@@ -1,15 +1,20 @@
 // lib/features/settings/presentation/settings_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/router/app_router.dart';
+import '../../../core/services/auth_service.dart';
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _notificationsEnabled = true;
   bool _slowTts = false;
 
@@ -115,11 +120,63 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
 
+            const SizedBox(height: 20),
+
+            // ── Notification settings ───────────────────────
+            _SectionHeader(title: 'Notifications'),
+            const SizedBox(height: 10),
+            _SettingsCard(children: [
+              _TapTile(
+                icon: Icons.notifications_active_rounded,
+                iconBg: const Color(0xFFFFF4E6),
+                iconColor: const Color(0xFFFF8C42),
+                title: 'Daily Reminder Settings',
+                onTap: () => context.push(AppRoutes.notifSettings),
+              ),
+            ]),
+
+            const SizedBox(height: 20),
+
+            // ── Sign out ───────────────────────────────────────
+            _SectionHeader(title: 'Account'),
+            const SizedBox(height: 10),
+            _SettingsCard(children: [
+              _TapTile(
+                icon: Icons.logout_rounded,
+                iconBg: const Color(0xFFFFF0F0),
+                iconColor: const Color(0xFFEF4444),
+                title: 'Sign Out',
+                onTap: _signOut,
+              ),
+            ]),
+
             const SizedBox(height: 30),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _signOut() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Sign Out'),
+        content: const Text('Are you sure you want to sign out?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, true),
+            child: const Text('Sign Out',
+              style: TextStyle(color: AppColors.error))),
+        ],
+      ),
+    );
+    if (confirm == true && mounted) {
+      await ref.read(authServiceProvider).signOut();
+      ref.read(currentUserProvider.notifier).state = null;
+      if (mounted) context.go(AppRoutes.auth);
+    }
   }
 }
 
