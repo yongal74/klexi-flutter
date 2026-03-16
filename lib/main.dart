@@ -15,7 +15,12 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // Firebase: skip on web/unsupported platforms gracefully
+  try {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  } catch (_) {
+    // Web or unsupported platform — continue without Firebase
+  }
 
   await Hive.initFlutter();
   Hive.registerAdapter(WordAdapter());

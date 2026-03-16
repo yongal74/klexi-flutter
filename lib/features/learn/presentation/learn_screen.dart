@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/services/daily_session_service.dart';
+import '../../../data/repositories/word_repository.dart';
 
 class LearnScreen extends ConsumerStatefulWidget {
   const LearnScreen({super.key});
@@ -88,6 +89,14 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
             ),
             const SizedBox(height: AppSpacing.sectionGap),
 
+            // ── TOPIK Levels ──────────────────────────────────
+            const Text('TOPIK Levels',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary)),
+            const SizedBox(height: AppSpacing.md),
+            _LevelGrid(),
+            const SizedBox(height: AppSpacing.sectionGap),
+
             const Text('Practice Modes',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary)),
@@ -127,6 +136,76 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ── TOPIK Level Grid ───────────────────────────────────────
+class _LevelGrid extends ConsumerWidget {
+  static const _names = ['Beginner', 'Elementary', 'Intermediate',
+      'Upper-Int.', 'Advanced', 'Master'];
+  static const _ranges = ['1–800', '801–2,000', '2,001–3,500',
+      '3,501–5,000', '5,001–6,500', '6,501+'];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final repo = ref.read(wordRepositoryProvider);
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      crossAxisSpacing: AppSpacing.listGap,
+      mainAxisSpacing: AppSpacing.listGap,
+      childAspectRatio: 1.55,
+      children: List.generate(6, (i) {
+        final lvl = i + 1;
+        final color = AppColors.topikColor(lvl);
+        final count = repo.getWordsByLevel(lvl).length;
+        return GestureDetector(
+          onTap: () => context.push('/level/$lvl'),
+          child: Container(
+            padding: const EdgeInsets.all(AppSpacing.cardPad),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+              border: Border.all(color: color.withOpacity(0.3)),
+              boxShadow: AppColors.subtleShadow,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text('TOPIK $lvl',
+                        style: const TextStyle(
+                            fontSize: 11, fontWeight: FontWeight.w800,
+                            color: Colors.white)),
+                  ),
+                  const Spacer(),
+                  Icon(Icons.arrow_forward_ios, size: 12, color: color),
+                ]),
+                const SizedBox(height: 8),
+                Text(_names[i],
+                    style: TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w700,
+                        color: color)),
+                const SizedBox(height: 2),
+                Text('$count words',
+                    style: const TextStyle(
+                        fontSize: 12, color: AppColors.textSecondary)),
+                Text(_ranges[i],
+                    style: const TextStyle(
+                        fontSize: 11, color: AppColors.textMuted)),
+              ],
+            ),
+          ),
+        );
+      }),
     );
   }
 }

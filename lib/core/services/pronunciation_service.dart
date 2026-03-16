@@ -4,7 +4,6 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'tts_service.dart'; // reuses dioProvider
 
 // ── Model ─────────────────────────────────────────────────────────────────
 
@@ -104,7 +103,13 @@ class PronunciationService {
 
 // ── Providers ─────────────────────────────────────────────────────────────
 
+final _dioProvider = Provider<Dio>((ref) => Dio(BaseOptions(
+  baseUrl: 'https://your-pronunciation-server.com/api',
+  connectTimeout: const Duration(seconds: 10),
+  receiveTimeout: const Duration(seconds: 30),
+)));
+
 final pronunciationServiceProvider = Provider<PronunciationService>((ref) {
-  final dio = ref.watch(dioProvider);
+  final dio = ref.watch(_dioProvider);
   return PronunciationService(dio);
 });

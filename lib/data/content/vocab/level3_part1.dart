@@ -1,6 +1,6 @@
 import '../../models/word.dart';
 
-const List<Word> level3_part1Words = [
+final List<Word> level3_part1Words = [
   Word(id: '3-1', korean: '관계', english: 'relationship', level: 3, partOfSpeech: 'noun', example: '좋은 관계를 유지하는 것이 중요해요.', exampleTranslation: 'It', pronunciation: 'gwangye', category: 'Social Life & Relationships'),
   Word(id: '3-2', korean: '소개하다', english: 'to introduce', level: 3, partOfSpeech: 'verb', example: '친구를 소개해 줄게요.', exampleTranslation: 'I', pronunciation: 'sogaehada', category: 'Social Life & Relationships'),
   Word(id: '3-3', korean: '사귀다', english: 'to date; to make friends', level: 3, partOfSpeech: 'verb', example: '새로운 친구를 사귀고 싶어요.', exampleTranslation: 'I want to make new friends.', pronunciation: 'sagwida', category: 'Social Life & Relationships'),

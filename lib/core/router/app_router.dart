@@ -21,6 +21,7 @@ import '../../features/themes/presentation/themes_screen.dart';
 import '../../features/themes/presentation/theme_detail_screen.dart';
 import '../../features/pronunciation/presentation/pronunciation_screen.dart';
 import '../../features/hangeul/presentation/hangeul_tracing_screen.dart';
+import '../../features/learn/presentation/level_words_screen.dart';
 import '../../features/premium/presentation/premium_screen.dart';
 
 abstract class AppRoutes {
@@ -42,6 +43,7 @@ abstract class AppRoutes {
   static const String pronunciation     = '/pronunciation';
   static const String hangeul           = '/hangeul';
   static const String notifSettings     = '/notification-settings';
+  static const String levelWords        = '/level/:level';
   static const String premium           = '/premium';
 }
 
@@ -102,7 +104,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.sentenceCard,
-        pageBuilder: (c, s) => _slide(const SentenceCardScreen()),
+        pageBuilder: (c, s) {
+          final lvl = int.tryParse(s.uri.queryParameters['level'] ?? '');
+          return _slide(SentenceCardScreen(level: lvl));
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.levelWords,
+        pageBuilder: (c, s) {
+          final level = int.tryParse(s.pathParameters['level'] ?? '1') ?? 1;
+          return _slide(LevelWordsScreen(level: level));
+        },
       ),
       GoRoute(
         path: AppRoutes.clozeQuiz,

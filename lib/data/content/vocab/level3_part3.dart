@@ -1,6 +1,6 @@
 import '../../models/word.dart';
 
-const List<Word> level3_part3Words = [
+final List<Word> level3_part3Words = [
   Word(id: '3-801', korean: '존경', english: 'respect; admiration', level: 3, partOfSpeech: 'noun', example: '선생님께 존경을 표해요.', exampleTranslation: 'I show respect to the teacher.', pronunciation: 'jongyeong', category: 'Social Life & Relationships'),
   Word(id: '3-802', korean: '감사', english: 'gratitude; thanks', level: 3, partOfSpeech: 'noun', example: '감사의 마음을 전해요.', exampleTranslation: 'I convey my gratitude.', pronunciation: 'gamsa', category: 'Social Life & Relationships'),
   Word(id: '3-803', korean: '정', english: 'affection; attachment', level: 3, partOfSpeech: 'noun', example: '한국 사람들은 정이 많아요.', exampleTranslation: 'Korean people have a lot of affection.', pronunciation: 'jeong', category: 'Social Life & Relationships'),

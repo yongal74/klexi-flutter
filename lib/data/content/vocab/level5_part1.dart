@@ -1,6 +1,6 @@
 import '../../models/word.dart';
 
-const List<Word> level5_part1Words = [
+final List<Word> level5_part1Words = [
   Word(id: '5-1', korean: '창작하다', english: 'to create (a work)', level: 5, partOfSpeech: 'verb', example: '그는 독창적인 소설을 창작했습니다.', exampleTranslation: 'He created an original novel.', pronunciation: 'changjakhada', category: 'Literature & Writing'),
   Word(id: '5-2', korean: '비평', english: 'criticism; critique', level: 5, partOfSpeech: 'noun', example: '문학 비평은 작품의 가치를 분석합니다.', exampleTranslation: 'Literary criticism analyzes the value of works.', pronunciation: 'bipyeong', category: 'Literature & Writing'),
   Word(id: '5-3', korean: '소설', english: 'novel; fiction', level: 5, partOfSpeech: 'noun', example: '이 소설은 전쟁의 비극을 다루고 있습니다.', exampleTranslation: 'This novel deals with the tragedy of war.', pronunciation: 'soseol', category: 'Literature & Writing'),

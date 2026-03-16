@@ -15,25 +15,25 @@ class WordRepository {
   static final WordRepository instance = WordRepository._();
 
   // ── Internal data ──────────────────────────────────────────
-  static const List<Word> _all = [
-    ...level1Part1Words,
-    ...level1Part2Words,
-    ...level1Part3Words,
-    ...level2Part1Words,
-    ...level2Part2Words,
-    ...level2Part3Words,
-    ...level3Part1Words,
-    ...level3Part2Words,
-    ...level3Part3Words,
-    ...level4Part1Words,
-    ...level4Part2Words,
-    ...level4Part3Words,
-    ...level5Part1Words,
-    ...level5Part2Words,
-    ...level5Part3Words,
-    ...level6Part1Words,
-    ...level6Part2Words,
-    ...level6Part3Words,
+  static final List<Word> _all = [
+    ...level1_part1Words,
+    ...level1_part2Words,
+    ...level1_part3Words,
+    ...level2_part1Words,
+    ...level2_part2Words,
+    ...level2_part3Words,
+    ...level3_part1Words,
+    ...level3_part2Words,
+    ...level3_part3Words,
+    ...level4_part1Words,
+    ...level4_part2Words,
+    ...level4_part3Words,
+    ...level5_part1Words,
+    ...level5_part2Words,
+    ...level5_part3Words,
+    ...level6_part1Words,
+    ...level6_part2Words,
+    ...level6_part3Words,
   ];
 
   // ── Public API ─────────────────────────────────────────────

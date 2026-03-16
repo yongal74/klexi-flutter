@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_typography.dart';
 import '../constants/app_spacing.dart';
@@ -127,7 +128,8 @@ abstract class AppTheme {
         space: 1,
       ),
 
-      textTheme: TextTheme(
+      // Apply DM Sans as the base English UI font, then override with app scale
+      textTheme: GoogleFonts.dmSansTextTheme(TextTheme(
         displayLarge:  AppTypography.display,
         headlineLarge: AppTypography.heading1,
         headlineMedium: AppTypography.heading2,
@@ -138,7 +140,7 @@ abstract class AppTheme {
         labelLarge:    AppTypography.button,
         labelMedium:   AppTypography.caption,
         labelSmall:    AppTypography.label,
-      ),
+      )),
     );
   }
 

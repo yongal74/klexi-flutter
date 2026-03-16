@@ -1,6 +1,6 @@
 import '../../models/word.dart';
 
-const List<Word> level6_part2Words = [
+final List<Word> level6_part2Words = [
   Word(id: '6-401', korean: '인공지능', english: 'artificial intelligence', level: 6, partOfSpeech: 'noun', example: '인공지능 기술이 산업 전반에 혁신을 가져오고 있습니다.', exampleTranslation: 'Artificial intelligence technology is bringing innovation across all industries.', pronunciation: 'ingongjineung', category: 'Science & Technology'),
   Word(id: '6-402', korean: '알고리즘', english: 'algorithm', level: 6, partOfSpeech: 'noun', example: '검색 알고리즘이 사용자 맞춤형 결과를 제공합니다.', exampleTranslation: 'The search algorithm provides customized results for users.', pronunciation: 'algorijeum', category: 'Science & Technology'),
   Word(id: '6-403', korean: '생명공학', english: 'biotechnology', level: 6, partOfSpeech: 'noun', example: '생명공학의 발전으로 난치병 치료의 가능성이 높아졌습니다.', exampleTranslation: 'Advances in biotechnology have increased the possibility of treating incurable diseases.', pronunciation: 'saengmyeonggonghak', category: 'Science & Technology'),

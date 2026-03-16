@@ -11,15 +11,15 @@ class GrammarDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final pattern = grammarData.firstWhere(
+    final pattern = kGrammarData.firstWhere(
       (g) => g.id == patternId,
-      orElse: () => grammarData.first,
+      orElse: () => kGrammarData.first,
     );
 
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: AppBar(
-        title: Text(pattern.pattern,
+        title: Text(pattern.title,
           style: const TextStyle(fontFamily: 'NotoSansKR')),
         backgroundColor: AppColors.surface,
       ),
@@ -33,7 +33,7 @@ class GrammarDetailScreen extends ConsumerWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(AppSpacing.cardPadLg),
               decoration: BoxDecoration(
-                gradient: AppColors.levelGradient(pattern.topikLevel),
+                gradient: AppColors.levelGradient(pattern.level),
                 borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
               ),
               child: Column(
@@ -45,12 +45,12 @@ class GrammarDetailScreen extends ConsumerWidget {
                       color: Colors.white.withOpacity(0.25),
                       borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
                     ),
-                    child: Text('TOPIK ${pattern.topikLevel}',
+                    child: Text('TOPIK ${pattern.level}',
                       style: const TextStyle(
                         fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  Text(pattern.pattern,
+                  Text(pattern.title,
                     style: const TextStyle(
                       fontFamily: 'NotoSansKR',
                       fontSize: 32, fontWeight: FontWeight.w700, color: Colors.white)),
@@ -64,10 +64,10 @@ class GrammarDetailScreen extends ConsumerWidget {
             const SizedBox(height: AppSpacing.lg),
 
             // Usage / Structure
-            if (pattern.usage.isNotEmpty)
+            if (pattern.structure.isNotEmpty)
               _InfoCard(
                 title: 'How to Use',
-                child: Text(pattern.usage,
+                child: Text(pattern.structure,
                   style: const TextStyle(
                     fontSize: 15, color: AppColors.textPrimary, height: 1.6)),
               ),
@@ -86,13 +86,13 @@ class GrammarDetailScreen extends ConsumerWidget {
                       if (idx > 0) ...[
                         Divider(color: AppColors.border, height: AppSpacing.x2l),
                       ],
-                      Text(ex.sentence,
+                      Text(ex.korean,
                         style: const TextStyle(
                           fontFamily: 'NotoSansKR',
                           fontSize: 18, fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary, height: 1.7)),
                       const SizedBox(height: 4),
-                      Text(ex.translation,
+                      Text(ex.english,
                         style: const TextStyle(
                           fontSize: 14, color: AppColors.textSecondary, height: 1.5)),
                     ],

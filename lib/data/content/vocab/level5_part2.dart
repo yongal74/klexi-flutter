@@ -1,6 +1,6 @@
 import '../../models/word.dart';
 
-const List<Word> level5_part2Words = [
+final List<Word> level5_part2Words = [
   Word(id: '5-401', korean: '서론', english: 'introduction; preface', level: 5, partOfSpeech: 'noun', example: '논문의 서론에서 연구 목적을 밝혔습니다.', exampleTranslation: 'The research purpose was stated in the introduction.', pronunciation: 'seoron', category: 'Literature & Writing'),
   Word(id: '5-402', korean: '본론', english: 'main body; main argument', level: 5, partOfSpeech: 'noun', example: '본론에서 핵심 내용을 다룹니다.', exampleTranslation: 'The main body covers the core content.', pronunciation: 'bonron', category: 'Literature & Writing'),
   Word(id: '5-403', korean: '결론', english: 'conclusion', level: 5, partOfSpeech: 'noun', example: '결론에서 연구 결과를 요약했습니다.', exampleTranslation: 'The research results were summarized in the conclusion.', pronunciation: 'gyeollon', category: 'Literature & Writing'),

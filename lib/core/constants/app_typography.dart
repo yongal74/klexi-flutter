@@ -5,8 +5,8 @@ import 'app_colors.dart';
 abstract class AppTypography {
   // ── Korean Font (NotoSansKR) ──────────────────────────
   static const String fontKorean = 'NotoSansKR';
-  // ── English UI Font (Inter) ───────────────────────────
-  static const String fontUI = 'Inter';
+  // ── English UI Font (DM Sans) ─────────────────────────
+  static const String fontUI = 'DM Sans';
 
   // ── Display: 48px Bold — 메인 한국어 단어 ─────────────
   static const TextStyle display = TextStyle(

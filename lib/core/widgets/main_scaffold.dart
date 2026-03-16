@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_colors.dart';
 import '../router/app_router.dart';
 
@@ -95,10 +96,9 @@ class _NavItem extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               label,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 11,
-                fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+              style: GoogleFonts.dmSans(
+                fontSize: 13,
+                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
                 color: active ? AppColors.primary : AppColors.textMuted,
               ),
             ),

@@ -1,6 +1,6 @@
 import '../../models/word.dart';
 
-const List<Word> level1_part1Words = [
+final List<Word> level1_part1Words = [
   Word(id: '1-1', korean: '안녕하세요', english: 'Hello', level: 1, partOfSpeech: 'expression', example: '안녕하세요, 만나서 반갑습니다.', exampleTranslation: 'Hello, nice to meet you.', pronunciation: 'annyeonghaseyo', category: 'Greetings & Manners'),
   Word(id: '1-2', korean: '감사합니다', english: 'Thank you', level: 1, partOfSpeech: 'expression', example: '도와주셔서 감사합니다.', exampleTranslation: 'Thank you for helping me.', pronunciation: 'gamsahamnida', category: 'Greetings & Manners'),
   Word(id: '1-3', korean: '죄송합니다', english: 'I', level: 1, partOfSpeech: 'expression', example: '늦어서 죄송합니다.', exampleTranslation: 'I', pronunciation: 'joesonghamnida', category: 'Greetings & Manners'),

@@ -1,6 +1,6 @@
 import '../../models/word.dart';
 
-const List<Word> level6_part1Words = [
+final List<Word> level6_part1Words = [
   Word(id: '6-1', korean: '논문', english: 'thesis; academic paper', level: 6, partOfSpeech: 'noun', example: '석사 논문을 완성하는 데 일 년이 걸렸습니다.', exampleTranslation: 'It took one year to complete the master', pronunciation: 'nonmun', category: 'Academic Writing'),
   Word(id: '6-2', korean: '학술', english: 'academic; scholarly', level: 6, partOfSpeech: 'noun', example: '학술 논문은 엄격한 심사 과정을 거칩니다.', exampleTranslation: 'Academic papers go through a rigorous review process.', pronunciation: 'haksul', category: 'Academic Writing'),
   Word(id: '6-3', korean: '근거', english: 'basis; grounds', level: 6, partOfSpeech: 'noun', example: '그 주장은 과학적 근거가 부족합니다.', exampleTranslation: 'That claim lacks scientific basis.', pronunciation: 'geungeo', category: 'Academic Writing'),

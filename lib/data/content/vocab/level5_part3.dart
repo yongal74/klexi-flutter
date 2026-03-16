@@ -1,6 +1,6 @@
 import '../../models/word.dart';
 
-const List<Word> level5_part3Words = [
+final List<Word> level5_part3Words = [
   Word(id: '5-801', korean: '서사시', english: 'epic poem', level: 5, partOfSpeech: 'noun', example: '호메로스의 서사시는 문학사에서 중요합니다.', exampleTranslation: 'Homer', pronunciation: 'seosasi', category: 'Literature & Writing'),
   Word(id: '5-802', korean: '단편소설', english: 'short story', level: 5, partOfSpeech: 'noun', example: '그는 단편소설 작가로 유명합니다.', exampleTranslation: 'He is famous as a short story writer.', pronunciation: 'danpyeonsoseol', category: 'Literature & Writing'),
   Word(id: '5-803', korean: '장편소설', english: 'full-length novel', level: 5, partOfSpeech: 'noun', example: '이 장편소설은 삼 년에 걸쳐 완성되었습니다.', exampleTranslation: 'This full-length novel was completed over three years.', pronunciation: 'jangpyeonsoseol', category: 'Literature & Writing'),

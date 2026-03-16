@@ -1,6 +1,6 @@
 import '../../models/word.dart';
 
-const List<Word> level1_part3Words = [
+final List<Word> level1_part3Words = [
   Word(id: '1-801', korean: '건강하다', english: 'To be healthy', level: 1, partOfSpeech: 'adjective', example: '할아버지는 건강해요.', exampleTranslation: 'Grandfather is healthy.', pronunciation: 'geonganghada', category: 'Basic Adjectives'),
   Word(id: '1-802', korean: '젊다', english: 'To be young', level: 1, partOfSpeech: 'adjective', example: '저 사람은 젊어요.', exampleTranslation: 'That person is young.', pronunciation: 'jeolmda', category: 'Basic Adjectives'),
   Word(id: '1-803', korean: '늙다', english: 'To be old (person)', level: 1, partOfSpeech: 'adjective', example: '강아지가 늙었어요.', exampleTranslation: 'The dog has gotten old.', pronunciation: 'neukda', category: 'Basic Adjectives'),

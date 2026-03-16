@@ -1,6 +1,6 @@
 import '../../models/word.dart';
 
-const List<Word> level4_part1Words = [
+final List<Word> level4_part1Words = [
   Word(id: '4-1', korean: '경제', english: 'economy', level: 4, partOfSpeech: 'noun', example: '한국 경제가 빠르게 성장하고 있습니다.', exampleTranslation: 'The Korean economy is growing rapidly.', pronunciation: 'gyeongje', category: 'Business & Economy'),
   Word(id: '4-2', korean: '투자', english: 'investment', level: 4, partOfSpeech: 'noun', example: '부동산에 투자하는 것은 위험할 수 있습니다.', exampleTranslation: 'Investing in real estate can be risky.', pronunciation: 'tuja', category: 'Business & Economy'),
   Word(id: '4-3', korean: '주식', english: 'stock; shares', level: 4, partOfSpeech: 'noun', example: '주식 시장이 크게 변동했습니다.', exampleTranslation: 'The stock market fluctuated greatly.', pronunciation: 'jusik', category: 'Business & Economy'),

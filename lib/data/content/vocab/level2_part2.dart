@@ -1,6 +1,6 @@
 import '../../models/word.dart';
 
-const List<Word> level2_part2Words = [
+final List<Word> level2_part2Words = [
   Word(id: '2-401', korean: '수업', english: 'class / lesson', level: 2, partOfSpeech: 'noun', example: '수업이 9시에 시작해요.', exampleTranslation: 'Class starts at 9.', pronunciation: 'sueop', category: 'Education'),
   Word(id: '2-402', korean: '시험', english: 'exam / test', level: 2, partOfSpeech: 'noun', example: '시험을 잘 봤어요.', exampleTranslation: 'I did well on the exam.', pronunciation: 'siheom', category: 'Education'),
   Word(id: '2-403', korean: '숙제', english: 'homework', level: 2, partOfSpeech: 'noun', example: '숙제를 다 했어요.', exampleTranslation: 'I finished all my homework.', pronunciation: 'sukje', category: 'Education'),

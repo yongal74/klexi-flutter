@@ -1,6 +1,6 @@
 import '../../models/word.dart';
 
-const List<Word> level6_part3Words = [
+final List<Word> level6_part3Words = [
   Word(id: '6-801', korean: '민주주의', english: 'democracy', level: 6, partOfSpeech: 'noun', example: '민주주의는 국민의 참여를 기반으로 합니다.', exampleTranslation: 'Democracy is based on the participation of the people.', pronunciation: 'minjujuui', category: 'Political Science'),
   Word(id: '6-802', korean: '권위주의', english: 'authoritarianism', level: 6, partOfSpeech: 'noun', example: '권위주의 체제에서는 개인의 자유가 제한됩니다.', exampleTranslation: 'Individual freedom is restricted under an authoritarian regime.', pronunciation: 'gwonwijuui', category: 'Political Science'),
   Word(id: '6-803', korean: '자유주의', english: 'liberalism', level: 6, partOfSpeech: 'noun', example: '자유주의는 개인의 권리와 자유를 중시합니다.', exampleTranslation: 'Liberalism values individual rights and freedoms.', pronunciation: 'jayujuui', category: 'Political Science'),

@@ -1,6 +1,6 @@
 import '../../models/word.dart';
 
-const List<Word> level4_part3Words = [
+final List<Word> level4_part3Words = [
   Word(id: '4-801', korean: '빈곤', english: 'poverty', level: 4, partOfSpeech: 'noun', example: '빈곤 문제를 해결하기 위한 대책이 필요합니다.', exampleTranslation: 'Measures to solve the poverty problem are needed.', pronunciation: 'bingon', category: 'Social Issues'),
   Word(id: '4-802', korean: '불평등', english: 'inequality', level: 4, partOfSpeech: 'noun', example: '경제적 불평등이 사회 문제가 되고 있습니다.', exampleTranslation: 'Economic inequality is becoming a social problem.', pronunciation: 'bulpyeongdeung', category: 'Social Issues'),
   Word(id: '4-803', korean: '차별', english: 'discrimination', level: 4, partOfSpeech: 'noun', example: '인종 차별은 절대 용납될 수 없습니다.', exampleTranslation: 'Racial discrimination can never be tolerated.', pronunciation: 'chabyeol', category: 'Social Issues'),

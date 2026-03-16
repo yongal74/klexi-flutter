@@ -1,6 +1,6 @@
 import '../../models/word.dart';
 
-const List<Word> level3_part2Words = [
+final List<Word> level3_part2Words = [
   Word(id: '3-401', korean: '문법', english: 'grammar', level: 3, partOfSpeech: 'noun', example: '한국어 문법을 공부하고 있어요.', exampleTranslation: 'I', pronunciation: 'munbeop', category: 'Grammar/Pattern Words'),
   Word(id: '3-402', korean: '어미', english: 'verb ending', level: 3, partOfSpeech: 'noun', example: '어미를 바꾸면 의미가 달라져요.', exampleTranslation: 'If you change the verb ending, the meaning changes.', pronunciation: 'eomi', category: 'Grammar/Pattern Words'),
   Word(id: '3-403', korean: '조사', english: 'particle (grammar)', level: 3, partOfSpeech: 'noun', example: '한국어 조사가 어려워요.', exampleTranslation: 'Korean particles are difficult.', pronunciation: 'josa', category: 'Grammar/Pattern Words'),

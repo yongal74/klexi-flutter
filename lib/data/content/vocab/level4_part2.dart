@@ -1,6 +1,6 @@
 import '../../models/word.dart';
 
-const List<Word> level4_part2Words = [
+final List<Word> level4_part2Words = [
   Word(id: '4-401', korean: '간', english: 'liver', level: 4, partOfSpeech: 'noun', example: '간 기능 검사를 받았습니다.', exampleTranslation: 'I had a liver function test.', pronunciation: 'gan', category: 'Medicine & Health'),
   Word(id: '4-402', korean: '신장', english: 'kidney', level: 4, partOfSpeech: 'noun', example: '신장 질환은 조기 치료가 중요합니다.', exampleTranslation: 'Early treatment is important for kidney disease.', pronunciation: 'sinjang', category: 'Medicine & Health'),
   Word(id: '4-403', korean: '위장', english: 'stomach', level: 4, partOfSpeech: 'noun', example: '스트레스로 위장 질환이 생겼습니다.', exampleTranslation: 'I developed a stomach disorder due to stress.', pronunciation: 'wijang', category: 'Medicine & Health'),

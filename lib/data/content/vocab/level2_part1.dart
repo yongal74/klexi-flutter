@@ -1,6 +1,6 @@
 import '../../models/word.dart';
 
-const List<Word> level2_part1Words = [
+final List<Word> level2_part1Words = [
   Word(id: '2-1', korean: '주문하다', english: 'to order', level: 2, partOfSpeech: 'verb', example: '음식을 주문하다.', exampleTranslation: 'To order food.', pronunciation: 'jumunhada', category: 'Shopping & Commerce'),
   Word(id: '2-2', korean: '계산하다', english: 'to pay / to calculate', level: 2, partOfSpeech: 'verb', example: '카드로 계산하다.', exampleTranslation: 'To pay by card.', pronunciation: 'gyesanhada', category: 'Shopping & Commerce'),
   Word(id: '2-3', korean: '교환하다', english: 'to exchange', level: 2, partOfSpeech: 'verb', example: '사이즈가 안 맞아서 교환하다.', exampleTranslation: 'To exchange because the size doesn', pronunciation: 'gyohwanhada', category: 'Shopping & Commerce'),

@@ -24,7 +24,7 @@ class ThemeSentence {
 // ─────────────────────────────────────────────────────────────
 // KDRAMA — 8 sentences (levels 1–6)
 // ─────────────────────────────────────────────────────────────
-const List<ThemeSentence> kdramaSentences = [
+final List<ThemeSentence> kdramaSentences = [
   ThemeSentence(
     theme: 'kdrama',
     level: 1,
@@ -102,7 +102,7 @@ const List<ThemeSentence> kdramaSentences = [
 // ─────────────────────────────────────────────────────────────
 // KPOP — 8 sentences (levels 1–6)
 // ─────────────────────────────────────────────────────────────
-const List<ThemeSentence> kpopSentences = [
+final List<ThemeSentence> kpopSentences = [
   ThemeSentence(
     theme: 'kpop',
     level: 1,
@@ -116,7 +116,7 @@ const List<ThemeSentence> kpopSentences = [
     theme: 'kpop',
     level: 1,
     korean: '오늘 콘서트 완전 대박이었어!',
-    english: 'Tonight\'s concert was totally amazing!',
+    english: "Tonight's concert was totally amazing!",
     targetWords: ['콘서트', '완전', '대박'],
     context: 'A fan texts a friend right after a concert ends',
     grammar: '-았/었어',
@@ -134,7 +134,7 @@ const List<ThemeSentence> kpopSentences = [
     theme: 'kpop',
     level: 2,
     korean: '그 그룹 새 앨범 들어봤어? 진짜 미쳤어.',
-    english: 'Have you listened to that group\'s new album? It\'s insane.',
+    english: "Have you listened to that group's new album? It's insane.",
     targetWords: ['그룹', '앨범', '들어보다', '미치다'],
     context: 'Two fans talk excitedly about a new release',
     grammar: '-아/어 보다',
@@ -180,7 +180,7 @@ const List<ThemeSentence> kpopSentences = [
 // ─────────────────────────────────────────────────────────────
 // TRAVEL — 8 sentences (levels 1–6)
 // ─────────────────────────────────────────────────────────────
-const List<ThemeSentence> travelSentences = [
+final List<ThemeSentence> travelSentences = [
   ThemeSentence(
     theme: 'travel',
     level: 1,
@@ -221,7 +221,7 @@ const List<ThemeSentence> travelSentences = [
     theme: 'travel',
     level: 3,
     korean: '서울에 처음 왔는데, 꼭 가봐야 할 곳이 어디예요?',
-    english: 'It\'s my first time in Seoul — where must I go?',
+    english: "It's my first time in Seoul — where must I go?",
     targetWords: ['처음', '꼭', '가보다', '곳'],
     context: 'A first-time visitor asks a local for recommendations',
     grammar: '-아/어야 하다',
@@ -258,7 +258,7 @@ const List<ThemeSentence> travelSentences = [
 // ─────────────────────────────────────────────────────────────
 // KFOOD — 8 sentences (levels 1–6)
 // ─────────────────────────────────────────────────────────────
-const List<ThemeSentence> kfoodSentences = [
+final List<ThemeSentence> kfoodSentences = [
   ThemeSentence(
     theme: 'kfood',
     level: 1,
@@ -299,7 +299,7 @@ const List<ThemeSentence> kfoodSentences = [
     theme: 'kfood',
     level: 3,
     korean: '먹어 봤자 익숙하지 않으면 맛을 모를 수도 있어요.',
-    english: 'Even if you try it, you might not appreciate the taste if you\'re not used to it.',
+    english: "Even if you try it, you might not appreciate the taste if you're not used to it.",
     targetWords: ['익숙하다', '맛', '알다', '-ㄹ 수도 있다'],
     context: 'A discussion about acquiring a taste for fermented Korean foods',
     grammar: '-아/어 봤자',
@@ -308,7 +308,7 @@ const List<ThemeSentence> kfoodSentences = [
     theme: 'kfood',
     level: 3,
     korean: '이 집 냉면은 먹을수록 빠져드는 맛이에요.',
-    english: 'This restaurant\'s naengmyeon has a taste that draws you in the more you eat.',
+    english: "This restaurant's naengmyeon has a taste that draws you in the more you eat.",
     targetWords: ['냉면', '먹을수록', '빠져들다'],
     context: 'A food blogger describes their favourite naengmyeon spot',
     grammar: '-(으)ㄹ수록',
@@ -336,12 +336,12 @@ const List<ThemeSentence> kfoodSentences = [
 // ─────────────────────────────────────────────────────────────
 // MANNERS — 8 sentences (levels 1–6)
 // ─────────────────────────────────────────────────────────────
-const List<ThemeSentence> mannersSentences = [
+final List<ThemeSentence> mannersSentences = [
   ThemeSentence(
     theme: 'manners',
     level: 1,
     korean: '안녕하세요, 처음 뵙겠습니다.',
-    english: 'Hello, it\'s nice to meet you for the first time.',
+    english: "Hello, it's nice to meet you for the first time.",
     targetWords: ['안녕하세요', '처음', '뵙다'],
     context: 'A formal first introduction — bowing and greeting a new colleague',
     grammar: '-겠습니다',
@@ -368,7 +368,7 @@ const List<ThemeSentence> mannersSentences = [
     theme: 'manners',
     level: 2,
     korean: '어른이 드실 때까지 기다리는 게 예의예요.',
-    english: 'It\'s polite to wait until elders start eating.',
+    english: "It's polite to wait until elders start eating.",
     targetWords: ['어른', '드시다', '기다리다', '예의'],
     context: 'Explaining Korean dining etiquette to a foreign guest',
     grammar: '-는 게 예의예요',
@@ -377,7 +377,7 @@ const List<ThemeSentence> mannersSentences = [
     theme: 'manners',
     level: 3,
     korean: '처음 만나는 분께 나이를 여쭤보는 건 자연스러운 일이에요.',
-    english: 'It\'s natural to ask someone\'s age when you first meet in Korea.',
+    english: "It's natural to ask someone's age when you first meet in Korea.",
     targetWords: ['처음 만나다', '나이', '여쭤보다', '자연스럽다'],
     context: 'Explaining to a foreigner why Koreans ask ages right away',
     grammar: '-는 건 자연스럽다',
@@ -414,12 +414,12 @@ const List<ThemeSentence> mannersSentences = [
 // ─────────────────────────────────────────────────────────────
 // SLANG — 8 sentences (levels 1–6)
 // ─────────────────────────────────────────────────────────────
-const List<ThemeSentence> slangSentences = [
+final List<ThemeSentence> slangSentences = [
   ThemeSentence(
     theme: 'slang',
     level: 1,
     korean: '대박! 이게 진짜야?',
-    english: 'Wow! Is this real? (That\'s insane!)',
+    english: "Wow! Is this real? (That's insane!",
     targetWords: ['대박', '진짜'],
     context: 'A friend reacts with disbelief at some crazy good news',
     grammar: '-이야?',
@@ -428,7 +428,7 @@ const List<ThemeSentence> slangSentences = [
     theme: 'slang',
     level: 1,
     korean: '헐, 나 완전 망했어.',
-    english: 'Oh no, I\'m totally done for.',
+    english: "Oh no, I'm totally done for.",
     targetWords: ['헐', '완전', '망하다'],
     context: 'A student realises they forgot to submit homework',
     grammar: '-았/었어',
@@ -455,7 +455,7 @@ const List<ThemeSentence> slangSentences = [
     theme: 'slang',
     level: 3,
     korean: '그 사람 인싸인지 아싸인지 모르겠어.',
-    english: 'I can\'t tell if that person is an insider or an outsider.',
+    english: "I can't tell if that person is an insider or an outsider.",
     targetWords: ['인싸', '아싸', '모르다'],
     context: 'Discussing whether someone is socially popular or a loner',
     grammar: '-인지 모르다',
@@ -464,7 +464,7 @@ const List<ThemeSentence> slangSentences = [
     theme: 'slang',
     level: 3,
     korean: '고구마 같은 상황이어서 답답해 미치겠어.',
-    english: 'The situation is so frustrating and stuffy, I\'m going crazy.',
+    english: "The situation is so frustrating and stuffy, I'm going crazy.",
     targetWords: ['고구마', '답답하다', '-아/어 미치겠다'],
     context: 'Venting about a situation that feels painfully slow or blocked',
     grammar: '-아/어 미치겠다',
@@ -482,7 +482,7 @@ const List<ThemeSentence> slangSentences = [
     theme: 'slang',
     level: 5,
     korean: '요즘 MZ세대 사이에서 유행하는 표현들을 이해 못 하면 아재 소리 들어.',
-    english: 'If you can\'t understand the trendy expressions among Gen MZ these days, people will call you old.',
+    english: "If you can't understand the trendy expressions among Gen MZ these days, people will call you old.",
     targetWords: ['MZ세대', '유행하다', '표현', '아재'],
     context: 'A discussion about generational language gaps and keeping up with slang',
     grammar: '-으면 N 소리 듣다',
@@ -492,7 +492,7 @@ const List<ThemeSentence> slangSentences = [
 // ─────────────────────────────────────────────────────────────
 // All theme sentences combined
 // ─────────────────────────────────────────────────────────────
-const List<ThemeSentence> kAllThemeSentences = [
+final List<ThemeSentence> kAllThemeSentences = [
   ...kdramaSentences,
   ...kpopSentences,
   ...travelSentences,

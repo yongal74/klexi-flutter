@@ -109,14 +109,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 crossAxisCount: 2,
                 crossAxisSpacing: AppSpacing.listGap,
                 mainAxisSpacing: AppSpacing.listGap,
-                childAspectRatio: 1.6,
+                childAspectRatio: 1.5,
                 children: [
-                  _QuickAction(icon: '🕸️', label: 'Word Network',   color: AppColors.primary,  onTap: () => context.push(AppRoutes.wordNetwork)),
-                  _QuickAction(icon: '💬', label: 'Chat with Dalli', color: AppColors.accent,   onTap: () => context.push(AppRoutes.dalliChat)),
-                  _QuickAction(icon: '✏️', label: 'Grammar',        color: AppColors.topik4,   onTap: () => context.push(AppRoutes.grammar)),
-                  _QuickAction(icon: '🎬', label: 'Themes',         color: AppColors.topik5,   onTap: () => context.push(AppRoutes.themes)),
-                  _QuickAction(icon: '🙉', label: 'Pronunciation',  color: AppColors.topik3,   onTap: () => context.push(AppRoutes.pronunciation)),
-                  _QuickAction(icon: '✍️', label: 'Hangeul',        color: AppColors.topik2,   onTap: () => context.push(AppRoutes.hangeul)),
+                  _QuickAction(label: 'Word Network',   color: AppColors.primary,  onTap: () => context.push(AppRoutes.wordNetwork)),
+                  _QuickAction(label: 'Chat with Dalli', color: AppColors.accent,   onTap: () => context.push(AppRoutes.dalliChat)),
+                  _QuickAction(label: 'Grammar',        color: AppColors.topik4,   onTap: () => context.push(AppRoutes.grammar)),
+                  _QuickAction(label: 'Themes',         color: AppColors.topik5,   onTap: () => context.push(AppRoutes.themes)),
+                  _QuickAction(label: 'Pronunciation',  color: AppColors.topik3,   onTap: () => context.push(AppRoutes.pronunciation)),
+                  _QuickAction(label: 'Hangeul',        color: AppColors.topik2,   onTap: () => context.push(AppRoutes.hangeul)),
                 ],
               ),
               const SizedBox(height: AppSpacing.sectionGap),
@@ -215,20 +215,16 @@ class _TodayCard extends StatelessWidget {
           ),
         ],
       )),
-      const SizedBox(width: AppSpacing.md),
-      const Text('📖', style: TextStyle(fontSize: 56)),
     ]),
   );
 }
 
 // ── Quick Action ──────────────────────────────────────────
 class _QuickAction extends StatelessWidget {
-  final String icon;
   final String label;
   final Color color;
   final VoidCallback onTap;
-  const _QuickAction({required this.icon, required this.label,
-    required this.color, required this.onTap});
+  const _QuickAction({required this.label, required this.color, required this.onTap});
 
   @override
   Widget build(BuildContext context) => GestureDetector(
@@ -242,12 +238,10 @@ class _QuickAction extends StatelessWidget {
         boxShadow: AppColors.subtleShadow,
       ),
       child: Row(children: [
-        Text(icon, style: const TextStyle(fontSize: 24)),
-        const SizedBox(width: 8),
         Expanded(child: Text(label,
           style: const TextStyle(
-            fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary))),
-        Icon(Icons.arrow_forward_ios, size: 12, color: color),
+            fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary))),
+        Icon(Icons.arrow_forward_ios, size: 14, color: color),
       ]),
     ),
   );

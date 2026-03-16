@@ -1,6 +1,6 @@
-import '../models/word.dart';
+import '../../models/word.dart';
 
-const List<Word> slangWords = [
+final List<Word> slangWords = [
   Word(id: 'theme-slang-1-1', korean: 'ㅋㅋ', english: 'Haha (laughing)', level: 1, partOfSpeech: 'expression', example: '너무 웃겨 ㅋㅋ', exampleTranslation: 'So funny haha.', pronunciation: 'keu-keu', category: 'SLANG'),
   Word(id: 'theme-slang-1-2', korean: 'ㅎㅎ', english: 'Hehe (soft laugh)', level: 1, partOfSpeech: 'expression', example: '고마워 ㅎㅎ', exampleTranslation: 'Thanks hehe.', pronunciation: 'heu-heu', category: 'SLANG'),
   Word(id: 'theme-slang-1-3', korean: '대박', english: 'Amazing / Jackpot', level: 1, partOfSpeech: 'expression', example: '대박! 진짜야?', exampleTranslation: 'Amazing! Really?', pronunciation: 'dae-bak', category: 'SLANG'),

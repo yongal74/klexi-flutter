@@ -18,11 +18,11 @@ class _GrammarScreenState extends ConsumerState<GrammarScreen> {
   String _search = '';
 
   List<GrammarPattern> get _filtered {
-    var list = grammarData;
-    if (_level > 0) list = list.where((g) => g.topikLevel == _level).toList();
+    var list = kGrammarData;
+    if (_level > 0) list = list.where((g) => g.level == _level).toList();
     if (_search.isNotEmpty) {
       list = list.where((g) =>
-        g.pattern.toLowerCase().contains(_search.toLowerCase()) ||
+        g.title.toLowerCase().contains(_search.toLowerCase()) ||
         g.meaning.toLowerCase().contains(_search.toLowerCase())).toList();
     }
     return list;
@@ -126,14 +126,14 @@ class _GrammarCard extends StatelessWidget {
             Container(
               width: 36, height: 36,
               decoration: BoxDecoration(
-                color: AppColors.topikBg(pattern.topikLevel),
+                color: AppColors.topikBg(pattern.level),
                 borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
               ),
               child: Center(
-                child: Text('${pattern.topikLevel}',
+                child: Text('${pattern.level}',
                   style: TextStyle(
                     fontSize: 14, fontWeight: FontWeight.w700,
-                    color: AppColors.topikColor(pattern.topikLevel))),
+                    color: AppColors.topikColor(pattern.level))),
               ),
             ),
             const SizedBox(width: AppSpacing.md),
@@ -141,7 +141,7 @@ class _GrammarCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(pattern.pattern,
+                  Text(pattern.title,
                     style: const TextStyle(
                       fontFamily: 'NotoSansKR',
                       fontSize: 18, fontWeight: FontWeight.w700,
@@ -152,7 +152,7 @@ class _GrammarCard extends StatelessWidget {
                       fontSize: 13, color: AppColors.textSecondary)),
                   if (pattern.examples.isNotEmpty) ...[
                     const SizedBox(height: 6),
-                    Text(pattern.examples.first.sentence,
+                    Text(pattern.examples.first.korean,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(

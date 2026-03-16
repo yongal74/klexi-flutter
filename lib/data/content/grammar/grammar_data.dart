@@ -1,9 +1,9 @@
 // Auto-generated from grammar-data.ts
 // DO NOT EDIT MANUALLY
 
-import '../models/grammar_pattern.dart';
+import '../../models/grammar_pattern.dart';
 
-const List<GrammarPattern> kGrammarData = [
+final List<GrammarPattern> kGrammarData = [
   GrammarPattern(
     id: 'g1-01',
     level: 1,

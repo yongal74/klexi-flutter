@@ -1,6 +1,6 @@
 import '../../models/word.dart';
 
-const List<Word> level1_part2Words = [
+final List<Word> level1_part2Words = [
   Word(id: '1-401', korean: '뱀', english: 'Snake', level: 1, partOfSpeech: 'noun', example: '뱀이 무서워요.', exampleTranslation: 'I', pronunciation: 'baem', category: 'Animals'),
   Word(id: '1-402', korean: '호랑이', english: 'Tiger', level: 1, partOfSpeech: 'noun', example: '호랑이는 강해요.', exampleTranslation: 'Tigers are strong.', pronunciation: 'horangi', category: 'Animals'),
   Word(id: '1-403', korean: '코끼리', english: 'Elephant', level: 1, partOfSpeech: 'noun', example: '코끼리는 커요.', exampleTranslation: 'Elephants are big.', pronunciation: 'kokkiri', category: 'Animals'),
