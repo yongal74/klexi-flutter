@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'core/router/app_router.dart';
+import 'core/services/daily_session_service.dart';
 import 'core/theme/app_theme.dart';
 import 'data/models/word.dart';
 
@@ -19,6 +20,7 @@ void main() async {
 
   await Hive.initFlutter();
   Hive.registerAdapter(WordAdapter());
+  await DailySessionService.instance.init();
 
   runApp(
     const ProviderScope(

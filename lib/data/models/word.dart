@@ -28,6 +28,31 @@ class Word extends HiveObject {
     this.relatedIds = const [],
   });
 
+  Word copyWith({
+    String? id,
+    String? korean,
+    String? english,
+    int? level,
+    String? partOfSpeech,
+    String? example,
+    String? exampleTranslation,
+    String? pronunciation,
+    String? category,
+    List<String>? relatedIds,
+  }) =>
+      Word(
+        id: id ?? this.id,
+        korean: korean ?? this.korean,
+        english: english ?? this.english,
+        level: level ?? this.level,
+        partOfSpeech: partOfSpeech ?? this.partOfSpeech,
+        example: example ?? this.example,
+        exampleTranslation: exampleTranslation ?? this.exampleTranslation,
+        pronunciation: pronunciation ?? this.pronunciation,
+        category: category ?? this.category,
+        relatedIds: relatedIds ?? this.relatedIds,
+      );
+
   factory Word.fromJson(Map<String, dynamic> json) => Word(
     id: json['id'] as String,
     korean: json['korean'] as String,

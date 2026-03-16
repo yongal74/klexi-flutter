@@ -1,7 +1,12 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:record/record.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/services/pronunciation_service.dart';
+import '../../../core/utils/tts_service.dart';
 import '../../../data/models/word.dart';
 import '../../../data/repositories/word_repository.dart';
 
@@ -15,10 +20,16 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen>
     with SingleTickerProviderStateMixin {
   bool _recording = false;
   bool _hasRecording = false;
+  bool _scoring = false;
   int? _score;
+  String? _feedback;
+  String? _transcript;
   Word? _currentWord;
   bool _loading = true;
   late AnimationController _pulseCtrl;
+  // Audio recorder
+  final _recorder = AudioRecorder();
+  String? _lastRecordingPath;
 
   @override
   void initState() {
@@ -31,6 +42,7 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen>
   @override
   void dispose() {
     _pulseCtrl.dispose();
+    _recorder.dispose();
     super.dispose();
   }
 
@@ -47,20 +59,73 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen>
 
   void _toggleRecord() async {
     if (_recording) {
-      // Stop recording → score
+      // Stop recording
       setState(() {
         _recording = false;
         _hasRecording = true;
-        // Mock score — replace with actual pronunciation API
-        _score = 75 + (DateTime.now().millisecond % 25);
+        _scoring = true;
+        _score = null;
+        _feedback = null;
+        _transcript = null;
       });
+
+      // Stop actual recorder
+      if (await _recorder.isRecording()) {
+        await _recorder.stop();
+      }
+
+      // If we have a real recording file, score it via the server
+      if (_lastRecordingPath != null && _currentWord != null) {
+        final result = await ref.read(pronunciationServiceProvider).score(
+              audioFile: File(_lastRecordingPath!),
+              expectedText: _currentWord!.korean,
+            );
+        if (mounted) {
+          setState(() {
+            _score = result.score;
+            _feedback = result.feedback;
+            _transcript = result.transcript;
+            _scoring = false;
+          });
+        }
+      } else {
+        // No recorder plugin yet — use mock score for demo
+        setState(() {
+          _score = 75 + (DateTime.now().millisecond % 25);
+          _feedback = 'Demo mode — real scoring requires audio plugin.';
+          _scoring = false;
+        });
+      }
     } else {
+      // Start recording
       setState(() {
         _recording = true;
         _hasRecording = false;
         _score = null;
+        _feedback = null;
+        _transcript = null;
       });
+      // Start actual recorder
+      try {
+        final hasPermission = await _recorder.hasPermission();
+        if (hasPermission) {
+          final dir = await getTemporaryDirectory();
+          final path = '${dir.path}/klexi_pronunciation.m4a';
+          await _recorder.start(
+            const RecordConfig(encoder: AudioEncoder.aacLc),
+            path: path,
+          );
+          _lastRecordingPath = path;
+        }
+      } catch (e) {
+        debugPrint('[Pronunciation] Recorder error: $e');
+      }
     }
+  }
+
+  void _playNative() {
+    if (_currentWord == null) return;
+    ref.read(ttsServiceProvider).speak(_currentWord!.korean);
   }
 
   void _next() async {
@@ -111,7 +176,7 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen>
 
                   // Native audio button
                   OutlinedButton.icon(
-                    onPressed: () {},
+                    onPressed: _playNative,
                     icon: const Icon(Icons.volume_up_outlined),
                     label: const Text('Play Native Audio'),
                     style: OutlinedButton.styleFrom(
@@ -158,9 +223,20 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen>
                       color: _recording ? AppColors.error : AppColors.textMuted)),
                   const SizedBox(height: AppSpacing.x3l),
 
+                  // Scoring spinner
+                  if (_scoring)
+                    const Padding(
+                      padding: EdgeInsets.all(AppSpacing.lg),
+                      child: CircularProgressIndicator(),
+                    ),
+
                   // Score
-                  if (_score != null) ...[
-                    _ScoreCard(score: _score!),
+                  if (_score != null && !_scoring) ...[
+                    _ScoreCard(
+                      score: _score!,
+                      feedback: _feedback,
+                      transcript: _transcript,
+                    ),
                     const SizedBox(height: AppSpacing.lg),
                     ElevatedButton(
                       onPressed: _next,
@@ -176,7 +252,9 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen>
 
 class _ScoreCard extends StatelessWidget {
   final int score;
-  const _ScoreCard({required this.score});
+  final String? feedback;
+  final String? transcript;
+  const _ScoreCard({required this.score, this.feedback, this.transcript});
 
   Color get _color {
     if (score >= 85) return AppColors.success;
@@ -184,11 +262,11 @@ class _ScoreCard extends StatelessWidget {
     return AppColors.error;
   }
 
-  String get _label {
-    if (score >= 85) return 'Great job! 🎉';
-    if (score >= 60) return 'Almost there!';
-    return 'Keep practicing';
-  }
+  String get _label => feedback ?? (score >= 85
+      ? 'Great job! 🎉'
+      : score >= 60
+          ? 'Almost there!'
+          : 'Keep practicing');
 
   @override
   Widget build(BuildContext context) {
@@ -227,7 +305,12 @@ class _ScoreCard extends StatelessWidget {
                 fontSize: 12, color: AppColors.textMuted)),
               const SizedBox(height: 2),
               Text(_label, style: TextStyle(
-                fontSize: 16, fontWeight: FontWeight.w700, color: _color)),
+                fontSize: 14, fontWeight: FontWeight.w700, color: _color)),
+              if (transcript != null && transcript!.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text('Heard: "$transcript"',
+                  style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+              ],
             ],
           )),
         ],

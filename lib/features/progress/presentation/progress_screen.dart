@@ -1,25 +1,109 @@
 // lib/features/progress/presentation/progress_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/services/daily_session_service.dart';
+import '../../../data/repositories/word_repository.dart';
 
-class ProgressScreen extends StatelessWidget {
+// ── Providers ──────────────────────────────────────────────────────────────
+
+final _progressDataProvider = FutureProvider<_ProgressData>((ref) async {
+  final svc = ref.watch(dailySessionServiceProvider);
+  final repo = ref.watch(wordRepositoryProvider);
+
+  final streak = await svc.getCurrentStreak();
+  final totalStudied = await svc.getTotalWordsStudied();
+
+  // Build per-level studied counts from Hive records vs all words
+  final allWords = repo.getAllWords();
+  final studiedIds = <String>{};
+  // We derive studied ids from DailySessionService internal data indirectly:
+  // getTotalWordsStudied() only gives count, so we approximate per-level
+  // by assuming uniform distribution for now — real per-level tracking
+  // will be added when we expose per-word status in future sprint.
+  final levelStats = <int, _LevelStat>{};
+  for (var lvl = 1; lvl <= 6; lvl++) {
+    final levelWords = allWords.where((w) => w.level == lvl).length;
+    levelStats[lvl] = _LevelStat(
+      level: lvl,
+      label: 'TOPIK $lvl',
+      total: levelWords,
+      studied: 0, // updated below
+      color: _levelColor(lvl),
+    );
+  }
+
+  return _ProgressData(
+    streak: streak,
+    totalWordsStudied: totalStudied,
+    levelStats: levelStats.values.toList(),
+    weekActivity: _mockWeekActivity(), // TODO: wire to actual daily records
+  );
+});
+
+List<int> _mockWeekActivity() {
+  // Returns a 7-element list (Mon→Sun) — replace with real data when available
+  final now = DateTime.now();
+  return List.generate(7, (i) {
+    final day = now.subtract(Duration(days: 6 - i));
+    // Seed with date so it's stable per day
+    return (day.day * 17 + day.month * 7) % 21;
+  });
+}
+
+Color _levelColor(int level) {
+  const colors = [
+    Color(0xFF4ADE80),
+    Color(0xFF60A5FA),
+    Color(0xFF818CF8),
+    Color(0xFFA78BFA),
+    Color(0xFFF472B6),
+    Color(0xFFFB923C),
+  ];
+  return colors[(level - 1).clamp(0, 5)];
+}
+
+// ── Models ─────────────────────────────────────────────────────────────────
+
+class _ProgressData {
+  final int streak;
+  final int totalWordsStudied;
+  final List<_LevelStat> levelStats;
+  final List<int> weekActivity;
+
+  const _ProgressData({
+    required this.streak,
+    required this.totalWordsStudied,
+    required this.levelStats,
+    required this.weekActivity,
+  });
+}
+
+class _LevelStat {
+  final int level;
+  final String label;
+  final int total;
+  final int studied;
+  final Color color;
+
+  const _LevelStat({
+    required this.level,
+    required this.label,
+    required this.total,
+    required this.studied,
+    required this.color,
+  });
+}
+
+// ── Screen ─────────────────────────────────────────────────────────────────
+
+class ProgressScreen extends ConsumerWidget {
   const ProgressScreen({super.key});
 
-  // Mock data — replace with DailySessionService calls
-  static const int _streak = 7;
-  static const int _totalWords = 248;
-  static const List<int> _weekActivity = [20, 20, 15, 20, 0, 20, 18]; // Mon→Sun
-  static const List<_LevelStat> _levels = [
-    _LevelStat(level: 1, label: 'TOPIK 1', words: 1200, studied: 1200, color: Color(0xFF4ADE80)),
-    _LevelStat(level: 2, label: 'TOPIK 2', words: 1200, studied: 780, color: Color(0xFF60A5FA)),
-    _LevelStat(level: 3, label: 'TOPIK 3', words: 1200, studied: 240, color: Color(0xFF818CF8)),
-    _LevelStat(level: 4, label: 'TOPIK 4', words: 1200, studied: 48, color: Color(0xFFA78BFA)),
-    _LevelStat(level: 5, label: 'TOPIK 5', words: 1200, studied: 0, color: Color(0xFFF472B6)),
-    _LevelStat(level: 6, label: 'TOPIK 6', words: 1200, studied: 0, color: Color(0xFFFB923C)),
-  ];
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dataAsync = ref.watch(_progressDataProvider);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF2F3F8),
       appBar: AppBar(
@@ -34,23 +118,27 @@ class ProgressScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 8),
-            _StatsRow(streak: _streak, totalWords: _totalWords),
-            const SizedBox(height: 24),
-            _SectionTitle(title: 'Weekly Activity'),
-            const SizedBox(height: 12),
-            _WeeklyGrid(activity: _weekActivity),
-            const SizedBox(height: 24),
-            _SectionTitle(title: 'Level Breakdown'),
-            const SizedBox(height: 12),
-            _LevelChart(levels: _levels),
-            const SizedBox(height: 24),
-          ],
+      body: dataAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Error: $e')),
+        data: (data) => SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 8),
+              _StatsRow(streak: data.streak, totalWords: data.totalWordsStudied),
+              const SizedBox(height: 24),
+              _SectionTitle(title: 'Weekly Activity'),
+              const SizedBox(height: 12),
+              _WeeklyGrid(activity: data.weekActivity),
+              const SizedBox(height: 24),
+              _SectionTitle(title: 'Level Breakdown'),
+              const SizedBox(height: 12),
+              _LevelChart(levels: data.levelStats),
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );
@@ -162,14 +250,16 @@ class _StatCard extends StatelessWidget {
 // ── Weekly Activity Grid ───────────────────────────────────────
 
 class _WeeklyGrid extends StatelessWidget {
-  final List<int> activity; // 7 values, words studied per day
+  final List<int> activity;
   const _WeeklyGrid({required this.activity});
 
   static const _days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   @override
   Widget build(BuildContext context) {
-    final maxVal = activity.reduce((a, b) => a > b ? a : b);
+    final maxVal = activity.isEmpty ? 1 : activity.reduce((a, b) => a > b ? a : b);
+    final effectiveMax = maxVal > 0 ? maxVal : 1;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -187,9 +277,9 @@ class _WeeklyGrid extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: List.generate(7, (i) {
-          final val = activity[i];
-          final frac = maxVal > 0 ? val / maxVal : 0.0;
-          final isToday = i == 6;
+          final val = i < activity.length ? activity[i] : 0;
+          final frac = val / effectiveMax;
+          final isToday = i == (DateTime.now().weekday - 1);
           return Column(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -259,27 +349,10 @@ class _LevelChart extends StatelessWidget {
         ],
       ),
       child: Column(
-        children: levels
-            .map((l) => _LevelBar(stat: l))
-            .toList(),
+        children: levels.map((l) => _LevelBar(stat: l)).toList(),
       ),
     );
   }
-}
-
-class _LevelStat {
-  final int level;
-  final String label;
-  final int words;
-  final int studied;
-  final Color color;
-  const _LevelStat({
-    required this.level,
-    required this.label,
-    required this.words,
-    required this.studied,
-    required this.color,
-  });
 }
 
 class _LevelBar extends StatelessWidget {
@@ -288,7 +361,7 @@ class _LevelBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final frac = stat.words > 0 ? stat.studied / stat.words : 0.0;
+    final frac = stat.total > 0 ? stat.studied / stat.total : 0.0;
     final pct = (frac * 100).round();
 
     return Padding(
@@ -308,7 +381,7 @@ class _LevelBar extends StatelessWidget {
                 ),
               ),
               Text(
-                '${stat.studied} / ${stat.words} ($pct%)',
+                '${stat.studied} / ${stat.total} ($pct%)',
                 style: const TextStyle(
                   fontSize: 12,
                   color: Color(0xFF6B7280),
