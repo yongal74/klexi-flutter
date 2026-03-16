@@ -26,7 +26,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Future<void> _load() async {
     final session = ref.read(dailySessionServiceProvider);
-    await session.init();
+    // init() already called in main.dart; safe to call again (idempotent via Hive.openBox)
     final streak = await session.getCurrentStreak();
     final total  = await session.getTotalWordsStudied();
     if (mounted) setState(() { _streak = streak; _totalLearned = total; });
@@ -254,9 +254,15 @@ class _QuickAction extends StatelessWidget {
 }
 
 // ── Sentence Spotlight ────────────────────────────────────
-class _SentenceSpotlight extends StatelessWidget {
+class _SentenceSpotlight extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final repo = ref.read(wordRepositoryProvider);
+    final words = repo.getAllWords();
+    // Pick a daily-stable word for the spotlight
+    final seed = DateTime.now().millisecondsSinceEpoch ~/ 86400000;
+    final word = words.isEmpty ? null : words[seed % words.length];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -272,36 +278,40 @@ class _SentenceSpotlight extends StatelessWidget {
             border: Border.all(color: AppColors.border),
             boxShadow: AppColors.subtleShadow,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.topikBg(1),
-                    borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
-                  ),
-                  child: const Text('TOPIK 1',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.topik1)),
+          child: word == null
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppColors.topikBg(word.level),
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                        ),
+                        child: Text('TOPIK ${word.level}',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
+                            color: AppColors.topikColor(word.level))),
+                      ),
+                    ]),
+                    const SizedBox(height: AppSpacing.md),
+                    Text(word.example,
+                      style: const TextStyle(
+                        fontFamily: 'NotoSansKR',
+                        fontSize: 20, fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary, height: 1.5)),
+                    const SizedBox(height: 6),
+                    Text(word.exampleTranslation,
+                      style: const TextStyle(
+                        fontSize: 14, color: AppColors.textSecondary, height: 1.5)),
+                    const SizedBox(height: AppSpacing.md),
+                    Wrap(spacing: 8, runSpacing: 8, children: [
+                      _WordChip(word.korean),
+                      if (word.partOfSpeech.isNotEmpty) _WordChip(word.partOfSpeech),
+                    ]),
+                  ],
                 ),
-              ]),
-              const SizedBox(height: AppSpacing.md),
-              const Text('오늘도 열심히 공부했어요!',
-                style: TextStyle(
-                  fontFamily: 'NotoSansKR',
-                  fontSize: 22, fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary, height: 1.5)),
-              const SizedBox(height: 6),
-              const Text('I studied hard again today!',
-                style: TextStyle(
-                  fontSize: 15, color: AppColors.textSecondary, height: 1.5)),
-              const SizedBox(height: AppSpacing.md),
-              Wrap(spacing: 8, runSpacing: 8, children: const [
-                _WordChip('오늘'), _WordChip('열심히'), _WordChip('공부했어요'),
-              ]),
-            ],
-          ),
         ),
       ],
     );

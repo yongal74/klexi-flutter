@@ -24,7 +24,6 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
 
   Future<void> _load() async {
     final session = ref.read(dailySessionServiceProvider);
-    await session.init();
     final streak = await session.getCurrentStreak();
     final total  = await session.getTotalWordsStudied();
     if (mounted) setState(() { _streak = streak; _todayDone = total % 20; });

@@ -86,6 +86,7 @@ class DailySessionService {
   // ── Lifecycle ──────────────────────────────────────────────
 
   Future<void> init() async {
+    if (_box != null && _box!.isOpen) return; // idempotent
     _box = await Hive.openBox<Map>(_boxName);
   }
 
