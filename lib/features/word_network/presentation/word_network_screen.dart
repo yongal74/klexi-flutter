@@ -127,27 +127,9 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
     sampled.addAll(lvlWords.take(cap));
     if (_levelFilter == 0) { setState(() => _levelFilter = 1); }
 
-    // ── Cluster by relatedMap so connected words are adjacent ──
-    final idSet = {for (final w in sampled) w.id};
-    final clusterOf = <String, int>{};
-    int nextCluster = 0;
-    for (final w in sampled) {
-      if (clusterOf.containsKey(w.id)) continue;
-      final queue = [w.id];
-      clusterOf[w.id] = nextCluster;
-      int qi = 0;
-      while (qi < queue.length) {
-        final cur = queue[qi++];
-        for (final rid in (_relatedMap[cur] ?? [])) {
-          if (idSet.contains(rid) && !clusterOf.containsKey(rid)) {
-            clusterOf[rid] = nextCluster;
-            queue.add(rid);
-          }
-        }
-      }
-      nextCluster++;
-    }
-    sampled.sort((a, b) => (clusterOf[a.id] ?? 0).compareTo(clusterOf[b.id] ?? 0));
+    // Sort by category so same-category words are adjacent in spiral
+    // → creates natural clusters + proximity edges become visible
+    sampled.sort((a, b) => a.category.compareTo(b.category));
 
     // ── Sunflower phyllotaxis — single disc, radius 1100px ──
     const center = Offset(2000, 2000);
@@ -355,6 +337,7 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
                 onHover: (e) => setState(() => _hoverPos = e.localPosition),
                 onExit: (_) => setState(() => _hoverPos = null),
                 child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
                   onScaleStart: _onScaleStart,
                   onScaleUpdate: _onScaleUpdate,
                   onScaleEnd: _onScaleEnd,
@@ -572,10 +555,30 @@ class _GraphPainter extends CustomPainter {
       posMap[n.word.id] = _proj(n.pos);
     }
 
-    // ── Related-word edges (always drawn — from relatedMap) ──
+    // ── 1. Category proximity edges (always drawn — O(n*k) via sorted order) ──
+    // Nodes are sorted by category, so same-cat neighbours in list are close
+    final proxPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 0.8;
+    for (int i = 0; i < nodes.length; i++) {
+      final n = nodes[i];
+      final np = posMap[n.word.id]!;
+      if (np.dx < -80 || np.dx > size.width + 80 ||
+          np.dy < -80 || np.dy > size.height + 80) continue;
+      // Only check next 40 neighbours in sorted list (same category window)
+      for (int j = i + 1; j < nodes.length && j < i + 40; j++) {
+        final m = nodes[j];
+        if (m.word.category != n.word.category) break; // past category boundary
+        final mp = posMap[m.word.id]!;
+        final dist = (np - mp).distance;
+        if (dist > 260) continue;
+        proxPaint.color = nodeColorFn(n).withOpacity(0.18);
+        canvas.drawLine(np, mp, proxPaint);
+      }
+    }
+
+    // ── 2. Semantic related edges (bright dashed, from relatedMap) ──
     final relPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
+      ..strokeWidth = 2.0;
     for (final n in nodes) {
       final rels = relatedMap[n.word.id];
       if (rels == null || rels.isEmpty) continue;
@@ -586,32 +589,8 @@ class _GraphPainter extends CustomPainter {
       for (final relId in rels) {
         final mp = posMap[relId];
         if (mp == null) continue;
-        relPaint.color = nc.withOpacity(0.60);
+        relPaint.color = nc.withOpacity(0.80);
         _dashed(canvas, np, mp, relPaint);
-      }
-    }
-
-    // ── Proximity same-group edges (only when few nodes) ──
-    if (nodes.length <= 400) {
-      for (int i = 0; i < nodes.length; i++) {
-        final n = nodes[i];
-        final np = posMap[n.word.id]!;
-        if (np.dx < -120 || np.dx > size.width + 120 ||
-            np.dy < -120 || np.dy > size.height + 120) continue;
-        for (int j = i + 1; j < nodes.length; j++) {
-          final m = nodes[j];
-          final mp = posMap[m.word.id]!;
-          if ((np - mp).distance > 180) continue;
-          final sameGroup = groupBy == 'level'
-              ? n.word.level == m.word.level
-              : n.word.category == m.word.category;
-          if (sameGroup) {
-            ep
-              ..color = nodeColorFn(n).withOpacity(0.15)
-              ..strokeWidth = 0.6;
-            canvas.drawLine(np, mp, ep);
-          }
-        }
       }
     }
 
