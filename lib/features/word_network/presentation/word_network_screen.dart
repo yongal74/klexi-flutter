@@ -17,12 +17,13 @@ import '../../../data/repositories/word_repository.dart';
 
 class _Node {
   final Word word;
-  Offset pos;
-  Offset vel;
+  final Offset basePos; // immutable sunflower position
+  Offset pos;          // current pos (basePos + ambient wobble or drag)
   bool pinned;
 
-  _Node({required this.word, required this.pos})
-      : vel = Offset.zero,
+  _Node({required this.word, required Offset pos})
+      : basePos = pos,
+        pos = pos,
         pinned = false;
 }
 
@@ -115,27 +116,27 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
   }
 
   void _buildNodes(List<Word> all) {
-    final perLevel = _levelFilter == 0 ? 130 : 1200;
+    // All levels: 1200 per level = 7200 total. Single level: all words.
     final sampled = <Word>[];
-
     for (var lvl = 1; lvl <= 6; lvl++) {
       if (_levelFilter != 0 && lvl != _levelFilter) continue;
       final lvlWords = all.where((w) => w.level == lvl).toList()
         ..shuffle(_rng);
-      sampled.addAll(lvlWords.take(perLevel));
+      sampled.addAll(_levelFilter == 0
+          ? lvlWords.take(1200)
+          : lvlWords);
     }
 
-    // ── Single sphere: all nodes in ONE sunflower pattern ──
-    // Shuffle so all levels are interspersed — prevents level-arc clustering
+    // Shuffle so levels are interspersed throughout the sphere
     sampled.shuffle(_rng);
 
+    // ── Sunflower phyllotaxis — single disc, radius 1100px ──
     const center = Offset(2000, 2000);
     const goldenAngle = 2.399963;
     final total = sampled.length;
 
     final nodes = List.generate(total, (i) {
-      // Sunflower: disc — radius up to 800px (inside soft boundary at 900)
-      final r = 40.0 + 800.0 * math.sqrt(i / total);
+      final r = 30.0 + 1100.0 * math.sqrt(i / total);
       final angle = i * goldenAngle;
       return _Node(
         word: sampled[i],
@@ -146,7 +147,7 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
     setState(() {
       _nodes = nodes;
       _loading = false;
-      _tick = 800; // start settled — no expansion
+      _tick = 0;
     });
 
     _resetView();
@@ -157,7 +158,10 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
       if (!mounted) return;
       final size = MediaQuery.of(context).size;
       setState(() {
-        _scale = _levelFilter == 0 ? 0.28 : 0.18;
+        // fit 2200px sphere into screen with some margin
+        _scale = (_levelFilter == 0
+            ? (size.shortestSide * 0.9) / 2200.0
+            : (size.shortestSide * 0.9) / 2400.0).clamp(0.08, 1.0);
         _pan = Offset(
           size.width / 2 - 2000.0 * _scale,
           size.height / 2 - 2000.0 * _scale,
@@ -166,100 +170,24 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
     });
   }
 
-  // ── Spatial grid for O(n) repulsion ──────────────────────
+  // ── Ambient tick — pure sine wobble, no physics ───────────
+  // O(n) simple math: each node oscillates gently around its basePos
 
-  static const double _cellSize = 240.0;
-
-  Map<String, List<_Node>> _buildGrid(List<_Node> nodes) {
-    final grid = <String, List<_Node>>{};
-    for (final n in nodes) {
-      final cx = (n.pos.dx / _cellSize).floor();
-      final cy = (n.pos.dy / _cellSize).floor();
-      final key = '$cx,$cy';
-      (grid[key] ??= []).add(n);
-    }
-    return grid;
-  }
-
-  // ── Physics tick (Ticker — fires every frame) ─────────────
-
-  void _onTick(Duration _) {
+  void _onTick(Duration elapsed) {
     if (!mounted || _nodes.isEmpty) return;
     _tick++;
+    // Only repaint every 3rd frame to save CPU with 7200 nodes
+    if (_tick % 3 != 0) return;
 
-    final settled = _tick > 800;
-    final damping = 0.97; // always high — minimal movement
-    const repulsion = 2500.0;   // stronger — keeps nodes spread
-    const boundaryR = 900.0;    // soft boundary radius
-
-    final visible = _visibleNodes;
-    if (visible.isEmpty) return;
-
-    final grid = _buildGrid(visible);
-
+    final t = elapsed.inMilliseconds / 1000.0;
     setState(() {
-      for (final n in visible) {
+      for (final n in _nodes) {
         if (n.pinned) continue;
-
-        var fx = 0.0, fy = 0.0;
-
-        // Repulsion via spatial grid (only nearby cells)
-        final cx = (n.pos.dx / _cellSize).floor();
-        final cy = (n.pos.dy / _cellSize).floor();
-        for (var dx2 = -2; dx2 <= 2; dx2++) {
-          for (var dy2 = -2; dy2 <= 2; dy2++) {
-            final neighbors = grid['${cx + dx2},${cy + dy2}'];
-            if (neighbors == null) continue;
-            for (final m in neighbors) {
-              if (identical(n, m)) continue;
-              final dx = n.pos.dx - m.pos.dx;
-              final dy = n.pos.dy - m.pos.dy;
-              final dist2 = dx * dx + dy * dy;
-              if (dist2 < 1) continue;
-              final dist = math.sqrt(dist2).clamp(8.0, 220.0);
-              final force = repulsion / (dist * dist);
-              fx += (dx / dist) * force;
-              fy += (dy / dist) * force;
-            }
-          }
-        }
-
-        // Related word weak attraction — just a slight pull, not clustering
-        for (final relId in n.word.relatedIds) {
-          final rel = visible.where((m) => m.word.id == relId).firstOrNull;
-          if (rel != null) {
-            fx += (rel.pos.dx - n.pos.dx) * 0.005;
-            fy += (rel.pos.dy - n.pos.dy) * 0.005;
-          }
-        }
-
-        // Soft boundary — only pull back nodes that drift outside 900px radius
-        {
-          final ddx = 2000.0 - n.pos.dx;
-          final ddy = 2000.0 - n.pos.dy;
-          final distC = math.sqrt(ddx * ddx + ddy * ddy);
-          if (distC > boundaryR) {
-            final excess = distC - boundaryR;
-            final strength = 0.015 * excess / distC;
-            fx += ddx * strength;
-            fy += ddy * strength;
-          }
-        }
-
-        // Ambient motion — gentle continuous turbulence after settling
-        if (settled) {
-          final angle = (_tick * 0.01 + n.word.id.hashCode * 0.001) % (2 * math.pi);
-          fx += math.cos(angle) * 0.4;
-          fy += math.sin(angle) * 0.4;
-        }
-
-        n.vel = Offset(
-          (n.vel.dx + fx * 0.016) * damping,
-          (n.vel.dy + fy * 0.016) * damping,
-        );
-        final speed = n.vel.distance;
-        if (speed > 12) n.vel = n.vel * (12 / speed);
-        n.pos = n.pos + n.vel;
+        final h = n.word.id.hashCode;
+        // Each node drifts on its own phase — ±4px gentle oscillation
+        final dx = math.sin(t * 0.25 + h * 0.009) * 4.0;
+        final dy = math.cos(t * 0.30 + h * 0.011) * 4.0;
+        n.pos = n.basePos + Offset(dx, dy);
       }
     });
   }
@@ -309,7 +237,6 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
     if (_draggedNode != null) {
       setState(() {
         _draggedNode!.pos = _screenToGraph(d.focalPoint);
-        _draggedNode!.vel = Offset.zero;
       });
     } else {
       setState(() {
@@ -323,6 +250,7 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
     _draggedNode?.pinned = false;
     _draggedNode = null;
   }
+
 
   void _onTapUp(TapUpDetails d) {
     if (_draggedNode != null) return;
