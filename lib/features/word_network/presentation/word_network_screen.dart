@@ -1,10 +1,10 @@
 // lib/features/word_network/presentation/word_network_screen.dart
-// Obsidian-style Word Network — interactive force-directed graph
-// Features: pan, pinch-to-zoom, spring physics, level/category clustering,
-//           node dragging (mouse + touch), topic filter chips
+// Word Network v3 — spatial-grid physics, Ticker animation, ambient motion,
+// topic color coding, 1200-node default / full level on filter
 
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
@@ -12,24 +12,26 @@ import '../../../core/router/app_router.dart';
 import '../../../data/models/word.dart';
 import '../../../data/repositories/word_repository.dart';
 
-// ── Node model ─────────────────────────────────────────────────────────────
+// ── Node ───────────────────────────────────────────────────────────────────
 
 class _Node {
   final Word word;
   Offset pos;
   Offset vel;
-  bool pinned; // true while user is dragging
+  bool pinned;
 
   _Node({required this.word, required this.pos})
       : vel = Offset.zero,
         pinned = false;
 }
 
-// ── Constants ──────────────────────────────────────────────────────────────
+// ── Topic color palette (cycles through 12 colors) ───────────────────────
 
-const int _kDefaultNodes = 300;   // 50 per level × 6
-const int _kFilteredNodes = 600;  // when a single level is selected
-const double _kRepulDist = 280.0; // skip repulsion beyond this (perf)
+const List<Color> _kTopicColors = [
+  Color(0xFF667EEA), Color(0xFFFF8C42), Color(0xFF48C774), Color(0xFFFF3860),
+  Color(0xFF00B4D8), Color(0xFFFFD166), Color(0xFFEF476F), Color(0xFF06D6A0),
+  Color(0xFF118AB2), Color(0xFFFF6B6B), Color(0xFF8338EC), Color(0xFFFF9F1C),
+];
 
 // ── Screen ─────────────────────────────────────────────────────────────────
 
@@ -37,12 +39,13 @@ class WordNetworkScreen extends ConsumerStatefulWidget {
   const WordNetworkScreen({super.key});
 
   @override
-  ConsumerState<WordNetworkScreen> createState() => _WordNetworkScreenState();
+  ConsumerState<WordNetworkScreen> createState() =>
+      _WordNetworkScreenState();
 }
 
 class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
-    with TickerProviderStateMixin {
-  // Graph
+    with SingleTickerProviderStateMixin {
+  // All nodes in memory
   List<_Node> _nodes = [];
   bool _loading = true;
 
@@ -52,94 +55,232 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
   double _scaleStart = 1.0;
   Offset _panStart = Offset.zero;
 
-  // Filter
-  int _levelFilter = 0;        // 0 = all
-  String _groupBy = 'level';   // 'level' | 'category'
-  String _topicFilter = '';    // '' = all topics
-
-  // Categories extracted from words
+  // Filter state
+  int _levelFilter = 0;
+  String _groupBy = 'level';
+  String _topicFilter = '';
   List<String> _allCategories = [];
+  Map<String, Color> _topicColorMap = {};
 
-  // Selection & dragging
+  // Selection / drag
   _Node? _selected;
   _Node? _draggedNode;
-  Offset? _hoverPos; // web mouse hover
+  Offset? _hoverPos;
 
-  // Physics
-  late AnimationController _physicsCtrl;
-  int _settleTick = 0;
+  // Physics ticker (replaces AnimationController.addListener)
+  late Ticker _ticker;
+  int _tick = 0;
+  final math.Random _rng = math.Random(42);
 
   // Search
   final _searchCtrl = TextEditingController();
   String _searchQuery = '';
   bool _showSearch = false;
 
+  // Stats — always show total, not just visible
+  int _totalWordCount = 0;
+
   @override
   void initState() {
     super.initState();
-    _physicsCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 120),
-    )..addListener(_tick);
+    _ticker = createTicker(_onTick)..start();
     _loadWords();
   }
 
   @override
   void dispose() {
-    _physicsCtrl.dispose();
+    _ticker.dispose();
     _searchCtrl.dispose();
     super.dispose();
   }
 
+  // ── Data loading ──────────────────────────────────────────
+
   void _loadWords() {
     final repo = ref.read(wordRepositoryProvider);
     final all = repo.getAllWords();
-    final rng = math.Random(42);
+    _totalWordCount = all.length;
 
-    // Extract unique categories
-    final cats = all.map((w) => w.category).where((c) => c.isNotEmpty).toSet().toList()
-      ..sort();
+    // Build category → color map
+    final cats = all.map((w) => w.category).where((c) => c.isNotEmpty)
+        .toSet().toList()..sort();
     _allCategories = cats;
+    _topicColorMap = {
+      for (var i = 0; i < cats.length; i++)
+        cats[i]: _kTopicColors[i % _kTopicColors.length]
+    };
 
-    _rebuildNodes(all, rng);
+    _buildNodes(all);
   }
 
-  void _rebuildNodes(List<Word> all, math.Random rng) {
-    final cap = _levelFilter == 0 ? _kDefaultNodes : _kFilteredNodes;
+  void _buildNodes(List<Word> all) {
+    // Dots are cheap to render — show more words
+    // Default: 300/level = 1800 total; single level: up to 1200
+    final perLevel = _levelFilter == 0 ? 300 : 1200;
     final sampled = <Word>[];
 
-    if (_levelFilter == 0) {
-      for (var lvl = 1; lvl <= 6; lvl++) {
-        final lvlWords = all.where((w) => w.level == lvl).take(cap ~/ 6).toList()
-          ..shuffle(rng);
-        sampled.addAll(lvlWords);
-      }
-    } else {
-      final lvlWords = all.where((w) => w.level == _levelFilter).take(cap).toList()
-        ..shuffle(rng);
-      sampled.addAll(lvlWords);
+    for (var lvl = 1; lvl <= 6; lvl++) {
+      if (_levelFilter != 0 && lvl != _levelFilter) continue;
+      final lvlWords = all.where((w) => w.level == lvl).toList()
+        ..shuffle(_rng);
+      sampled.addAll(lvlWords.take(perLevel));
     }
 
-    final initialNodes = sampled.map((w) {
-      final angle = rng.nextDouble() * 2 * math.pi;
-      final r = 80.0 + rng.nextDouble() * 250;
+    // Layout: 6 clusters in a 3×2 grid, 800px spacing
+    final clusterCenters = {
+      1: const Offset(600, 600),
+      2: const Offset(1800, 600),
+      3: const Offset(3000, 600),
+      4: const Offset(600, 1800),
+      5: const Offset(1800, 1800),
+      6: const Offset(3000, 1800),
+    };
+
+    final nodes = sampled.map((w) {
+      final center = clusterCenters[w.level] ?? const Offset(1500, 1200);
+      final angle = _rng.nextDouble() * 2 * math.pi;
+      final r = 60.0 + _rng.nextDouble() * 300;
       return _Node(
         word: w,
-        pos: Offset(500 + r * math.cos(angle), 500 + r * math.sin(angle)),
+        pos: center + Offset(r * math.cos(angle), r * math.sin(angle)),
       );
     }).toList();
 
     setState(() {
-      _nodes = initialNodes;
+      _nodes = nodes;
       _loading = false;
-      _settleTick = 0;
+      _tick = 0;
     });
 
-    if (!_physicsCtrl.isAnimating) {
-      _physicsCtrl.reset();
-      _physicsCtrl.forward();
-    }
+    // Center viewport on canvas
+    _resetView();
   }
+
+  void _resetView() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final size = MediaQuery.of(context).size;
+      setState(() {
+        _scale = _levelFilter == 0 ? 0.22 : 0.30;
+        _pan = Offset(
+          size.width / 2 - (_levelFilter == 0 ? 1800 : 1200) * _scale,
+          size.height / 2 - (_levelFilter == 0 ? 1200 : 900) * _scale,
+        );
+      });
+    });
+  }
+
+  // ── Spatial grid for O(n) repulsion ──────────────────────
+
+  static const double _cellSize = 240.0;
+
+  Map<String, List<_Node>> _buildGrid(List<_Node> nodes) {
+    final grid = <String, List<_Node>>{};
+    for (final n in nodes) {
+      final cx = (n.pos.dx / _cellSize).floor();
+      final cy = (n.pos.dy / _cellSize).floor();
+      final key = '$cx,$cy';
+      (grid[key] ??= []).add(n);
+    }
+    return grid;
+  }
+
+  // ── Physics tick (Ticker — fires every frame) ─────────────
+
+  void _onTick(Duration _) {
+    if (!mounted || _nodes.isEmpty) return;
+    _tick++;
+
+    // Slow down repulsion/damping after settling, but keep ambient motion
+    final settled = _tick > 500;
+    final damping = settled ? 0.96 : 0.84;
+    const repulsion = 2400.0;
+    const groupAttraction = 0.008;
+    const centerGravity = 0.004;
+
+    final visible = _visibleNodes;
+    if (visible.isEmpty) return;
+
+    final grid = _buildGrid(visible);
+
+    setState(() {
+      for (final n in visible) {
+        if (n.pinned) continue;
+
+        var fx = 0.0, fy = 0.0;
+
+        // Repulsion via spatial grid (only nearby cells)
+        final cx = (n.pos.dx / _cellSize).floor();
+        final cy = (n.pos.dy / _cellSize).floor();
+        for (var dx2 = -2; dx2 <= 2; dx2++) {
+          for (var dy2 = -2; dy2 <= 2; dy2++) {
+            final neighbors = grid['${cx + dx2},${cy + dy2}'];
+            if (neighbors == null) continue;
+            for (final m in neighbors) {
+              if (identical(n, m)) continue;
+              final dx = n.pos.dx - m.pos.dx;
+              final dy = n.pos.dy - m.pos.dy;
+              final dist2 = dx * dx + dy * dy;
+              if (dist2 < 1) continue;
+              final dist = math.sqrt(dist2).clamp(8.0, 220.0);
+              final force = repulsion / (dist * dist);
+              fx += (dx / dist) * force;
+              fy += (dy / dist) * force;
+            }
+          }
+        }
+
+        // Group attraction (same level or same topic)
+        for (final m in visible) {
+          if (identical(n, m)) continue;
+          final sameGroup = _groupBy == 'level'
+              ? n.word.level == m.word.level
+              : n.word.category == m.word.category;
+          if (!sameGroup) continue;
+          final dx = m.pos.dx - n.pos.dx;
+          final dy = m.pos.dy - n.pos.dy;
+          fx += dx * groupAttraction;
+          fy += dy * groupAttraction;
+        }
+
+        // Related word strong attraction
+        for (final relId in n.word.relatedIds) {
+          final rel = visible.where((m) => m.word.id == relId).firstOrNull;
+          if (rel != null) {
+            fx += (rel.pos.dx - n.pos.dx) * 0.04;
+            fy += (rel.pos.dy - n.pos.dy) * 0.04;
+          }
+        }
+
+        // Center gravity toward cluster center
+        final clusterCenters = {
+          1: const Offset(600, 600), 2: const Offset(1800, 600),
+          3: const Offset(3000, 600), 4: const Offset(600, 1800),
+          5: const Offset(1800, 1800), 6: const Offset(3000, 1800),
+        };
+        final cc = clusterCenters[n.word.level] ?? const Offset(1800, 1200);
+        fx += (cc.dx - n.pos.dx) * centerGravity;
+        fy += (cc.dy - n.pos.dy) * centerGravity;
+
+        // Ambient motion — gentle continuous turbulence after settling
+        if (settled) {
+          final angle = (_tick * 0.01 + n.word.id.hashCode * 0.001) % (2 * math.pi);
+          fx += math.cos(angle) * 0.4;
+          fy += math.sin(angle) * 0.4;
+        }
+
+        n.vel = Offset(
+          (n.vel.dx + fx * 0.016) * damping,
+          (n.vel.dy + fy * 0.016) * damping,
+        );
+        final speed = n.vel.distance;
+        if (speed > 12) n.vel = n.vel * (12 / speed);
+        n.pos = n.pos + n.vel;
+      }
+    });
+  }
+
+  // ── Filtered view ─────────────────────────────────────────
 
   List<_Node> get _visibleNodes {
     var nodes = _levelFilter == 0
@@ -149,7 +290,6 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
     if (_topicFilter.isNotEmpty) {
       nodes = nodes.where((n) => n.word.category == _topicFilter).toList();
     }
-
     if (_searchQuery.isNotEmpty) {
       final q = _searchQuery.toLowerCase();
       nodes = nodes
@@ -158,93 +298,17 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
               n.word.english.toLowerCase().contains(q))
           .toList();
     }
-
     return nodes;
   }
 
-  // ── Force-directed physics ─────────────────────────────────
-  void _tick() {
-    if (!mounted || _nodes.isEmpty) return;
-    _settleTick++;
+  // ── Gestures ──────────────────────────────────────────────
 
-    final damping = _settleTick > 400 ? 0.94 : 0.86;
-    const repulsion = 2000.0;
-    const attraction = 0.010;
-    const centerGravity = 0.006;
-    const cx = 500.0, cy = 500.0;
-
-    final visible = _visibleNodes;
-    if (visible.isEmpty) return;
-
-    setState(() {
-      for (final n in visible) {
-        if (n.pinned) continue; // user is dragging — skip physics
-
-        var fx = 0.0, fy = 0.0;
-
-        // Repulsion (distance-culled for performance)
-        for (final m in visible) {
-          if (identical(n, m)) continue;
-          final dx = n.pos.dx - m.pos.dx;
-          final dy = n.pos.dy - m.pos.dy;
-          final dist2 = dx * dx + dy * dy;
-          if (dist2 > _kRepulDist * _kRepulDist) continue;
-          final dist = math.sqrt(dist2).clamp(10.0, _kRepulDist);
-          final force = repulsion / (dist * dist);
-          fx += (dx / dist) * force;
-          fy += (dy / dist) * force;
-        }
-
-        // Group attraction
-        for (final m in visible) {
-          if (identical(n, m)) continue;
-          final sameGroup = _groupBy == 'level'
-              ? n.word.level == m.word.level
-              : n.word.category == m.word.category;
-          if (sameGroup) {
-            final dx = m.pos.dx - n.pos.dx;
-            final dy = m.pos.dy - n.pos.dy;
-            fx += dx * attraction;
-            fy += dy * attraction;
-          }
-        }
-
-        // Related word attraction
-        for (final relId in n.word.relatedIds) {
-          final rel =
-              visible.where((m) => m.word.id == relId).firstOrNull;
-          if (rel != null) {
-            final dx = rel.pos.dx - n.pos.dx;
-            final dy = rel.pos.dy - n.pos.dy;
-            fx += dx * 0.05;
-            fy += dy * 0.05;
-          }
-        }
-
-        // Center gravity
-        fx += (cx - n.pos.dx) * centerGravity;
-        fy += (cy - n.pos.dy) * centerGravity;
-
-        n.vel = Offset(
-          (n.vel.dx + fx * 0.016) * damping,
-          (n.vel.dy + fy * 0.016) * damping,
-        );
-        final speed = n.vel.distance;
-        if (speed > 10) n.vel = n.vel * (10 / speed);
-        n.pos = n.pos + n.vel;
-      }
-    });
-  }
-
-  // ── Gesture handlers ────────────────────────────────────────
   void _onScaleStart(ScaleStartDetails d) {
-    // Check if touching a node
     final graphPos = _screenToGraph(d.focalPoint);
     final hit = _visibleNodes.cast<_Node?>().firstWhere(
       (n) => (n!.pos - graphPos).distance < _nodeRadius(n.word) + 12,
       orElse: () => null,
     );
-
     if (hit != null) {
       _draggedNode = hit;
       hit.pinned = true;
@@ -257,27 +321,25 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
 
   void _onScaleUpdate(ScaleUpdateDetails d) {
     if (_draggedNode != null) {
-      // Move the dragged node
       setState(() {
         _draggedNode!.pos = _screenToGraph(d.focalPoint);
         _draggedNode!.vel = Offset.zero;
       });
     } else {
-      // Pan + zoom canvas
       setState(() {
-        _scale = (_scaleStart * d.scale).clamp(0.2, 5.0);
+        _scale = (_scaleStart * d.scale).clamp(0.08, 6.0);
         _pan = d.focalPoint - _panStart;
       });
     }
   }
 
-  void _onScaleEnd(ScaleEndDetails d) {
+  void _onScaleEnd(ScaleEndDetails _) {
     _draggedNode?.pinned = false;
     _draggedNode = null;
   }
 
   void _onTapUp(TapUpDetails d) {
-    if (_draggedNode != null) return; // was a drag, not a tap
+    if (_draggedNode != null) return;
     final graphPos = _screenToGraph(d.localPosition);
     final hit = _visibleNodes.cast<_Node?>().firstWhere(
       (n) => (n!.pos - graphPos).distance < _nodeRadius(n.word) + 8,
@@ -289,31 +351,41 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
   Offset _screenToGraph(Offset screen) => (screen - _pan) / _scale;
 
   double _nodeRadius(Word w) {
-    if (_selected?.word.id == w.id) return 26.0;
-    if (w.level == 1) return 18.0;
-    if (w.level == 2) return 16.0;
-    return 12.0 + (6 - w.level) * 1.5;
+    if (_selected?.word.id == w.id) return 18.0;
+    // Obsidian-style: small dots, size by level importance
+    if (w.level == 1) return 6.0;
+    if (w.level == 2) return 5.5;
+    return 4.0 + (6 - w.level) * 0.3;
   }
 
-  // ── Level filter change (reloads nodes) ────────────────────
+  Color _nodeColor(_Node n) {
+    if (_groupBy == 'category' && n.word.category.isNotEmpty) {
+      return _topicColorMap[n.word.category] ?? AppColors.topikColor(n.word.level);
+    }
+    return AppColors.topikColor(n.word.level);
+  }
+
+  // ── Level change: reload nodes ────────────────────────────
+
   void _changeLevel(int lvl) {
     final repo = ref.read(wordRepositoryProvider);
-    final all = repo.getAllWords();
-    setState(() => _levelFilter = lvl);
-    _rebuildNodes(all, math.Random(42));
+    setState(() { _levelFilter = lvl; _topicFilter = ''; _tick = 0; });
+    _buildNodes(repo.getAllWords());
   }
+
+  // ── Build ─────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0C1A),
+      backgroundColor: const Color(0xFF080A18),
       extendBodyBehindAppBar: true,
       appBar: _buildAppBar(),
       body: _loading
           ? const Center(
               child: CircularProgressIndicator(color: AppColors.primary))
           : Stack(children: [
-              // ── Graph canvas ───────────────────────────
+              // Canvas
               MouseRegion(
                 onHover: (e) => setState(() => _hoverPos = e.localPosition),
                 onExit: (_) => setState(() => _hoverPos = null),
@@ -322,22 +394,27 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
                   onScaleUpdate: _onScaleUpdate,
                   onScaleEnd: _onScaleEnd,
                   onTapUp: _onTapUp,
-                  child: CustomPaint(
-                    painter: _GraphPainter(
-                      nodes: _visibleNodes,
-                      selected: _selected,
-                      dragged: _draggedNode,
-                      groupBy: _groupBy,
-                      scale: _scale,
-                      pan: _pan,
-                      hoverPos: _hoverPos,
+                  child: RepaintBoundary(
+                    child: CustomPaint(
+                      painter: _GraphPainter(
+                        nodes: _visibleNodes,
+                        selected: _selected,
+                        dragged: _draggedNode,
+                        groupBy: _groupBy,
+                        scale: _scale,
+                        pan: _pan,
+                        hoverPos: _hoverPos,
+                        nodeColorFn: _nodeColor,
+                        nodeRadiusFn: _nodeRadius,
+                        topicColorMap: _topicColorMap,
+                      ),
+                      child: const SizedBox.expand(),
                     ),
-                    child: const SizedBox.expand(),
                   ),
                 ),
               ),
 
-              // ── Filter bar ────────────────────────────
+              // Filter bar
               Positioned(
                 top: kToolbarHeight + MediaQuery.of(context).padding.top + 8,
                 left: 0, right: 0,
@@ -346,30 +423,40 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
                   groupBy: _groupBy,
                   topicFilter: _topicFilter,
                   categories: _allCategories,
+                  topicColorMap: _topicColorMap,
                   onLevelChanged: _changeLevel,
-                  onGroupChanged: (v) =>
-                      setState(() { _groupBy = v; _settleTick = 0; }),
-                  onTopicChanged: (v) =>
-                      setState(() { _topicFilter = v; _settleTick = 0; }),
+                  onGroupChanged: (v) => setState(() {
+                    _groupBy = v;
+                    _topicFilter = '';
+                    _tick = 0;
+                  }),
+                  onTopicChanged: (v) => setState(() {
+                    _topicFilter = v;
+                    _tick = 0;
+                  }),
                 ),
               ),
 
-              // ── Stats chip ────────────────────────────
+              // Stats
               Positioned(
                 top: kToolbarHeight +
                     MediaQuery.of(context).padding.top +
-                    (_groupBy == 'category' ? 100 : 56),
+                    (_groupBy == 'category' ? 96 : 52),
                 right: 16,
-                child: _StatsChip(nodeCount: _visibleNodes.length),
+                child: _StatsChip(
+                  visible: _visibleNodes.length,
+                  total: _totalWordCount,
+                ),
               ),
 
-              // ── Word detail panel ─────────────────────
+              // Word detail panel
               if (_selected != null)
                 Positioned(
                   bottom: 0, left: 0, right: 0,
                   child: _WordPanel(
                     node: _selected!,
                     allNodes: _visibleNodes,
+                    nodeColorFn: _nodeColor,
                     onClose: () => setState(() => _selected = null),
                     onLearn: () {
                       final id = _selected!.word.id;
@@ -380,40 +467,38 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
                   ),
                 ),
 
-              // ── Hint ──────────────────────────────────
+              // Hint
               if (_selected == null)
                 Positioned(
                   bottom: 20, left: 0, right: 0,
                   child: Center(
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
+                          horizontal: 14, vertical: 7),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.08),
+                        color: Colors.white.withOpacity(0.07),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Text(
-                          'Pinch/scroll to zoom · Drag canvas to pan · Drag nodes to move',
+                          'Scroll/pinch to zoom · Drag to pan · Drag nodes · Tap to select',
                           style: TextStyle(
-                              color: Colors.white54, fontSize: 11)),
+                              color: Colors.white38, fontSize: 11)),
                     ),
                   ),
                 ),
 
-              // ── Search panel ──────────────────────────
+              // Search panel
               if (_showSearch)
                 Positioned(
                   top: kToolbarHeight +
-                      MediaQuery.of(context).padding.top +
-                      4,
+                      MediaQuery.of(context).padding.top + 4,
                   left: 16, right: 60,
                   child: Material(
                     color: const Color(0xFF1A1D2E),
                     borderRadius: BorderRadius.circular(12),
                     elevation: 4,
                     child: Padding(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: TextField(
                         controller: _searchCtrl,
                         style: const TextStyle(color: Colors.white),
@@ -444,8 +529,7 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
                 color: Colors.white, fontWeight: FontWeight.w700)),
         actions: [
           IconButton(
-            icon: Icon(
-                _showSearch ? Icons.close : Icons.search,
+            icon: Icon(_showSearch ? Icons.close : Icons.search,
                 color: Colors.white70),
             onPressed: () => setState(() {
               _showSearch = !_showSearch;
@@ -459,14 +543,16 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
             icon: const Icon(Icons.center_focus_strong,
                 color: Colors.white70),
             tooltip: 'Reset view',
-            onPressed: () =>
-                setState(() { _scale = 1.0; _pan = Offset.zero; }),
+            onPressed: () {
+              setState(() { _scale = 1.0; _pan = Offset.zero; });
+              _resetView();
+            },
           ),
         ],
       );
 }
 
-// ── Custom Painter ──────────────────────────────────────────────────────────
+// ── Painter ─────────────────────────────────────────────────────────────────
 
 class _GraphPainter extends CustomPainter {
   final List<_Node> nodes;
@@ -476,6 +562,9 @@ class _GraphPainter extends CustomPainter {
   final double scale;
   final Offset pan;
   final Offset? hoverPos;
+  final Color Function(_Node) nodeColorFn;
+  final double Function(Word) nodeRadiusFn;
+  final Map<String, Color> topicColorMap;
 
   _GraphPainter({
     required this.nodes,
@@ -484,23 +573,19 @@ class _GraphPainter extends CustomPainter {
     required this.groupBy,
     required this.scale,
     required this.pan,
-    this.hoverPos,
+    required this.hoverPos,
+    required this.nodeColorFn,
+    required this.nodeRadiusFn,
+    required this.topicColorMap,
   });
 
-  Offset _project(Offset graphPos) => graphPos * scale + pan;
+  Offset _proj(Offset p) => p * scale + pan;
 
-  double _radius(Word w) {
-    if (selected?.word.id == w.id) return 26.0;
-    if (w.level == 1) return 18.0;
-    if (w.level == 2) return 16.0;
-    return 12.0 + (6 - w.level) * 1.5;
-  }
-
-  _Node? _hoveredNode(Size size) {
+  _Node? get _hovered {
     if (hoverPos == null) return null;
-    final graphPos = (hoverPos! - pan) / scale;
+    final gp = (hoverPos! - pan) / scale;
     return nodes.cast<_Node?>().firstWhere(
-      (n) => (n!.pos - graphPos).distance < _radius(n.word) + 8,
+      (n) => (n!.pos - gp).distance < nodeRadiusFn(n.word) + 8,
       orElse: () => null,
     );
   }
@@ -508,163 +593,124 @@ class _GraphPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     if (nodes.isEmpty) return;
+    final hov = _hovered;
+    final ep = Paint()..style = PaintingStyle.stroke;
 
-    final hovered = _hoveredNode(size);
-    final edgePaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.8;
-
-    // ── Edges ────────────────────────────────────────────────
+    // Edges
     for (int i = 0; i < nodes.length; i++) {
       final n = nodes[i];
-      final np = _project(n.pos);
-      if (np.dx < -100 || np.dx > size.width + 100 ||
-          np.dy < -100 || np.dy > size.height + 100) continue;
+      final np = _proj(n.pos);
+      if (np.dx < -120 || np.dx > size.width + 120 ||
+          np.dy < -120 || np.dy > size.height + 120) continue;
 
       for (int j = i + 1; j < nodes.length; j++) {
         final m = nodes[j];
-        final mp = _project(m.pos);
-        if ((np - mp).distance > 260) continue;
+        final mp = _proj(m.pos);
+        if ((np - mp).distance > 280) continue;
 
+        final isRelated = n.word.relatedIds.contains(m.word.id) ||
+            m.word.relatedIds.contains(n.word.id);
+        final nc = nodeColorFn(n);
         final sameGroup = groupBy == 'level'
             ? n.word.level == m.word.level
             : n.word.category == m.word.category;
-        final isRelated = n.word.relatedIds.contains(m.word.id) ||
-            m.word.relatedIds.contains(n.word.id);
 
         if (isRelated) {
-          edgePaint.color =
-              AppColors.topikColor(n.word.level).withOpacity(0.60);
-          edgePaint.strokeWidth = 1.5;
-          _drawDashedLine(canvas, np, mp, edgePaint);
+          ep
+            ..color = nc.withOpacity(0.65)
+            ..strokeWidth = 1.4;
+          _dashed(canvas, np, mp, ep);
         } else if (sameGroup && (np - mp).distance < 160) {
-          edgePaint.color =
-              AppColors.topikColor(n.word.level).withOpacity(0.15);
-          edgePaint.strokeWidth = 0.7;
-          canvas.drawLine(np, mp, edgePaint);
-        }
-      }
-
-      // Highlight edges from selected
-      if (selected != null && n.word.id == selected!.word.id) {
-        final sp = _project(selected!.pos);
-        for (final m in nodes) {
-          if (m.word.id == n.word.id) continue;
-          if (m.word.level != n.word.level) continue;
-          final mp2 = _project(m.pos);
-          canvas.drawLine(
-            sp, mp2,
-            Paint()
-              ..color = AppColors.topikColor(n.word.level).withOpacity(0.30)
-              ..strokeWidth = 1.0
-              ..style = PaintingStyle.stroke,
-          );
+          ep
+            ..color = nc.withOpacity(0.13)
+            ..strokeWidth = 0.6;
+          canvas.drawLine(np, mp, ep);
         }
       }
     }
 
-    // ── Nodes ────────────────────────────────────────────────
+    // Nodes
     for (final n in nodes) {
-      final p = _project(n.pos);
-      if (p.dx < -50 || p.dx > size.width + 50 ||
-          p.dy < -50 || p.dy > size.height + 50) continue;
+      final p = _proj(n.pos);
+      if (p.dx < -60 || p.dx > size.width + 60 ||
+          p.dy < -60 || p.dy > size.height + 60) continue;
 
-      final color = AppColors.topikColor(n.word.level);
-      final r = _radius(n.word);
-      final isSelected = selected?.word.id == n.word.id;
-      final isHovered = hovered?.word.id == n.word.id;
-      final isDragged = dragged?.word.id == n.word.id;
+      final color = nodeColorFn(n);
+      final r = nodeRadiusFn(n.word);
+      final isSel = selected?.word.id == n.word.id;
+      final isHov = hov?.word.id == n.word.id;
+      final isDrag = dragged?.word.id == n.word.id;
+      final highlight = isSel || isHov || isDrag;
 
-      // Glow for selected / hovered / dragged
-      if (isSelected || isHovered || isDragged) {
-        for (final glowR in [r + 14.0, r + 8.0]) {
-          canvas.drawCircle(
-            p, glowR,
-            Paint()
-              ..color = color.withOpacity(isSelected ? 0.18 : 0.12)
-              ..style = PaintingStyle.fill,
-          );
-        }
+      if (highlight) {
+        canvas.drawCircle(p, r + 14,
+            Paint()..color = color.withOpacity(0.14));
+        canvas.drawCircle(p, r + 7,
+            Paint()..color = color.withOpacity(0.22));
       }
 
-      // Node fill
       canvas.drawCircle(
         p, r,
-        Paint()
-          ..color = (isSelected || isDragged)
-              ? color
-              : isHovered
-                  ? color.withOpacity(0.90)
-                  : color.withOpacity(0.70)
-          ..style = PaintingStyle.fill,
+        Paint()..color = (isSel || isDrag) ? color : color.withOpacity(isHov ? 0.88 : 0.68),
       );
-
-      // Node border
       canvas.drawCircle(
         p, r,
         Paint()
-          ..color = (isSelected || isDragged)
+          ..color = highlight
               ? Colors.white.withOpacity(0.45)
-              : color.withOpacity(0.35)
+              : color.withOpacity(0.30)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.5,
+          ..strokeWidth = 1.4,
       );
 
-      // Label
-      final fontSize = isSelected ? 12.0 : (scale > 1.2 ? 9.0 : 7.5);
-      final tp = TextPainter(
-        text: TextSpan(
-          text: n.word.korean,
-          style: TextStyle(
-            fontFamily: 'NotoSansKR',
-            fontSize: fontSize,
-            fontWeight:
-                isSelected ? FontWeight.w700 : FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout(maxWidth: r * 2.5);
-      tp.paint(canvas, p - Offset(tp.width / 2, tp.height / 2));
-
-      // English label (selected or zoomed)
-      if (isSelected || scale > 1.8 || isHovered) {
-        final engTp = TextPainter(
+      // Obsidian style: show Korean label only when selected, hovered, or zoomed in
+      final showLabel = isSel || isHov || isDrag || scale > 2.5;
+      if (showLabel) {
+        final fs = isSel ? 13.0 : (scale > 4.0 ? 11.0 : 9.0);
+        final tp = TextPainter(
           text: TextSpan(
-            text: n.word.english,
+            text: n.word.korean,
             style: TextStyle(
-              fontSize: isSelected ? 9.0 : 7.0,
-              color: Colors.white.withOpacity(0.65),
+              fontFamily: 'NotoSansKR',
+              fontSize: fs,
+              fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
+              color: Colors.white,
             ),
           ),
           textDirection: TextDirection.ltr,
-        )..layout(maxWidth: r * 3.5);
-        engTp.paint(canvas,
-            p + Offset(-engTp.width / 2, r + 2));
+        )..layout(maxWidth: 80);
+        // Draw label below dot (not inside — dot is small)
+        tp.paint(canvas, p + Offset(-tp.width / 2, r + 2));
+      }
+
+      if (isSel || (isHov && scale > 1.0)) {
+        final et = TextPainter(
+          text: TextSpan(
+            text: n.word.english,
+            style: TextStyle(
+                fontSize: 8.0, color: Colors.white.withOpacity(0.55)),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout(maxWidth: 90);
+        final labelOffset = showLabel ? 14.0 : r + 2;
+        et.paint(canvas, p + Offset(-et.width / 2, r + labelOffset));
       }
     }
   }
 
-  void _drawDashedLine(
-      Canvas canvas, Offset p1, Offset p2, Paint paint) {
-    final dx = p2.dx - p1.dx, dy = p2.dy - p1.dy;
-    final dist = math.sqrt(dx * dx + dy * dy);
-    const dashLen = 5.0, gapLen = 4.0;
-    var drawn = 0.0;
-    var drawing = true;
-    final ux = dx / dist, uy = dy / dist;
-    var cx = p1.dx, cy = p1.dy;
-    while (drawn < dist) {
-      final segLen =
-          (drawing ? dashLen : gapLen).clamp(0.0, dist - drawn);
-      if (drawing) {
-        canvas.drawLine(Offset(cx, cy),
-            Offset(cx + ux * segLen, cy + uy * segLen), paint);
-      }
-      cx += ux * segLen;
-      cy += uy * segLen;
-      drawn += segLen;
-      drawing = !drawing;
+  void _dashed(Canvas c, Offset p1, Offset p2, Paint paint) {
+    final d = (p2 - p1).distance;
+    if (d < 1) return;
+    final u = (p2 - p1) / d;
+    var done = 0.0;
+    var draw = true;
+    var cur = p1;
+    while (done < d) {
+      final seg = (draw ? 5.0 : 4.0).clamp(0.0, d - done);
+      if (draw) c.drawLine(cur, cur + u * seg, paint);
+      cur += u * seg;
+      done += seg;
+      draw = !draw;
     }
   }
 
@@ -679,6 +725,7 @@ class _FilterBar extends StatelessWidget {
   final String groupBy;
   final String topicFilter;
   final List<String> categories;
+  final Map<String, Color> topicColorMap;
   final ValueChanged<int> onLevelChanged;
   final ValueChanged<String> onGroupChanged;
   final ValueChanged<String> onTopicChanged;
@@ -688,6 +735,7 @@ class _FilterBar extends StatelessWidget {
     required this.groupBy,
     required this.topicFilter,
     required this.categories,
+    required this.topicColorMap,
     required this.onLevelChanged,
     required this.onGroupChanged,
     required this.onTopicChanged,
@@ -697,73 +745,55 @@ class _FilterBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Row 1 — group + level filters
+        // Row 1 — group + level
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Row(children: [
-            _ToggleChip(
-              label: 'By Level',
-              active: groupBy == 'level',
-              onTap: () => onGroupChanged('level'),
-              color: const Color(0xFF667EEA),
-            ),
+            _Chip('By Level', groupBy == 'level',
+                () => onGroupChanged('level'), const Color(0xFF667EEA)),
             const SizedBox(width: 6),
-            _ToggleChip(
-              label: 'By Topic',
-              active: groupBy == 'category',
-              onTap: () => onGroupChanged('category'),
-              color: const Color(0xFFFF8C42),
-            ),
-            const SizedBox(width: 12),
-            Container(width: 1, height: 20, color: Colors.white12),
-            const SizedBox(width: 12),
-            _ToggleChip(
-              label: 'All',
-              active: levelFilter == 0,
-              onTap: () => onLevelChanged(0),
-              color: Colors.white54,
-            ),
-            ...List.generate(
-              6,
-              (i) => Padding(
+            _Chip('By Topic', groupBy == 'category',
+                () => onGroupChanged('category'), const Color(0xFFFF8C42)),
+            const SizedBox(width: 10),
+            Container(width: 1, height: 18, color: Colors.white12),
+            const SizedBox(width: 10),
+            _Chip('All', levelFilter == 0,
+                () => onLevelChanged(0), Colors.white54),
+            ...List.generate(6, (i) {
+              final c = AppColors.topikColor(i + 1);
+              return Padding(
                 padding: const EdgeInsets.only(left: 6),
-                child: _ToggleChip(
-                  label: 'L${i + 1}',
-                  active: levelFilter == i + 1,
-                  onTap: () => onLevelChanged(i + 1),
-                  color: AppColors.topikColor(i + 1),
-                ),
-              ),
-            ),
+                child: _Chip('L${i + 1}', levelFilter == i + 1,
+                    () => onLevelChanged(i + 1), c),
+              );
+            }),
           ]),
         ),
 
-        // Row 2 — topic chips (only when By Topic selected)
+        // Row 2 — topic chips (when By Topic selected)
         if (groupBy == 'category' && categories.isNotEmpty) ...[
           const SizedBox(height: 6),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(children: [
-              _ToggleChip(
-                label: 'All Topics',
-                active: topicFilter.isEmpty,
-                onTap: () => onTopicChanged(''),
-                color: const Color(0xFFFF8C42),
-              ),
-              ...categories.map((cat) => Padding(
-                    padding: const EdgeInsets.only(left: 6),
-                    child: _ToggleChip(
-                      label: cat,
-                      active: topicFilter == cat,
-                      onTap: () => onTopicChanged(
-                          topicFilter == cat ? '' : cat),
-                      color: const Color(0xFFFF8C42),
-                    ),
-                  )),
+              _Chip('All Topics', topicFilter.isEmpty,
+                  () => onTopicChanged(''), const Color(0xFFFF8C42)),
+              ...categories.map((cat) {
+                final color =
+                    topicColorMap[cat] ?? const Color(0xFFFF8C42);
+                return Padding(
+                  padding: const EdgeInsets.only(left: 6),
+                  child: _Chip(
+                    cat,
+                    topicFilter == cat,
+                    () => onTopicChanged(topicFilter == cat ? '' : cat),
+                    color,
+                  ),
+                );
+              }),
             ]),
           ),
         ],
@@ -772,31 +802,24 @@ class _FilterBar extends StatelessWidget {
   }
 }
 
-class _ToggleChip extends StatelessWidget {
+class _Chip extends StatelessWidget {
   final String label;
   final bool active;
   final VoidCallback onTap;
   final Color color;
-
-  const _ToggleChip({
-    required this.label,
-    required this.active,
-    required this.onTap,
-    required this.color,
-  });
+  const _Chip(this.label, this.active, this.onTap, this.color);
 
   @override
   Widget build(BuildContext context) => GestureDetector(
         onTap: onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+          duration: const Duration(milliseconds: 160),
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
           decoration: BoxDecoration(
             color: active ? color : color.withOpacity(0.12),
             borderRadius: BorderRadius.circular(20),
-            border:
-                Border.all(color: active ? color : color.withOpacity(0.3)),
+            border: Border.all(
+                color: active ? color : color.withOpacity(0.25)),
           ),
           child: Text(label,
               style: TextStyle(
@@ -810,22 +833,24 @@ class _ToggleChip extends StatelessWidget {
 // ── Stats Chip ──────────────────────────────────────────────────────────────
 
 class _StatsChip extends StatelessWidget {
-  final int nodeCount;
-  const _StatsChip({required this.nodeCount});
+  final int visible;
+  final int total;
+  const _StatsChip({required this.visible, required this.total});
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(16),
+          color: Colors.white.withOpacity(0.07),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(color: Colors.white12),
         ),
-        child: Text('$nodeCount words',
-            style: const TextStyle(
-                color: Colors.white60,
-                fontSize: 11,
-                fontWeight: FontWeight.w600)),
+        child: Text(
+          visible == total ? '$total words' : '$visible / $total',
+          style: const TextStyle(
+              color: Colors.white54, fontSize: 11,
+              fontWeight: FontWeight.w600),
+        ),
       );
 }
 
@@ -834,6 +859,7 @@ class _StatsChip extends StatelessWidget {
 class _WordPanel extends StatelessWidget {
   final _Node node;
   final List<_Node> allNodes;
+  final Color Function(_Node) nodeColorFn;
   final VoidCallback onClose;
   final VoidCallback onLearn;
   final ValueChanged<_Node> onSelectRelated;
@@ -841,6 +867,7 @@ class _WordPanel extends StatelessWidget {
   const _WordPanel({
     required this.node,
     required this.allNodes,
+    required this.nodeColorFn,
     required this.onClose,
     required this.onLearn,
     required this.onSelectRelated,
@@ -849,11 +876,9 @@ class _WordPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final w = node.word;
-    final color = AppColors.topikColor(w.level);
-
-    final related = allNodes
-        .where((n) => w.relatedIds.contains(n.word.id))
-        .toList();
+    final color = nodeColorFn(node);
+    final related =
+        allNodes.where((n) => w.relatedIds.contains(n.word.id)).toList();
     final sameLevel = allNodes
         .where((n) => n.word.id != w.id && n.word.level == w.level)
         .take(6)
@@ -862,171 +887,155 @@ class _WordPanel extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       decoration: BoxDecoration(
-        color: const Color(0xFF12152A),
+        color: const Color(0xFF10132A),
         borderRadius:
             const BorderRadius.vertical(top: Radius.circular(24)),
         border: Border(
-            top: BorderSide(color: color.withOpacity(0.3), width: 1.5)),
+            top: BorderSide(color: color.withOpacity(0.35), width: 1.5)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: [
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.18),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text('TOPIK ${w.level} · ${w.partOfSpeech}',
-                  style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: color)),
-            ),
+            _tag('TOPIK ${w.level}', AppColors.topikColor(w.level)),
             if (w.category.isNotEmpty) ...[
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFF8C42).withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(w.category,
-                    style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFFFF8C42))),
-              ),
+              const SizedBox(width: 6),
+              _tag(w.category, color),
             ],
             const Spacer(),
             GestureDetector(
               onTap: onClose,
-              child: const Icon(Icons.close,
-                  color: Colors.white38, size: 20)),
+              child: const Icon(Icons.close, color: Colors.white38, size: 20)),
           ]),
-          const SizedBox(height: 12),
-
+          const SizedBox(height: 10),
           Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
             Text(w.korean,
                 style: const TextStyle(
                     fontFamily: 'NotoSansKR',
-                    fontSize: 30,
+                    fontSize: 28,
                     fontWeight: FontWeight.w800,
                     color: Colors.white)),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.only(bottom: 4),
+                padding: const EdgeInsets.only(bottom: 3),
                 child: Text(w.english,
                     style: const TextStyle(
-                        fontSize: 18, color: Colors.white60)),
+                        fontSize: 16, color: Colors.white60)),
               ),
             ),
           ]),
           if (w.pronunciation.isNotEmpty) ...[
             const SizedBox(height: 2),
             Text('[${w.pronunciation}]',
-                style:
-                    TextStyle(fontSize: 14, color: color.withOpacity(0.8))),
+                style: TextStyle(
+                    fontSize: 13, color: color.withOpacity(0.8))),
           ],
           const SizedBox(height: 8),
-
           Text(w.example,
-              style: const TextStyle(
+              style: TextStyle(
                   fontFamily: 'NotoSansKR',
-                  fontSize: 14,
-                  color: Colors.white54,
+                  fontSize: 13,
+                  color: Colors.white.withOpacity(0.5),
                   height: 1.6)),
 
           if (related.isNotEmpty) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Text('Related',
                 style: const TextStyle(
                     fontSize: 11,
                     color: Colors.white38,
                     fontWeight: FontWeight.w600)),
-            const SizedBox(height: 6),
+            const SizedBox(height: 5),
             Wrap(
-                spacing: 8,
-                runSpacing: 6,
+                spacing: 7, runSpacing: 5,
                 children: related
                     .map((n) => GestureDetector(
                           onTap: () => onSelectRelated(n),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
+                                horizontal: 9, vertical: 4),
                             decoration: BoxDecoration(
-                              color: AppColors.topikColor(n.word.level)
-                                  .withOpacity(0.2),
+                              color:
+                                  nodeColorFn(n).withOpacity(0.18),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(n.word.korean,
                                 style: TextStyle(
                                     fontFamily: 'NotoSansKR',
-                                    fontSize: 13,
+                                    fontSize: 12,
                                     fontWeight: FontWeight.w600,
-                                    color: AppColors.topikColor(
-                                        n.word.level))),
+                                    color: nodeColorFn(n))),
                           ),
                         ))
                     .toList()),
           ],
 
           if (sameLevel.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text('Same level (TOPIK ${w.level})',
+            const SizedBox(height: 6),
+            Text('Same TOPIK ${w.level}',
                 style: const TextStyle(
                     fontSize: 11,
                     color: Colors.white38,
                     fontWeight: FontWeight.w600)),
-            const SizedBox(height: 6),
+            const SizedBox(height: 5),
             Wrap(
-                spacing: 6,
-                runSpacing: 6,
+                spacing: 5, runSpacing: 5,
                 children: sameLevel
                     .map((n) => GestureDetector(
                           onTap: () => onSelectRelated(n),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
+                                horizontal: 7, vertical: 3),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.06),
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(10),
                               border: Border.all(color: Colors.white12),
                             ),
                             child: Text(n.word.korean,
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontFamily: 'NotoSansKR',
-                                    fontSize: 12,
-                                    color: Colors.white54)),
+                                    fontSize: 11,
+                                    color: Colors.white.withOpacity(0.5))),
                           ),
                         ))
                     .toList()),
           ],
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: onLearn,
-              icon: const Icon(Icons.menu_book_rounded, size: 16),
+              icon: const Icon(Icons.menu_book_rounded, size: 15),
               label: const Text('Learn this word'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
+                padding: const EdgeInsets.symmetric(vertical: 13),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
+                    borderRadius: BorderRadius.circular(12)),
               ),
             ),
           ),
-          SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
+          SizedBox(
+              height: MediaQuery.of(context).padding.bottom + 14),
         ],
       ),
     );
   }
+
+  Widget _tag(String text, Color color) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.18),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(text,
+            style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: color)),
+      );
 }

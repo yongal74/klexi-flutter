@@ -101,20 +101,27 @@ class _LevelWordsScreenState extends ConsumerState<LevelWordsScreen> {
           SliverAppBar(
             pinned: true,
             expandedHeight: 160,
-            backgroundColor: AppColors.surface,
-            foregroundColor: AppColors.textPrimary,
+            backgroundColor: color,
+            foregroundColor: Colors.white,
+            title: Text('TOPIK ${widget.level} — $levelName',
+                style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white)),
             flexibleSpace: FlexibleSpaceBar(
+              // title 없음 — SliverAppBar.title이 collapsed 시 표시
+              collapseMode: CollapseMode.pin,
               background: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [color.withOpacity(0.9), color],
+                    colors: [color.withOpacity(0.85), color],
                   ),
                 ),
                 child: SafeArea(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 48, 20, 16),
+                    padding: const EdgeInsets.fromLTRB(20, 56, 20, 16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.end,
@@ -152,13 +159,8 @@ class _LevelWordsScreenState extends ConsumerState<LevelWordsScreen> {
                   ),
                 ),
               ),
-              title: Text('TOPIK ${widget.level} — $levelName',
-                  style: const TextStyle(fontSize: 16)),
-              titlePadding:
-                  const EdgeInsets.only(left: 56, bottom: 14),
             ),
             actions: [
-              // Start session button in app bar
               TextButton.icon(
                 onPressed: () => context.push(
                     '${AppRoutes.sentenceCard}?level=${widget.level}'),

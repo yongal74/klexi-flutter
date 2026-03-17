@@ -187,35 +187,33 @@ class _TodayCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
     ),
     padding: const EdgeInsets.all(AppSpacing.cardPadLg),
-    child: Row(children: [
-      Expanded(child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("Today's Session",
-            style: TextStyle(fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w500)),
-          const SizedBox(height: 4),
-          const Text('20 new words', style: TextStyle(
-            fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white)),
-          const SizedBox(height: 4),
-          Text('Sentence-first learning', style: TextStyle(
-            fontSize: 13, color: Colors.white.withOpacity(0.7))),
-          const SizedBox(height: AppSpacing.lg),
-          GestureDetector(
-            onTap: onStart,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
-              ),
-              child: const Text('Start Learning',
-                style: TextStyle(
-                  fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.primary)),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const Text("Today's Session",
+          style: TextStyle(fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w500)),
+        const SizedBox(height: 6),
+        const Text('20 new words', style: TextStyle(
+          fontSize: 26, fontWeight: FontWeight.w800, color: Colors.white)),
+        const SizedBox(height: 4),
+        Text('Sentence-first learning', style: TextStyle(
+          fontSize: 13, color: Colors.white.withOpacity(0.7))),
+        const SizedBox(height: AppSpacing.lg),
+        GestureDetector(
+          onTap: onStart,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 11),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
             ),
+            child: const Text('Start Learning',
+              style: TextStyle(
+                fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.primary)),
           ),
-        ],
-      )),
-    ]),
+        ),
+      ],
+    ),
   );
 }
 
@@ -232,16 +230,25 @@ class _QuickAction extends StatelessWidget {
     child: Container(
       padding: const EdgeInsets.all(AppSpacing.cardPad),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [color.withOpacity(0.85), color],
+        ),
         borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
-        border: Border.all(color: AppColors.border),
-        boxShadow: AppColors.subtleShadow,
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.30),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Row(children: [
         Expanded(child: Text(label,
           style: const TextStyle(
-            fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary))),
-        Icon(Icons.arrow_forward_ios, size: 14, color: color),
+            fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white))),
+        const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.white70),
       ]),
     ),
   );
