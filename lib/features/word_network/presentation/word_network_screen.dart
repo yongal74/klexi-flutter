@@ -114,9 +114,7 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
   }
 
   void _buildNodes(List<Word> all) {
-    // Dots are cheap to render — show more words
-    // Default: 300/level = 1800 total; single level: up to 1200
-    final perLevel = _levelFilter == 0 ? 300 : 1200;
+    final perLevel = _levelFilter == 0 ? 130 : 1200;
     final sampled = <Word>[];
 
     for (var lvl = 1; lvl <= 6; lvl++) {
@@ -126,33 +124,30 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
       sampled.addAll(lvlWords.take(perLevel));
     }
 
-    // Layout: 6 clusters in a 3×2 grid, 800px spacing
-    final clusterCenters = {
-      1: const Offset(600, 600),
-      2: const Offset(1800, 600),
-      3: const Offset(3000, 600),
-      4: const Offset(600, 1800),
-      5: const Offset(1800, 1800),
-      6: const Offset(3000, 1800),
-    };
+    // ── Single sphere: all nodes in ONE sunflower pattern ──
+    // Sorted by level so same-level nodes are neighbours in the spiral
+    sampled.sort((a, b) => a.level.compareTo(b.level));
 
-    final nodes = sampled.map((w) {
-      final center = clusterCenters[w.level] ?? const Offset(1500, 1200);
-      final angle = _rng.nextDouble() * 2 * math.pi;
-      final r = 60.0 + _rng.nextDouble() * 300;
+    const center = Offset(2000, 2000);
+    const goldenAngle = 2.399963;
+    final total = sampled.length;
+
+    final nodes = List.generate(total, (i) {
+      // Sunflower: disc — radius up to 800px (inside soft boundary at 900)
+      final r = 40.0 + 800.0 * math.sqrt(i / total);
+      final angle = i * goldenAngle;
       return _Node(
-        word: w,
+        word: sampled[i],
         pos: center + Offset(r * math.cos(angle), r * math.sin(angle)),
       );
-    }).toList();
+    });
 
     setState(() {
       _nodes = nodes;
       _loading = false;
-      _tick = 0;
+      _tick = 800; // start settled — no expansion
     });
 
-    // Center viewport on canvas
     _resetView();
   }
 
@@ -161,10 +156,10 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
       if (!mounted) return;
       final size = MediaQuery.of(context).size;
       setState(() {
-        _scale = _levelFilter == 0 ? 0.22 : 0.30;
+        _scale = _levelFilter == 0 ? 0.28 : 0.18;
         _pan = Offset(
-          size.width / 2 - (_levelFilter == 0 ? 1800 : 1200) * _scale,
-          size.height / 2 - (_levelFilter == 0 ? 1200 : 900) * _scale,
+          size.width / 2 - 2000.0 * _scale,
+          size.height / 2 - 2000.0 * _scale,
         );
       });
     });
@@ -191,12 +186,10 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
     if (!mounted || _nodes.isEmpty) return;
     _tick++;
 
-    // Slow down repulsion/damping after settling, but keep ambient motion
-    final settled = _tick > 500;
-    final damping = settled ? 0.96 : 0.84;
-    const repulsion = 2400.0;
-    const groupAttraction = 0.008;
-    const centerGravity = 0.004;
+    final settled = _tick > 800;
+    final damping = 0.97; // always high — minimal movement
+    const repulsion = 2500.0;   // stronger — keeps nodes spread
+    const boundaryR = 900.0;    // soft boundary radius
 
     final visible = _visibleNodes;
     if (visible.isEmpty) return;
@@ -230,19 +223,6 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
           }
         }
 
-        // Group attraction (same level or same topic)
-        for (final m in visible) {
-          if (identical(n, m)) continue;
-          final sameGroup = _groupBy == 'level'
-              ? n.word.level == m.word.level
-              : n.word.category == m.word.category;
-          if (!sameGroup) continue;
-          final dx = m.pos.dx - n.pos.dx;
-          final dy = m.pos.dy - n.pos.dy;
-          fx += dx * groupAttraction;
-          fy += dy * groupAttraction;
-        }
-
         // Related word strong attraction
         for (final relId in n.word.relatedIds) {
           final rel = visible.where((m) => m.word.id == relId).firstOrNull;
@@ -252,15 +232,18 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
           }
         }
 
-        // Center gravity toward cluster center
-        final clusterCenters = {
-          1: const Offset(600, 600), 2: const Offset(1800, 600),
-          3: const Offset(3000, 600), 4: const Offset(600, 1800),
-          5: const Offset(1800, 1800), 6: const Offset(3000, 1800),
-        };
-        final cc = clusterCenters[n.word.level] ?? const Offset(1800, 1200);
-        fx += (cc.dx - n.pos.dx) * centerGravity;
-        fy += (cc.dy - n.pos.dy) * centerGravity;
+        // Soft boundary — only pull back nodes that drift outside 900px radius
+        {
+          final ddx = 2000.0 - n.pos.dx;
+          final ddy = 2000.0 - n.pos.dy;
+          final distC = math.sqrt(ddx * ddx + ddy * ddy);
+          if (distC > boundaryR) {
+            final excess = distC - boundaryR;
+            final strength = 0.015 * excess / distC;
+            fx += ddx * strength;
+            fy += ddy * strength;
+          }
+        }
 
         // Ambient motion — gentle continuous turbulence after settling
         if (settled) {
@@ -305,8 +288,10 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
 
   void _onScaleStart(ScaleStartDetails d) {
     final graphPos = _screenToGraph(d.focalPoint);
+    // Hit radius: at least 24 screen-pixels converted to graph space
+    final extraHit = math.max(24.0 / _scale, 12.0);
     final hit = _visibleNodes.cast<_Node?>().firstWhere(
-      (n) => (n!.pos - graphPos).distance < _nodeRadius(n.word) + 12,
+      (n) => (n!.pos - graphPos).distance < _nodeRadius(n.word) + extraHit,
       orElse: () => null,
     );
     if (hit != null) {
@@ -341,8 +326,9 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
   void _onTapUp(TapUpDetails d) {
     if (_draggedNode != null) return;
     final graphPos = _screenToGraph(d.localPosition);
+    final extraHit = math.max(24.0 / _scale, 12.0);
     final hit = _visibleNodes.cast<_Node?>().firstWhere(
-      (n) => (n!.pos - graphPos).distance < _nodeRadius(n.word) + 8,
+      (n) => (n!.pos - graphPos).distance < _nodeRadius(n.word) + extraHit,
       orElse: () => null,
     );
     setState(() => _selected = hit == _selected ? null : hit);
@@ -584,8 +570,9 @@ class _GraphPainter extends CustomPainter {
   _Node? get _hovered {
     if (hoverPos == null) return null;
     final gp = (hoverPos! - pan) / scale;
+    final extraHit = math.max(20.0 / scale, 10.0);
     return nodes.cast<_Node?>().firstWhere(
-      (n) => (n!.pos - gp).distance < nodeRadiusFn(n.word) + 8,
+      (n) => (n!.pos - gp).distance < nodeRadiusFn(n.word) + extraHit,
       orElse: () => null,
     );
   }
@@ -617,13 +604,13 @@ class _GraphPainter extends CustomPainter {
 
         if (isRelated) {
           ep
-            ..color = nc.withOpacity(0.65)
-            ..strokeWidth = 1.4;
+            ..color = nc.withOpacity(0.70)
+            ..strokeWidth = 1.2;
           _dashed(canvas, np, mp, ep);
-        } else if (sameGroup && (np - mp).distance < 160) {
+        } else if (sameGroup && (np - mp).distance < 200) {
           ep
-            ..color = nc.withOpacity(0.13)
-            ..strokeWidth = 0.6;
+            ..color = nc.withOpacity(0.22)
+            ..strokeWidth = 0.7;
           canvas.drawLine(np, mp, ep);
         }
       }
