@@ -4,6 +4,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/word.dart';
 import '../content/vocab/vocab_index.dart';
+import '../content/related_words.dart';
 
 final wordRepositoryProvider = Provider<WordRepository>((_) => WordRepository.instance);
 
@@ -76,6 +77,33 @@ class WordRepository {
       shuffled[j] = tmp;
     }
     return shuffled.take(count).toList();
+  }
+
+  /// Returns a map of wordId → list of related wordIds,
+  /// built by matching relatedWordsMap Korean keys/values to Word IDs.
+  Map<String, List<String>> buildRelatedIdsMap() {
+    final korToId = <String, String>{};
+    for (final w in _all) {
+      korToId[w.korean] = w.id;
+    }
+    final result = <String, List<String>>{};
+    for (final entry in relatedWordsMap.entries) {
+      final srcId = korToId[entry.key];
+      if (srcId == null) continue;
+      final ids = <String>[];
+      for (final rw in entry.value) {
+        final rid = korToId[rw.korean];
+        if (rid != null) ids.add(rid);
+      }
+      if (ids.isNotEmpty) {
+        result[srcId] = ids;
+        // bidirectional
+        for (final rid in ids) {
+          (result[rid] ??= []).add(srcId);
+        }
+      }
+    }
+    return result;
   }
 
   /// Total number of words loaded.

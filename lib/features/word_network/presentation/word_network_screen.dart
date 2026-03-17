@@ -50,6 +50,7 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
   // All nodes in memory
   List<_Node> _nodes = [];
   bool _loading = true;
+  Map<String, List<String>> _relatedMap = {}; // wordId → relatedWordIds
 
   // Viewport
   double _scale = 1.0;
@@ -102,6 +103,7 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
     final repo = ref.read(wordRepositoryProvider);
     final all = repo.getAllWords();
     _totalWordCount = all.length;
+    _relatedMap = repo.buildRelatedIdsMap();
 
     // Build category → color map
     final cats = all.map((w) => w.category).where((c) => c.isNotEmpty)
@@ -125,20 +127,18 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
     sampled.addAll(lvlWords.take(cap));
     if (_levelFilter == 0) { setState(() => _levelFilter = 1); }
 
-    // ── Cluster by relatedIds so connected words are adjacent ──
+    // ── Cluster by relatedMap so connected words are adjacent ──
     final idSet = {for (final w in sampled) w.id};
     final clusterOf = <String, int>{};
     int nextCluster = 0;
     for (final w in sampled) {
       if (clusterOf.containsKey(w.id)) continue;
-      // BFS
       final queue = [w.id];
       clusterOf[w.id] = nextCluster;
       int qi = 0;
       while (qi < queue.length) {
         final cur = queue[qi++];
-        final word = sampled.firstWhere((x) => x.id == cur, orElse: () => w);
-        for (final rid in word.relatedIds) {
+        for (final rid in (_relatedMap[cur] ?? [])) {
           if (idSet.contains(rid) && !clusterOf.containsKey(rid)) {
             clusterOf[rid] = nextCluster;
             queue.add(rid);
@@ -147,7 +147,6 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
       }
       nextCluster++;
     }
-    // Sort by cluster so related words are adjacent in the spiral
     sampled.sort((a, b) => (clusterOf[a.id] ?? 0).compareTo(clusterOf[b.id] ?? 0));
 
     // ── Sunflower phyllotaxis — single disc, radius 1100px ──
@@ -373,6 +372,7 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
                         nodeColorFn: _nodeColor,
                         nodeRadiusFn: _nodeRadius,
                         topicColorMap: _topicColorMap,
+                        relatedMap: _relatedMap,
                       ),
                       child: const SizedBox.expand(),
                     ),
@@ -532,6 +532,7 @@ class _GraphPainter extends CustomPainter {
   final Color Function(_Node) nodeColorFn;
   final double Function(Word) nodeRadiusFn;
   final Map<String, Color> topicColorMap;
+  final Map<String, List<String>> relatedMap;
 
   _GraphPainter({
     required this.nodes,
@@ -544,6 +545,7 @@ class _GraphPainter extends CustomPainter {
     required this.nodeColorFn,
     required this.nodeRadiusFn,
     required this.topicColorMap,
+    required this.relatedMap,
   });
 
   Offset _proj(Offset p) => p * scale + pan;
@@ -570,21 +572,22 @@ class _GraphPainter extends CustomPainter {
       posMap[n.word.id] = _proj(n.pos);
     }
 
-    // ── Related-word edges (always drawn — sparse, O(n*k)) ──
+    // ── Related-word edges (always drawn — from relatedMap) ──
     final relPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
+      ..strokeWidth = 1.2;
     for (final n in nodes) {
-      if (n.word.relatedIds.isEmpty) continue;
+      final rels = relatedMap[n.word.id];
+      if (rels == null || rels.isEmpty) continue;
       final np = posMap[n.word.id]!;
       if (np.dx < -200 || np.dx > size.width + 200 ||
           np.dy < -200 || np.dy > size.height + 200) continue;
       final nc = nodeColorFn(n);
-      for (final relId in n.word.relatedIds) {
+      for (final relId in rels) {
         final mp = posMap[relId];
         if (mp == null) continue;
-        relPaint.color = nc.withOpacity(0.55);
-        _dashed(canvas, np, mp!, relPaint);
+        relPaint.color = nc.withOpacity(0.60);
+        _dashed(canvas, np, mp, relPaint);
       }
     }
 
