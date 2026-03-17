@@ -58,7 +58,7 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
   Offset _panStart = Offset.zero;
 
   // Filter state
-  int _levelFilter = 0;
+  int _levelFilter = 1; // default: Level 1
   String _groupBy = 'level';
   String _topicFilter = '';
   List<String> _allCategories = [];
@@ -116,16 +116,14 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
   }
 
   void _buildNodes(List<Word> all) {
-    // All levels: 1200 per level = 7200 total. Single level: all words.
+    // Level 1~2: up to 1200 words. Level 3~6: up to 600 words.
     final sampled = <Word>[];
-    for (var lvl = 1; lvl <= 6; lvl++) {
-      if (_levelFilter != 0 && lvl != _levelFilter) continue;
-      final lvlWords = all.where((w) => w.level == lvl).toList()
-        ..shuffle(_rng);
-      sampled.addAll(_levelFilter == 0
-          ? lvlWords.take(1200)
-          : lvlWords);
-    }
+    final lvl = _levelFilter == 0 ? 1 : _levelFilter; // never show all at once
+    final cap = lvl <= 2 ? 1200 : 600;
+    final lvlWords = all.where((w) => w.level == lvl).toList()
+      ..shuffle(_rng);
+    sampled.addAll(lvlWords.take(cap));
+    if (_levelFilter == 0) { setState(() => _levelFilter = 1); }
 
     // Shuffle so levels are interspersed throughout the sphere
     sampled.shuffle(_rng);
@@ -158,10 +156,8 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
       if (!mounted) return;
       final size = MediaQuery.of(context).size;
       setState(() {
-        // fit 2200px sphere into screen with some margin
-        _scale = (_levelFilter == 0
-            ? (size.shortestSide * 0.9) / 2200.0
-            : (size.shortestSide * 0.9) / 2400.0).clamp(0.08, 1.0);
+        // fit sphere into screen
+        _scale = ((size.shortestSide * 0.85) / 2200.0).clamp(0.08, 1.0);
         _pan = Offset(
           size.width / 2 - 2000.0 * _scale,
           size.height / 2 - 2000.0 * _scale,
@@ -170,34 +166,36 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
     });
   }
 
-  // ── Ambient tick — pure sine wobble, no physics ───────────
-  // O(n) simple math: each node oscillates gently around its basePos
+  // ── Ambient tick — very light, only for hover/drag repaint ──
 
   void _onTick(Duration elapsed) {
     if (!mounted || _nodes.isEmpty) return;
     _tick++;
-    // Only repaint every 3rd frame to save CPU with 7200 nodes
-    if (_tick % 3 != 0) return;
+    // For 7200 nodes: only update on interaction frames or every 30 frames
+    final hasInteraction = _draggedNode != null || _hoverPos != null;
+    if (!hasInteraction && _tick % 30 != 0) return;
 
-    final t = elapsed.inMilliseconds / 1000.0;
-    setState(() {
-      for (final n in _nodes) {
-        if (n.pinned) continue;
-        final h = n.word.id.hashCode;
-        // Each node drifts on its own phase — ±4px gentle oscillation
-        final dx = math.sin(t * 0.25 + h * 0.009) * 4.0;
-        final dy = math.cos(t * 0.30 + h * 0.011) * 4.0;
-        n.pos = n.basePos + Offset(dx, dy);
-      }
-    });
+    if (!hasInteraction) {
+      // Gentle ambient wobble — only when idle
+      final t = elapsed.inMilliseconds / 1000.0;
+      setState(() {
+        for (final n in _nodes) {
+          if (n.pinned) continue;
+          final h = n.word.id.hashCode & 0xFFF;
+          final dx = math.sin(t * 0.2 + h * 0.01) * 3.0;
+          final dy = math.cos(t * 0.25 + h * 0.013) * 3.0;
+          n.pos = n.basePos + Offset(dx, dy);
+        }
+      });
+    } else {
+      setState(() {}); // repaint for hover/drag
+    }
   }
 
   // ── Filtered view ─────────────────────────────────────────
 
   List<_Node> get _visibleNodes {
-    var nodes = _levelFilter == 0
-        ? _nodes
-        : _nodes.where((n) => n.word.level == _levelFilter).toList();
+    var nodes = List<_Node>.from(_nodes); // _nodes already filtered by level
 
     if (_topicFilter.isNotEmpty) {
       nodes = nodes.where((n) => n.word.category == _topicFilter).toList();
@@ -529,35 +527,38 @@ class _GraphPainter extends CustomPainter {
     final hov = _hovered;
     final ep = Paint()..style = PaintingStyle.stroke;
 
-    // Edges
-    for (int i = 0; i < nodes.length; i++) {
-      final n = nodes[i];
-      final np = _proj(n.pos);
-      if (np.dx < -120 || np.dx > size.width + 120 ||
-          np.dy < -120 || np.dy > size.height + 120) continue;
+    // Edges — only draw when zoomed in enough AND few nodes visible
+    // (skip entirely for large node counts — O(n²) is too expensive)
+    if (nodes.length <= 300) {
+      for (int i = 0; i < nodes.length; i++) {
+        final n = nodes[i];
+        final np = _proj(n.pos);
+        if (np.dx < -120 || np.dx > size.width + 120 ||
+            np.dy < -120 || np.dy > size.height + 120) continue;
 
-      for (int j = i + 1; j < nodes.length; j++) {
-        final m = nodes[j];
-        final mp = _proj(m.pos);
-        if ((np - mp).distance > 280) continue;
+        for (int j = i + 1; j < nodes.length; j++) {
+          final m = nodes[j];
+          final mp = _proj(m.pos);
+          if ((np - mp).distance > 280) continue;
 
-        final isRelated = n.word.relatedIds.contains(m.word.id) ||
-            m.word.relatedIds.contains(n.word.id);
-        final nc = nodeColorFn(n);
-        final sameGroup = groupBy == 'level'
-            ? n.word.level == m.word.level
-            : n.word.category == m.word.category;
+          final isRelated = n.word.relatedIds.contains(m.word.id) ||
+              m.word.relatedIds.contains(n.word.id);
+          final nc = nodeColorFn(n);
+          final sameGroup = groupBy == 'level'
+              ? n.word.level == m.word.level
+              : n.word.category == m.word.category;
 
-        if (isRelated) {
-          ep
-            ..color = nc.withOpacity(0.70)
-            ..strokeWidth = 1.2;
-          _dashed(canvas, np, mp, ep);
-        } else if (sameGroup && (np - mp).distance < 200) {
-          ep
-            ..color = nc.withOpacity(0.22)
-            ..strokeWidth = 0.7;
-          canvas.drawLine(np, mp, ep);
+          if (isRelated) {
+            ep
+              ..color = nc.withOpacity(0.70)
+              ..strokeWidth = 1.2;
+            _dashed(canvas, np, mp, ep);
+          } else if (sameGroup && (np - mp).distance < 200) {
+            ep
+              ..color = nc.withOpacity(0.22)
+              ..strokeWidth = 0.7;
+            canvas.drawLine(np, mp, ep);
+          }
         }
       }
     }
@@ -692,8 +693,6 @@ class _FilterBar extends StatelessWidget {
             const SizedBox(width: 10),
             Container(width: 1, height: 18, color: Colors.white12),
             const SizedBox(width: 10),
-            _Chip('All', levelFilter == 0,
-                () => onLevelChanged(0), Colors.white54),
             ...List.generate(6, (i) {
               final c = AppColors.topikColor(i + 1);
               return Padding(
