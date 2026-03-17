@@ -125,8 +125,30 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
     sampled.addAll(lvlWords.take(cap));
     if (_levelFilter == 0) { setState(() => _levelFilter = 1); }
 
-    // Shuffle so levels are interspersed throughout the sphere
-    sampled.shuffle(_rng);
+    // ── Cluster by relatedIds so connected words are adjacent ──
+    final idSet = {for (final w in sampled) w.id};
+    final clusterOf = <String, int>{};
+    int nextCluster = 0;
+    for (final w in sampled) {
+      if (clusterOf.containsKey(w.id)) continue;
+      // BFS
+      final queue = [w.id];
+      clusterOf[w.id] = nextCluster;
+      int qi = 0;
+      while (qi < queue.length) {
+        final cur = queue[qi++];
+        final word = sampled.firstWhere((x) => x.id == cur, orElse: () => w);
+        for (final rid in word.relatedIds) {
+          if (idSet.contains(rid) && !clusterOf.containsKey(rid)) {
+            clusterOf[rid] = nextCluster;
+            queue.add(rid);
+          }
+        }
+      }
+      nextCluster++;
+    }
+    // Sort by cluster so related words are adjacent in the spiral
+    sampled.sort((a, b) => (clusterOf[a.id] ?? 0).compareTo(clusterOf[b.id] ?? 0));
 
     // ── Sunflower phyllotaxis — single disc, radius 1100px ──
     const center = Offset(2000, 2000);
@@ -166,30 +188,45 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
     });
   }
 
-  // ── Ambient tick — very light, only for hover/drag repaint ──
+  // ── Ambient + cursor-repulsion tick ─────────────────────────
 
   void _onTick(Duration elapsed) {
     if (!mounted || _nodes.isEmpty) return;
     _tick++;
-    // For 7200 nodes: only update on interaction frames or every 30 frames
-    final hasInteraction = _draggedNode != null || _hoverPos != null;
-    if (!hasInteraction && _tick % 30 != 0) return;
 
-    if (!hasInteraction) {
-      // Gentle ambient wobble — only when idle
-      final t = elapsed.inMilliseconds / 1000.0;
-      setState(() {
-        for (final n in _nodes) {
-          if (n.pinned) continue;
-          final h = n.word.id.hashCode & 0xFFF;
-          final dx = math.sin(t * 0.2 + h * 0.01) * 3.0;
-          final dy = math.cos(t * 0.25 + h * 0.013) * 3.0;
-          n.pos = n.basePos + Offset(dx, dy);
+    final hasCursor = _hoverPos != null;
+    final hasDrag = _draggedNode != null;
+    // Always run when cursor active; otherwise every 20 frames
+    if (!hasCursor && !hasDrag && _tick % 20 != 0) return;
+
+    final t = elapsed.inMilliseconds / 1000.0;
+    // Convert hover pos to graph space once
+    final cursorG = hasCursor ? _screenToGraph(_hoverPos!) : null;
+    const repelR = 90.0;    // cursor repulsion radius in graph px
+    const repelStr = 0.6;   // repulsion strength
+
+    setState(() {
+      for (final n in _nodes) {
+        if (n.pinned) continue;
+        final h = n.word.id.hashCode & 0xFFF;
+        // Ambient sine wobble (±3px)
+        var dx = math.sin(t * 0.22 + h * 0.009) * 3.0;
+        var dy = math.cos(t * 0.28 + h * 0.011) * 3.0;
+        // Cursor repulsion
+        if (cursorG != null) {
+          final cdx = n.basePos.dx - cursorG.dx;
+          final cdy = n.basePos.dy - cursorG.dy;
+          final dist2 = cdx * cdx + cdy * cdy;
+          if (dist2 < repelR * repelR && dist2 > 0.1) {
+            final dist = math.sqrt(dist2);
+            final force = (repelR - dist) * repelStr;
+            dx += (cdx / dist) * force;
+            dy += (cdy / dist) * force;
+          }
         }
-      });
-    } else {
-      setState(() {}); // repaint for hover/drag
-    }
+        n.pos = n.basePos + Offset(dx, dy);
+      }
+    });
   }
 
   // ── Filtered view ─────────────────────────────────────────
@@ -527,36 +564,48 @@ class _GraphPainter extends CustomPainter {
     final hov = _hovered;
     final ep = Paint()..style = PaintingStyle.stroke;
 
-    // Edges — only draw when zoomed in enough AND few nodes visible
-    // (skip entirely for large node counts — O(n²) is too expensive)
-    if (nodes.length <= 300) {
+    // Build id→screen-pos map for related edge lookup (O(n) once)
+    final posMap = <String, Offset>{};
+    for (final n in nodes) {
+      posMap[n.word.id] = _proj(n.pos);
+    }
+
+    // ── Related-word edges (always drawn — sparse, O(n*k)) ──
+    final relPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+    for (final n in nodes) {
+      if (n.word.relatedIds.isEmpty) continue;
+      final np = posMap[n.word.id]!;
+      if (np.dx < -200 || np.dx > size.width + 200 ||
+          np.dy < -200 || np.dy > size.height + 200) continue;
+      final nc = nodeColorFn(n);
+      for (final relId in n.word.relatedIds) {
+        final mp = posMap[relId];
+        if (mp == null) continue;
+        relPaint.color = nc.withOpacity(0.55);
+        _dashed(canvas, np, mp!, relPaint);
+      }
+    }
+
+    // ── Proximity same-group edges (only when few nodes) ──
+    if (nodes.length <= 400) {
       for (int i = 0; i < nodes.length; i++) {
         final n = nodes[i];
-        final np = _proj(n.pos);
+        final np = posMap[n.word.id]!;
         if (np.dx < -120 || np.dx > size.width + 120 ||
             np.dy < -120 || np.dy > size.height + 120) continue;
-
         for (int j = i + 1; j < nodes.length; j++) {
           final m = nodes[j];
-          final mp = _proj(m.pos);
-          if ((np - mp).distance > 280) continue;
-
-          final isRelated = n.word.relatedIds.contains(m.word.id) ||
-              m.word.relatedIds.contains(n.word.id);
-          final nc = nodeColorFn(n);
+          final mp = posMap[m.word.id]!;
+          if ((np - mp).distance > 180) continue;
           final sameGroup = groupBy == 'level'
               ? n.word.level == m.word.level
               : n.word.category == m.word.category;
-
-          if (isRelated) {
+          if (sameGroup) {
             ep
-              ..color = nc.withOpacity(0.70)
-              ..strokeWidth = 1.2;
-            _dashed(canvas, np, mp, ep);
-          } else if (sameGroup && (np - mp).distance < 200) {
-            ep
-              ..color = nc.withOpacity(0.22)
-              ..strokeWidth = 0.7;
+              ..color = nodeColorFn(n).withOpacity(0.15)
+              ..strokeWidth = 0.6;
             canvas.drawLine(np, mp, ep);
           }
         }
