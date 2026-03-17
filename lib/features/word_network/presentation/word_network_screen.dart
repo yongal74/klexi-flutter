@@ -3,6 +3,7 @@
 // topic color coding, 1200-node default / full level on filter
 
 import 'dart:math' as math;
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -125,8 +126,8 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
     }
 
     // ── Single sphere: all nodes in ONE sunflower pattern ──
-    // Sorted by level so same-level nodes are neighbours in the spiral
-    sampled.sort((a, b) => a.level.compareTo(b.level));
+    // Shuffle so all levels are interspersed — prevents level-arc clustering
+    sampled.shuffle(_rng);
 
     const center = Offset(2000, 2000);
     const goldenAngle = 2.399963;
@@ -223,12 +224,12 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
           }
         }
 
-        // Related word strong attraction
+        // Related word weak attraction — just a slight pull, not clustering
         for (final relId in n.word.relatedIds) {
           final rel = visible.where((m) => m.word.id == relId).firstOrNull;
           if (rel != null) {
-            fx += (rel.pos.dx - n.pos.dx) * 0.04;
-            fy += (rel.pos.dy - n.pos.dy) * 0.04;
+            fx += (rel.pos.dx - n.pos.dx) * 0.005;
+            fy += (rel.pos.dy - n.pos.dy) * 0.005;
           }
         }
 
@@ -334,6 +335,20 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
     setState(() => _selected = hit == _selected ? null : hit);
   }
 
+  // Mouse wheel zoom — zoom towards cursor position
+  void _onPointerSignal(PointerSignalEvent event) {
+    if (event is PointerScrollEvent) {
+      final zoomFactor = event.scrollDelta.dy > 0 ? 0.9 : 1.1;
+      final newScale = (_scale * zoomFactor).clamp(0.08, 6.0);
+      // Zoom towards cursor
+      final focalGraph = _screenToGraph(event.localPosition);
+      setState(() {
+        _scale = newScale;
+        _pan = event.localPosition - focalGraph * _scale;
+      });
+    }
+  }
+
   Offset _screenToGraph(Offset screen) => (screen - _pan) / _scale;
 
   double _nodeRadius(Word w) {
@@ -372,7 +387,9 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
               child: CircularProgressIndicator(color: AppColors.primary))
           : Stack(children: [
               // Canvas
-              MouseRegion(
+              Listener(
+                onPointerSignal: _onPointerSignal,
+                child: MouseRegion(
                 onHover: (e) => setState(() => _hoverPos = e.localPosition),
                 onExit: (_) => setState(() => _hoverPos = null),
                 child: GestureDetector(
@@ -398,6 +415,7 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
                     ),
                   ),
                 ),
+              ),
               ),
 
               // Filter bar
