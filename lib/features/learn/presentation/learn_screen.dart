@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/services/daily_session_service.dart';
+import '../../../core/services/purchase_service.dart';
 import '../../../data/repositories/word_repository.dart';
 
 class LearnScreen extends ConsumerStatefulWidget {
@@ -123,6 +124,7 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
               title: 'Pronunciation',
               subtitle: 'AI scoring on your speech',
               color: AppColors.topik4,
+              isPro: true,
               onTap: () => context.push(AppRoutes.pronunciation),
             ),
             const SizedBox(height: AppSpacing.listGap),
@@ -150,6 +152,7 @@ class _LevelGrid extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final repo = ref.read(wordRepositoryProvider);
+    final isPremium = ref.watch(isPremiumProvider);
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -161,14 +164,22 @@ class _LevelGrid extends ConsumerWidget {
         final lvl = i + 1;
         final color = AppColors.topikColor(lvl);
         final count = repo.getWordsByLevel(lvl).length;
+        final locked = lvl > 1 && !isPremium;
         return GestureDetector(
-          onTap: () => context.push('/level/$lvl'),
+          onTap: () {
+            if (locked) {
+              context.push(AppRoutes.premium);
+            } else {
+              context.push('/level/$lvl');
+            }
+          },
           child: Container(
             padding: const EdgeInsets.all(AppSpacing.cardPad),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: locked ? AppColors.surface.withOpacity(0.7) : AppColors.surface,
               borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
-              border: Border.all(color: color.withOpacity(0.3)),
+              border: Border.all(
+                  color: locked ? AppColors.border : color.withOpacity(0.3)),
               boxShadow: AppColors.subtleShadow,
             ),
             child: Column(
@@ -178,7 +189,7 @@ class _LevelGrid extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: color,
+                      color: locked ? AppColors.textMuted : color,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text('TOPIK $lvl',
@@ -187,17 +198,23 @@ class _LevelGrid extends ConsumerWidget {
                             color: Colors.white)),
                   ),
                   const Spacer(),
-                  Icon(Icons.arrow_forward_ios, size: 12, color: color),
+                  locked
+                      ? const Icon(Icons.lock_rounded,
+                          size: 14, color: AppColors.textMuted)
+                      : Icon(Icons.arrow_forward_ios, size: 12, color: color),
                 ]),
                 const SizedBox(height: 8),
                 Text(_names[i],
                     style: TextStyle(
                         fontSize: 14, fontWeight: FontWeight.w700,
-                        color: color)),
+                        color: locked ? AppColors.textMuted : color)),
                 const SizedBox(height: 2),
-                Text('$count words',
-                    style: const TextStyle(
-                        fontSize: 12, color: AppColors.textSecondary)),
+                Text(locked ? 'Pro only' : '$count words',
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: locked
+                            ? AppColors.textMuted
+                            : AppColors.textSecondary)),
                 Text(_ranges[i],
                     style: const TextStyle(
                         fontSize: 11, color: AppColors.textMuted)),
@@ -210,50 +227,75 @@ class _LevelGrid extends ConsumerWidget {
   }
 }
 
-class _PracticeCard extends StatelessWidget {
+class _PracticeCard extends ConsumerWidget {
   final String icon;
   final String title;
   final String subtitle;
   final Color color;
   final VoidCallback onTap;
+  final bool isPro;
 
   const _PracticeCard({
     required this.icon, required this.title, required this.subtitle,
-    required this.color, required this.onTap,
+    required this.color, required this.onTap, this.isPro = false,
   });
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      padding: const EdgeInsets.all(AppSpacing.cardPad),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
-        border: Border.all(color: AppColors.border),
-        boxShadow: AppColors.subtleShadow,
-      ),
-      child: Row(children: [
-        Container(
-          width: 52, height: 52,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.12),
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          ),
-          child: Center(child: Text(icon, style: const TextStyle(fontSize: 26))),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locked = isPro && !ref.watch(isPremiumProvider);
+    return GestureDetector(
+      onTap: locked ? () => context.push(AppRoutes.premium) : onTap,
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.cardPad),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+          border: Border.all(color: AppColors.border),
+          boxShadow: AppColors.subtleShadow,
         ),
-        const SizedBox(width: AppSpacing.md),
-        Expanded(child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: const TextStyle(
-              fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-            Text(subtitle, style: const TextStyle(
-              fontSize: 13, color: AppColors.textSecondary)),
-          ],
-        )),
-        Icon(Icons.arrow_forward_ios, size: 14, color: color),
-      ]),
-    ),
-  );
+        child: Row(children: [
+          Container(
+            width: 52, height: 52,
+            decoration: BoxDecoration(
+              color: color.withOpacity(locked ? 0.06 : 0.12),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            ),
+            child: Center(child: Text(
+                locked ? '🔒' : icon,
+                style: const TextStyle(fontSize: 26))),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                Text(title, style: TextStyle(
+                  fontSize: 16, fontWeight: FontWeight.w700,
+                  color: locked ? AppColors.textMuted : AppColors.textPrimary)),
+                if (locked) ...[
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text('Pro',
+                        style: TextStyle(
+                            fontSize: 10, fontWeight: FontWeight.w700,
+                            color: AppColors.primary)),
+                  ),
+                ],
+              ]),
+              Text(subtitle, style: TextStyle(
+                fontSize: 13,
+                color: locked ? AppColors.textMuted : AppColors.textSecondary)),
+            ],
+          )),
+          Icon(Icons.arrow_forward_ios, size: 14,
+              color: locked ? AppColors.textMuted : color),
+        ]),
+      ),
+    );
+  }
 }

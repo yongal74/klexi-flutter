@@ -177,23 +177,23 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
 
     final hasCursor = _hoverPos != null;
     final hasDrag = _draggedNode != null;
-    // Always run when cursor active; otherwise every 20 frames
-    if (!hasCursor && !hasDrag && _tick % 20 != 0) return;
+    // Run every 3 frames for smooth ambient motion; every frame when cursor active
+    if (!hasCursor && !hasDrag && _tick % 3 != 0) return;
 
     final t = elapsed.inMilliseconds / 1000.0;
-    // Convert hover pos to graph space once
+    // Convert hover/touch pos to graph space once
     final cursorG = hasCursor ? _screenToGraph(_hoverPos!) : null;
-    const repelR = 90.0;    // cursor repulsion radius in graph px
-    const repelStr = 0.6;   // repulsion strength
+    const repelR = 120.0;   // repulsion radius in graph px
+    const repelStr = 1.2;   // repulsion strength
 
     setState(() {
       for (final n in _nodes) {
         if (n.pinned) continue;
         final h = n.word.id.hashCode & 0xFFF;
-        // Ambient sine wobble (±3px)
-        var dx = math.sin(t * 0.22 + h * 0.009) * 3.0;
-        var dy = math.cos(t * 0.28 + h * 0.011) * 3.0;
-        // Cursor repulsion
+        // Ambient sine wobble (±6px) — visible at overview zoom
+        var dx = math.sin(t * 0.22 + h * 0.009) * 6.0;
+        var dy = math.cos(t * 0.28 + h * 0.011) * 6.0;
+        // Cursor/touch repulsion
         if (cursorG != null) {
           final cdx = n.basePos.dx - cursorG.dx;
           final cdy = n.basePos.dy - cursorG.dy;
@@ -232,21 +232,26 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
   // ── Gestures ──────────────────────────────────────────────
 
   void _onScaleStart(ScaleStartDetails d) {
-    final graphPos = _screenToGraph(d.focalPoint);
-    // Hit radius: at least 24 screen-pixels converted to graph space
-    final extraHit = math.max(24.0 / _scale, 12.0);
-    final hit = _visibleNodes.cast<_Node?>().firstWhere(
-      (n) => (n!.pos - graphPos).distance < _nodeRadius(n.word) + extraHit,
-      orElse: () => null,
-    );
-    if (hit != null) {
-      _draggedNode = hit;
-      hit.pinned = true;
-    } else {
-      _draggedNode = null;
-      _scaleStart = _scale;
-      _panStart = d.focalPoint - _pan;
+    // Only try to drag individual nodes when zoomed in enough.
+    // At low zoom levels (overview), cap the hit radius so most touches
+    // go to pan/zoom instead of accidentally grabbing a node.
+    _draggedNode = null;
+    if (_scale > 0.4) {
+      final graphPos = _screenToGraph(d.focalPoint);
+      // Max hit zone = 22 screen-px, but never more than 28 graph-px
+      final extraHit = (22.0 / _scale).clamp(0.0, 28.0);
+      final hit = _visibleNodes.cast<_Node?>().firstWhere(
+        (n) => (n!.pos - graphPos).distance < _nodeRadius(n.word) + extraHit,
+        orElse: () => null,
+      );
+      if (hit != null) {
+        _draggedNode = hit;
+        hit.pinned = true;
+        return; // don't update _panStart / _scaleStart
+      }
     }
+    _scaleStart = _scale;
+    _panStart = d.focalPoint - _pan;
   }
 
   void _onScaleUpdate(ScaleUpdateDetails d) {
@@ -271,7 +276,7 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
   void _onTapUp(TapUpDetails d) {
     if (_draggedNode != null) return;
     final graphPos = _screenToGraph(d.localPosition);
-    final extraHit = math.max(24.0 / _scale, 12.0);
+    final extraHit = (22.0 / _scale).clamp(0.0, 28.0);
     final hit = _visibleNodes.cast<_Node?>().firstWhere(
       (n) => (n!.pos - graphPos).distance < _nodeRadius(n.word) + extraHit,
       orElse: () => null,
@@ -333,7 +338,12 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
               // Canvas
               Listener(
                 onPointerSignal: _onPointerSignal,
+                // onPointerMove works for both mouse and touch (finger drag)
+                onPointerMove: (e) => setState(() => _hoverPos = e.localPosition),
+                onPointerUp: (_) => setState(() => _hoverPos = null),
+                onPointerCancel: (_) => setState(() => _hoverPos = null),
                 child: MouseRegion(
+                onEnter: (e) => setState(() => _hoverPos = e.localPosition),
                 onHover: (e) => setState(() => _hoverPos = e.localPosition),
                 onExit: (_) => setState(() => _hoverPos = null),
                 child: GestureDetector(
@@ -536,7 +546,8 @@ class _GraphPainter extends CustomPainter {
   _Node? get _hovered {
     if (hoverPos == null) return null;
     final gp = (hoverPos! - pan) / scale;
-    final extraHit = math.max(20.0 / scale, 10.0);
+    // Cap hit radius so at low zoom we don't highlight the entire cloud
+    final extraHit = (18.0 / scale).clamp(0.0, 26.0);
     return nodes.cast<_Node?>().firstWhere(
       (n) => (n!.pos - gp).distance < nodeRadiusFn(n.word) + extraHit,
       orElse: () => null,
@@ -547,7 +558,13 @@ class _GraphPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (nodes.isEmpty) return;
     final hov = _hovered;
-    final ep = Paint()..style = PaintingStyle.stroke;
+
+    // Active node = selected or hovered (for Obsidian-style edge highlight)
+    final activeNode = selected ?? hov;
+    final activeId = activeNode?.word.id;
+    final activeRelIds = activeId != null
+        ? (relatedMap[activeId] ?? const <String>[]).toSet()
+        : const <String>{};
 
     // Build id→screen-pos map for related edge lookup (O(n) once)
     final posMap = <String, Offset>{};
@@ -555,30 +572,36 @@ class _GraphPainter extends CustomPainter {
       posMap[n.word.id] = _proj(n.pos);
     }
 
-    // ── 1. Category proximity edges (always drawn — O(n*k) via sorted order) ──
-    // Nodes are sorted by category, so same-cat neighbours in list are close
-    final proxPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 0.8;
+    // ── 1. Category proximity edges ──
+    final proxPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
     for (int i = 0; i < nodes.length; i++) {
       final n = nodes[i];
       final np = posMap[n.word.id]!;
       if (np.dx < -80 || np.dx > size.width + 80 ||
           np.dy < -80 || np.dy > size.height + 80) continue;
-      // Only check next 40 neighbours in sorted list (same category window)
       for (int j = i + 1; j < nodes.length && j < i + 40; j++) {
         final m = nodes[j];
-        if (m.word.category != n.word.category) break; // past category boundary
+        if (m.word.category != n.word.category) break;
         final mp = posMap[m.word.id]!;
         final dist = (np - mp).distance;
-        if (dist > 260) continue;
-        proxPaint.color = nodeColorFn(n).withOpacity(0.18);
+        if (dist > 300) continue;
+        // Dim non-active edges when something is selected/hovered
+        final isActive = activeId != null &&
+            (n.word.id == activeId || m.word.id == activeId);
+        proxPaint.color = nodeColorFn(n).withOpacity(activeId != null
+            ? (isActive ? 0.7 : 0.1)
+            : 0.38);
+        proxPaint.strokeWidth = isActive ? 1.8 : 1.2;
         canvas.drawLine(np, mp, proxPaint);
       }
     }
 
-    // ── 2. Semantic related edges (bright dashed, from relatedMap) ──
+    // ── 2. Semantic related edges (dashed) ──
     final relPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0;
+      ..strokeWidth = 1.8;
     for (final n in nodes) {
       final rels = relatedMap[n.word.id];
       if (rels == null || rels.isEmpty) continue;
@@ -589,8 +612,30 @@ class _GraphPainter extends CustomPainter {
       for (final relId in rels) {
         final mp = posMap[relId];
         if (mp == null) continue;
-        relPaint.color = nc.withOpacity(0.80);
+        final isActive = activeId != null &&
+            (n.word.id == activeId || relId == activeId);
+        relPaint.color = nc.withOpacity(activeId != null
+            ? (isActive ? 1.0 : 0.15)
+            : 0.85);
+        relPaint.strokeWidth = isActive ? 2.5 : 1.8;
         _dashed(canvas, np, mp, relPaint);
+      }
+    }
+
+    // ── 3. Highlighted connection lines for active node (drawn on top) ──
+    if (activeId != null && activeRelIds.isNotEmpty) {
+      final activePos = posMap[activeId];
+      if (activePos != null) {
+        final hlPaint = Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.0
+          ..color = (activeNode != null ? nodeColorFn(activeNode) : Colors.white)
+              .withOpacity(0.9);
+        for (final relId in activeRelIds) {
+          final rp = posMap[relId];
+          if (rp == null) continue;
+          canvas.drawLine(activePos, rp, hlPaint);
+        }
       }
     }
 

@@ -6,6 +6,7 @@ import '../../../core/constants/app_spacing.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/services/daily_session_service.dart';
+import '../../../core/services/purchase_service.dart';
 import '../../../data/repositories/word_repository.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -103,22 +104,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary)),
               const SizedBox(height: AppSpacing.md),
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                crossAxisSpacing: AppSpacing.listGap,
-                mainAxisSpacing: AppSpacing.listGap,
-                childAspectRatio: 1.5,
-                children: [
-                  _QuickAction(label: 'Word Network',   color: AppColors.primary,  onTap: () => context.push(AppRoutes.wordNetwork)),
-                  _QuickAction(label: 'Chat with Dalli', color: AppColors.accent,   onTap: () => context.push(AppRoutes.dalliChat)),
-                  _QuickAction(label: 'Grammar',        color: AppColors.topik4,   onTap: () => context.push(AppRoutes.grammar)),
-                  _QuickAction(label: 'Themes',         color: AppColors.topik5,   onTap: () => context.push(AppRoutes.themes)),
-                  _QuickAction(label: 'Pronunciation',  color: AppColors.topik3,   onTap: () => context.push(AppRoutes.pronunciation)),
-                  _QuickAction(label: 'Hangeul',        color: AppColors.topik2,   onTap: () => context.push(AppRoutes.hangeul)),
-                ],
-              ),
+              _QuickActionsGrid(),
               const SizedBox(height: AppSpacing.sectionGap),
 
               // ── Sentence spotlight ─────────────────────
@@ -217,12 +203,53 @@ class _TodayCard extends StatelessWidget {
   );
 }
 
+// ── Quick Actions Grid ────────────────────────────────────
+class _QuickActionsGrid extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isPremium = ref.watch(isPremiumProvider);
+    final actions = [
+      (label: 'Word Network',   color: AppColors.primary,  route: AppRoutes.wordNetwork,  pro: true),
+      (label: 'Chat with Dalli',color: AppColors.accent,   route: AppRoutes.dalliChat,    pro: true),
+      (label: 'Grammar',        color: AppColors.topik4,   route: AppRoutes.grammar,      pro: true),
+      (label: 'Themes',         color: AppColors.topik5,   route: AppRoutes.themes,       pro: true),
+      (label: 'Pronunciation',  color: AppColors.topik3,   route: AppRoutes.pronunciation,pro: true),
+      (label: 'Hangeul',        color: AppColors.topik2,   route: AppRoutes.hangeul,      pro: false),
+    ];
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      crossAxisSpacing: AppSpacing.listGap,
+      mainAxisSpacing: AppSpacing.listGap,
+      childAspectRatio: 1.5,
+      children: actions.map((a) {
+        final locked = a.pro && !isPremium;
+        return _QuickAction(
+          label: a.label, color: a.color, locked: locked,
+          onTap: () {
+            if (locked) {
+              context.push(AppRoutes.premium);
+            } else {
+              context.push(a.route);
+            }
+          },
+        );
+      }).toList(),
+    );
+  }
+}
+
 // ── Quick Action ──────────────────────────────────────────
 class _QuickAction extends StatelessWidget {
   final String label;
   final Color color;
+  final bool locked;
   final VoidCallback onTap;
-  const _QuickAction({required this.label, required this.color, required this.onTap});
+  const _QuickAction({
+    required this.label, required this.color,
+    required this.onTap, this.locked = false,
+  });
 
   @override
   Widget build(BuildContext context) => GestureDetector(
@@ -233,12 +260,14 @@ class _QuickAction extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [color.withOpacity(0.85), color],
+          colors: locked
+              ? [AppColors.textMuted.withOpacity(0.3), AppColors.textMuted.withOpacity(0.4)]
+              : [color.withOpacity(0.85), color],
         ),
         borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.30),
+            color: (locked ? AppColors.textMuted : color).withOpacity(0.22),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -246,9 +275,12 @@ class _QuickAction extends StatelessWidget {
       ),
       child: Row(children: [
         Expanded(child: Text(label,
-          style: const TextStyle(
-            fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white))),
-        const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.white70),
+          style: TextStyle(
+            fontSize: 15, fontWeight: FontWeight.w700,
+            color: locked ? Colors.white54 : Colors.white))),
+        locked
+            ? const Icon(Icons.lock_rounded, size: 14, color: Colors.white38)
+            : const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.white70),
       ]),
     ),
   );

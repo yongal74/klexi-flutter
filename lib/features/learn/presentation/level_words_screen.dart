@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/services/purchase_service.dart';
 import '../../../core/utils/tts_service.dart';
 import '../../../data/models/word.dart';
 import '../../../data/repositories/word_repository.dart';
@@ -90,6 +91,69 @@ class _LevelWordsScreenState extends ConsumerState<LevelWordsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Gate level 2+ behind premium
+    final isPremium = ref.watch(isPremiumProvider);
+    if (widget.level > 1 && !isPremium) {
+      return Scaffold(
+        backgroundColor: AppColors.bg,
+        appBar: AppBar(
+          title: Text('TOPIK ${widget.level}'),
+          backgroundColor: AppColors.topikColor(widget.level),
+          foregroundColor: Colors.white,
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 72, height: 72,
+                  decoration: BoxDecoration(
+                    gradient: AppColors.primaryGradient,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                      child: Icon(Icons.lock_rounded,
+                          color: Colors.white, size: 32)),
+                ),
+                const SizedBox(height: 20),
+                Text('TOPIK ${widget.level} — Pro Only',
+                    style: const TextStyle(
+                        fontSize: 20, fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary)),
+                const SizedBox(height: 10),
+                Text(
+                    'Upgrade to Klexi Pro to access Level ${widget.level} '
+                    'and all 7,200 TOPIK words.',
+                    style: const TextStyle(
+                        fontSize: 14, color: AppColors.textSecondary,
+                        height: 1.5),
+                    textAlign: TextAlign.center),
+                const SizedBox(height: 28),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => context.push(AppRoutes.premium),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('Upgrade to Pro',
+                        style: TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.w700)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     final color = AppColors.topikColor(widget.level);
     final levelName = _levelNames[widget.level] ?? 'Level ${widget.level}';
 

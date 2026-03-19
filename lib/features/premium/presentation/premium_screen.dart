@@ -18,8 +18,12 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
     setState(() => _loading = true);
     try {
       final svc = ref.read(purchaseServiceProvider);
-      await svc.purchasePremium(yearly: _yearly);
-      if (mounted) Navigator.pop(context);
+      final ok = await svc.purchasePremium(yearly: _yearly);
+      if (ok) {
+        // Update global premium state
+        ref.read(premiumProvider.notifier).setPremium(true);
+        if (mounted) Navigator.pop(context);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -34,7 +38,21 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
     setState(() => _loading = true);
     try {
       final svc = ref.read(purchaseServiceProvider);
-      await svc.restorePurchases();
+      final ok = await svc.restorePurchases();
+      ref.read(premiumProvider.notifier).setPremium(ok);
+      if (ok && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Premium restored!')));
+        Navigator.pop(context);
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No active subscription found.')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Restore failed: $e')));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }

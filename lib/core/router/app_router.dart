@@ -23,6 +23,7 @@ import '../../features/pronunciation/presentation/pronunciation_screen.dart';
 import '../../features/hangeul/presentation/hangeul_tracing_screen.dart';
 import '../../features/learn/presentation/level_words_screen.dart';
 import '../../features/premium/presentation/premium_screen.dart';
+import '../widgets/paywall_gate.dart';
 
 abstract class AppRoutes {
   static const String auth              = '/auth';
@@ -129,37 +130,73 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.wordNetwork,
-        pageBuilder: (c, s) => _slide(const WordNetworkScreen()),
+        pageBuilder: (c, s) => _slide(const PaywallGate(
+          featureName: 'Word Network',
+          featureDescription:
+              'Explore the full 7,200-word semantic graph across all TOPIK levels. '
+              'Upgrade to Klexi Pro to unlock the complete Word Network.',
+          child: WordNetworkScreen(),
+        )),
       ),
       GoRoute(
         path: AppRoutes.dalliChat,
-        pageBuilder: (c, s) => _slide(const DalliChatScreen()),
+        pageBuilder: (c, s) => _slide(const PaywallGate(
+          featureName: 'Dalli AI Chat',
+          featureDescription:
+              'Unlimited Korean conversation practice with Dalli, your AI tutor. '
+              'Upgrade to Klexi Pro for unlimited Dalli sessions.',
+          child: DalliChatScreen(),
+        )),
       ),
       GoRoute(
         path: AppRoutes.grammar,
-        pageBuilder: (c, s) => _slide(const GrammarScreen()),
+        pageBuilder: (c, s) => _slide(const PaywallGate(
+          featureName: 'Grammar Coach',
+          featureDescription:
+              'Master all Korean grammar patterns across TOPIK levels 1–6. '
+              'Upgrade to Klexi Pro for full grammar access.',
+          child: GrammarScreen(),
+        )),
       ),
       GoRoute(
         path: AppRoutes.grammarDetail,
         pageBuilder: (c, s) {
           final id = s.pathParameters['id'] ?? '';
-          return _slide(GrammarDetailScreen(patternId: id));
+          return _slide(PaywallGate(
+            featureName: 'Grammar Detail',
+            child: GrammarDetailScreen(patternId: id),
+          ));
         },
       ),
       GoRoute(
         path: AppRoutes.themes,
-        pageBuilder: (c, s) => _slide(const ThemesScreen()),
+        pageBuilder: (c, s) => _slide(const PaywallGate(
+          featureName: 'Theme Packs',
+          featureDescription:
+              'Access K-Drama, K-Pop, K-Food, Travel, Slang, and Manners '
+              'vocabulary packs. Upgrade to Klexi Pro to unlock all themes.',
+          child: ThemesScreen(),
+        )),
       ),
       GoRoute(
         path: AppRoutes.themeDetail,
         pageBuilder: (c, s) {
           final id = s.pathParameters['id'] ?? '';
-          return _slide(ThemeDetailScreen(themeId: id));
+          return _slide(PaywallGate(
+            featureName: 'Theme Pack',
+            child: ThemeDetailScreen(themeId: id),
+          ));
         },
       ),
       GoRoute(
         path: AppRoutes.pronunciation,
-        pageBuilder: (c, s) => _slide(const PronunciationScreen()),
+        pageBuilder: (c, s) => _slide(const PaywallGate(
+          featureName: 'Pronunciation Coach',
+          featureDescription:
+              'AI-powered pronunciation scoring and feedback. '
+              'Upgrade to Klexi Pro for unlimited pronunciation sessions.',
+          child: PronunciationScreen(),
+        )),
       ),
       GoRoute(
         path: AppRoutes.hangeul,
