@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'core/router/app_router.dart';
 import 'core/services/daily_session_service.dart';
-import 'core/services/purchase_service.dart';
+import 'core/services/polar_service.dart';
 import 'core/theme/app_theme.dart';
 import 'data/models/word.dart';
 
@@ -23,17 +23,12 @@ void main() async {
   Hive.registerAdapter(WordAdapter());
   await DailySessionService.instance.init();
 
-  // Create a ProviderContainer so we can access providers before runApp.
-  // This lets us initialize PurchaseService (which reads SharedPreferences)
-  // and update the premium state BEFORE the first frame renders.
   final container = ProviderContainer();
 
-  // Wire PurchaseService to the PremiumNotifier, then initialize.
-  // PurchaseService will load cached premium status from SharedPreferences
-  // and (if RevenueCat keys are set) verify against the server.
+  // PolarService를 PremiumNotifier에 연결하고 초기화
   final notifier = container.read(premiumProvider.notifier);
-  PurchaseService.instance.attachNotifier(notifier);
-  await PurchaseService.instance.initialize();
+  PolarService.instance.attachNotifier(notifier);
+  await PolarService.instance.initialize();
 
   runApp(
     UncontrolledProviderScope(

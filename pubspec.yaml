@@ -48,8 +48,8 @@ dependencies:
   # Icons
   flutter_svg: ^2.0.10+1
 
-  # In-App Purchase (RevenueCat)
-  purchases_flutter: ^8.7.4
+  # URL Launcher (Polar 결제 페이지 열기)
+  url_launcher: ^6.3.1
 
   # Notifications
   flutter_local_notifications: ^18.0.0

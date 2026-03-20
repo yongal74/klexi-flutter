@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_config.dart';
 import '../../../core/constants/app_spacing.dart';
 
 // ── Mode ─────────────────────────────────────────────────
@@ -71,6 +74,9 @@ class _DalliChatScreenState extends ConsumerState<DalliChatScreen> {
     super.dispose();
   }
 
+  // 이전 메시지들 (API 호출용)
+  final List<Map<String, String>> _history = [];
+
   void _send() async {
     final text = _ctrl.text.trim();
     if (text.isEmpty) return;
@@ -78,47 +84,76 @@ class _DalliChatScreenState extends ConsumerState<DalliChatScreen> {
 
     final msgs = ref.read(chatMessagesProvider.notifier);
     msgs.update((s) => [...s, ChatMessage(text: text, isUser: true)]);
+    _history.add({'role': 'user', 'content': text});
     _scrollDown();
 
-    // Typing indicator
     ref.read(dalliTypingProvider.notifier).state = true;
-    await Future.delayed(const Duration(milliseconds: 1200));
 
-    // Mock response (replace with real API)
-    final mode = ref.read(dalliModeProvider);
-    final reply = _mockReply(text, mode);
-    ref.read(dalliTypingProvider.notifier).state = false;
-    msgs.update((s) => [...s, reply]);
-    _scrollDown();
-  }
+    if (!AppConfig.isBackendConfigured) {
+      // 개발 모드: 즉각 응답
+      await Future.delayed(const Duration(milliseconds: 800));
+      ref.read(dalliTypingProvider.notifier).state = false;
+      final reply = ChatMessage(
+        text: 'Backend URL not configured. Edit AppConfig.backendUrl.',
+        isUser: false,
+      );
+      msgs.update((s) => [...s, reply]);
+      _scrollDown();
+      return;
+    }
 
-  ChatMessage _mockReply(String input, DalliMode mode) {
-    switch (mode) {
-      case DalliMode.grammarCoach:
-        return ChatMessage(
-          text: '좋아요! Let me explain that grammar pattern...\n'
-              '"${input.split(' ').first}"을/를 사용할 때는 이렇게 씁니다.',
-          isUser: false,
-          wordPills: ['문법', '패턴'],
-        );
-      case DalliMode.rolePlay:
-        return ChatMessage(
-          text: '(In a café) 어서오세요! 무엇을 드릴까요?\nWhat would you like to order?',
-          isUser: false,
-          wordPills: ['카페', '주문'],
-        );
-      case DalliMode.wordReview:
-        return ChatMessage(
-          text: '잘했어요! 이 단어의 의미는...\nGreat! Let\'s try using it in a sentence.',
-          isUser: false,
-          wordPills: ['단어', '문장'],
-        );
-      default:
-        return ChatMessage(
-          text: '그렇군요! That\'s interesting. \n이걸 한국어로 말하면 어떻게 될까요?\nHow would you say this in Korean?',
-          isUser: false,
-          wordPills: [],
-        );
+    try {
+      // SSE 스트리밍 호출
+      final uri = Uri.parse('${AppConfig.backendUrl}/api/ai-chat');
+      final request = http.Request('POST', uri)
+        ..headers['Content-Type'] = 'application/json'
+        ..body = json.encode({
+          'messages': _history.length > 8 ? _history.sublist(_history.length - 8) : _history,
+          'userLevel': 1,
+        });
+
+      final response = await http.Client().send(request);
+
+      String accumulated = '';
+      ref.read(dalliTypingProvider.notifier).state = false;
+
+      // 스트리밍 응답 파싱 (SSE 형식: "data: {...}\n\n")
+      await for (final chunk in response.stream.transform(utf8.decoder)) {
+        for (final line in chunk.split('\n')) {
+          if (!line.startsWith('data: ')) continue;
+          final payload = line.substring(6).trim();
+          if (payload.isEmpty) continue;
+          try {
+            final parsed = json.decode(payload) as Map<String, dynamic>;
+            if (parsed['done'] == true) break;
+            final content = parsed['content'] as String? ?? '';
+            accumulated += content;
+
+            // 실시간으로 마지막 메시지 업데이트
+            final current = ref.read(chatMessagesProvider);
+            if (current.isNotEmpty && !current.last.isUser) {
+              msgs.update((s) => [
+                ...s.sublist(0, s.length - 1),
+                ChatMessage(text: accumulated, isUser: false),
+              ]);
+            } else {
+              msgs.update((s) => [...s, ChatMessage(text: accumulated, isUser: false)]);
+            }
+            _scrollDown();
+          } catch (_) {}
+        }
+      }
+
+      if (accumulated.isNotEmpty) {
+        _history.add({'role': 'assistant', 'content': accumulated});
+      }
+    } catch (e) {
+      ref.read(dalliTypingProvider.notifier).state = false;
+      msgs.update((s) => [...s, ChatMessage(
+        text: 'Connection error. Check your internet connection.',
+        isUser: false,
+      )]);
+      _scrollDown();
     }
   }
 

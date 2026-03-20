@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/router/app_router.dart';
-import '../../../core/services/purchase_service.dart';
+import '../../../core/services/polar_service.dart';
 import '../../../core/utils/tts_service.dart';
 import '../../../data/models/word.dart';
 import '../../../data/repositories/word_repository.dart';

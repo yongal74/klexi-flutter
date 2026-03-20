@@ -6,7 +6,7 @@ import '../../../core/constants/app_spacing.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/services/daily_session_service.dart';
-import '../../../core/services/purchase_service.dart';
+import '../../../core/services/polar_service.dart';
 import '../../../data/repositories/word_repository.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {

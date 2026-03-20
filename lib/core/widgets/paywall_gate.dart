@@ -11,7 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../constants/app_colors.dart';
 import '../router/app_router.dart';
-import '../services/purchase_service.dart';
+import '../services/polar_service.dart';
 
 class PaywallGate extends ConsumerWidget {
   final Widget child;
