@@ -206,7 +206,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
               child: Row(children: [
                 Expanded(child: _PlanCard(
                   label: 'Monthly',
-                  price: '\$4.99',
+                  price: '\$7.99',
                   period: '/month',
                   selected: !_yearly,
                   badge: null,
@@ -215,7 +215,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(child: _PlanCard(
                   label: 'Yearly',
-                  price: '\$29.99',
+                  price: '\$49.99',
                   period: '/year',
                   selected: _yearly,
                   badge: 'Best Value',
@@ -239,7 +239,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
                     children: [
                       Icon(Icons.savings_outlined, size: 16, color: AppColors.success),
                       SizedBox(width: 8),
-                      Text('Save 50% vs monthly — 7-day free trial',
+                      Text('Save 48% vs monthly — 7-day free trial',
                         style: TextStyle(
                           fontSize: 13, color: AppColors.success, fontWeight: FontWeight.w600)),
                     ],
@@ -298,8 +298,9 @@ class _Feature extends StatelessWidget {
     child: Row(children: [
       Text(icon, style: const TextStyle(fontSize: 20)),
       const SizedBox(width: 12),
-      Text(text, style: const TextStyle(
-        fontSize: 15, fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
+      Expanded(child: Text(text, style: const TextStyle(
+        fontSize: 15, fontWeight: FontWeight.w500,
+        color: Color(0xFF374151)))),  // 고급감 있는 다크 그레이 (textPrimary보다 한 톤 밝게)
     ]),
   );
 }

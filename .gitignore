@@ -48,3 +48,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+functions/.env
+
+# Android signing — NEVER commit these
+android/key.properties
+android/klexi-release.jks

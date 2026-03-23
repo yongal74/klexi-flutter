@@ -274,7 +274,7 @@ final List<Word> level1_part2Words = [
   Word(id: '1-671', korean: '시작하다', english: 'To start / To begin', level: 1, partOfSpeech: 'verb', example: '수업이 시작해요.', exampleTranslation: 'The class starts.', pronunciation: 'sijakhada', category: 'Basic Verbs'),
   Word(id: '1-672', korean: '준비하다', english: 'To prepare', level: 1, partOfSpeech: 'verb', example: '시험을 준비해요.', exampleTranslation: 'I prepare for the exam.', pronunciation: 'junbihada', category: 'Basic Verbs'),
   Word(id: '1-673', korean: '결혼하다', english: 'To marry', level: 1, partOfSpeech: 'verb', example: '내년에 결혼해요.', exampleTranslation: 'I', pronunciation: 'gyeolhonhada', category: 'Basic Verbs'),
-  Word(id: '1-674', korean: '이사하다', english: 'To move (house)', level: 1, partOfSpeech: 'verb', example: '다음 달에 이사해요.', exampleTranslation: 'I', pronunciation: 'isahada', category: 'Basic Verbs'),
+  Word(id: '1-674', korean: '이사하다', english: 'To move (house)', level: 1, partOfSpeech: 'verb', example: '다음 달에 이사해요.', exampleTranslation: "I'm moving next month.", pronunciation: 'isahada', category: 'Basic Verbs'),
   Word(id: '1-675', korean: '운전하다', english: 'To drive', level: 1, partOfSpeech: 'verb', example: '차를 운전해요.', exampleTranslation: 'I drive a car.', pronunciation: 'unjeonhada', category: 'Basic Verbs'),
   Word(id: '1-676', korean: '세수하다', english: 'To wash one', level: 1, partOfSpeech: 'verb', example: '아침에 세수해요.', exampleTranslation: 'I wash my face in the morning.', pronunciation: 'sesuhada', category: 'Basic Verbs'),
   Word(id: '1-677', korean: '샤워하다', english: 'To take a shower', level: 1, partOfSpeech: 'verb', example: '저녁에 샤워해요.', exampleTranslation: 'I take a shower in the evening.', pronunciation: 'syawohada', category: 'Basic Verbs'),
