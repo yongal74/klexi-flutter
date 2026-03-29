@@ -1,0 +1,84 @@
+name: klexi_flutter
+description: "Klexi — Learn Korean through sentences. TOPIK 1–6, Word Network, AI chat."
+publish_to: 'none'
+version: 1.0.6+36
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Navigation
+  go_router: ^14.6.3
+
+  # State Management
+  flutter_riverpod: ^2.6.1
+
+  # Local Storage
+  hive_flutter: ^1.1.0
+
+  # Auth — Google Sign-In (PRIMARY)
+  google_sign_in: ^6.2.2
+
+  # Firebase
+  firebase_core: ^3.8.1
+  firebase_messaging: ^15.1.6
+  firebase_auth: ^5.3.4
+
+  # Animations
+  flutter_animate: ^4.5.0
+
+  # Fonts
+  google_fonts: ^6.2.1
+
+  # TTS
+  flutter_tts: ^4.2.0       # device offline fallback
+  just_audio: ^0.9.40        # CLOVA/Google TTS MP3 playback
+
+  # HTTP
+  dio: ^5.8.0+1
+  http: ^1.2.2
+
+  # Audio Recording (Pronunciation)
+  record: ^6.2.0
+  audioplayers: ^6.4.0
+
+  # Icons
+  flutter_svg: ^2.0.10+1
+
+  # URL Launcher (Polar 결제 페이지 열기)
+  url_launcher: ^6.3.1
+
+  # Notifications
+  flutter_local_notifications: ^18.0.0
+  timezone: ^0.9.4
+
+  # Utilities
+  shared_preferences: ^2.5.3
+  path_provider: ^2.1.5
+  intl: ^0.20.2
+  uuid: ^4.5.1
+  collection: ^1.19.1
+
+  # UI Extras
+  shimmer: ^3.0.0
+  cached_network_image: ^3.4.1
+  flutter_markdown: ^0.7.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  mockito: ^5.4.4
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/fonts/
+    - assets/images/
+    - assets/icons/
+
+  # Fonts loaded via google_fonts package at runtime (no local .ttf needed)
