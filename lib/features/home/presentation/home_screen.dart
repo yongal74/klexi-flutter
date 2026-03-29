@@ -107,7 +107,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               const Text('Quick Actions',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary)),
-              const SizedBox(height: 2),
+              const SizedBox(height: AppSpacing.md),
               _QuickActionsGrid(),
 
               // ── Sentence spotlight ─────────────────────

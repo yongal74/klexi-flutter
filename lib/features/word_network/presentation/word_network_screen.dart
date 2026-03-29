@@ -194,9 +194,9 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
       for (final n in _nodes) {
         if (n.pinned) continue;
         final h = n.word.id.hashCode & 0xFFF;
-        // Ambient sine wobble (±6px) — visible at overview zoom
-        var dx = math.sin(t * 0.22 + h * 0.009) * 6.0;
-        var dy = math.cos(t * 0.28 + h * 0.011) * 6.0;
+        // Ambient sine wobble (±10px) — Obsidian-style floating feel
+        var dx = math.sin(t * 0.18 + h * 0.009) * 10.0;
+        var dy = math.cos(t * 0.22 + h * 0.011) * 10.0;
         // Cursor/touch repulsion
         if (cursorG != null) {
           final cdx = n.basePos.dx - cursorG.dx;
@@ -280,9 +280,10 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
   void _onTapUp(TapUpDetails d) {
     if (_draggedNode != null) return;
     final graphPos = _screenToGraph(d.localPosition);
-    final extraHit = (22.0 / _scale).clamp(0.0, 28.0);
+    // Always ensure at least 20 screen-px hit area regardless of zoom level
+    final minHitGraphPx = 20.0 / _scale;
     final hit = _visibleNodes.cast<_Node?>().firstWhere(
-      (n) => (n!.pos - graphPos).distance < _nodeRadius(n.word) + extraHit,
+      (n) => (n!.pos - graphPos).distance < _nodeRadius(n.word) + minHitGraphPx,
       orElse: () => null,
     );
     setState(() => _selected = hit == _selected ? null : hit);
@@ -743,8 +744,8 @@ class _GraphPainter extends CustomPainter {
           ..strokeWidth = 1.4,
       );
 
-      // Obsidian style: show Korean label when selected, hovered, dragged, or zoomed in moderately
-      final showLabel = isSel || isHov || isDrag || scale > 1.0;
+      // Obsidian style: show Korean label when selected, hovered, dragged, or zoomed in enough
+      final showLabel = isSel || isHov || isDrag || scale > 0.4;
       if (showLabel) {
         final fs = isSel ? 13.0 : (scale > 4.0 ? 11.0 : 9.0);
         final tp = TextPainter(
