@@ -226,6 +226,7 @@ class _QuickActionsGrid extends ConsumerWidget {
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
       crossAxisCount: 2,
       crossAxisSpacing: AppSpacing.listGap,
       mainAxisSpacing: AppSpacing.listGap,

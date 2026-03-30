@@ -71,6 +71,10 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
   _Node? _draggedNode;
   Offset? _hoverPos;
 
+  // Tap tracking (replaces onTapUp — ScaleGesture wins on mobile)
+  Offset? _tapStartFocal;
+  bool _tapMoved = false;
+
   // Physics ticker (replaces AnimationController.addListener)
   late Ticker _ticker;
   int _tick = 0;
@@ -180,10 +184,6 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
     _tick++;
 
     final hasCursor = _hoverPos != null;
-    final hasDrag = _draggedNode != null;
-    // Run every 3 frames for smooth ambient motion; every frame when cursor active
-    if (!hasCursor && !hasDrag && _tick % 3 != 0) return;
-
     final t = elapsed.inMilliseconds / 1000.0;
     // Convert hover/touch pos to graph space once
     final cursorG = hasCursor ? _screenToGraph(_hoverPos!) : null;
@@ -194,9 +194,9 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
       for (final n in _nodes) {
         if (n.pinned) continue;
         final h = n.word.id.hashCode & 0xFFF;
-        // Ambient sine wobble (±10px) — Obsidian-style floating feel
-        var dx = math.sin(t * 0.18 + h * 0.009) * 10.0;
-        var dy = math.cos(t * 0.22 + h * 0.011) * 10.0;
+        // Ambient sine wobble (±5px) — smooth 60fps Obsidian-style float
+        var dx = math.sin(t * 0.18 + h * 0.009) * 5.0;
+        var dy = math.cos(t * 0.22 + h * 0.011) * 5.0;
         // Cursor/touch repulsion
         if (cursorG != null) {
           final cdx = n.basePos.dx - cursorG.dx;
@@ -236,13 +236,12 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
   // ── Gestures ──────────────────────────────────────────────
 
   void _onScaleStart(ScaleStartDetails d) {
-    // Only try to drag individual nodes when zoomed in enough.
-    // At low zoom levels (overview), cap the hit radius so most touches
-    // go to pan/zoom instead of accidentally grabbing a node.
     _draggedNode = null;
+    _tapStartFocal = d.focalPoint;
+    _tapMoved = false;
+    // Only drag nodes when zoomed in (scale > 0.4); taps at any zoom handled in _onScaleEnd
     if (_scale > 0.4) {
       final graphPos = _screenToGraph(d.focalPoint);
-      // Max hit zone = 22 screen-px, but never more than 28 graph-px
       final extraHit = (22.0 / _scale).clamp(0.0, 28.0);
       final hit = _visibleNodes.cast<_Node?>().firstWhere(
         (n) => (n!.pos - graphPos).distance < _nodeRadius(n.word) + extraHit,
@@ -251,7 +250,7 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
       if (hit != null) {
         _draggedNode = hit;
         hit.pinned = true;
-        return; // don't update _panStart / _scaleStart
+        return;
       }
     }
     _scaleStart = _scale;
@@ -259,6 +258,11 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
   }
 
   void _onScaleUpdate(ScaleUpdateDetails d) {
+    // Mark as moved if finger drifted more than 8 screen-px (not a tap)
+    if (_tapStartFocal != null &&
+        (d.focalPoint - _tapStartFocal!).distance > 8.0) {
+      _tapMoved = true;
+    }
     if (_draggedNode != null) {
       setState(() {
         _draggedNode!.pos = _screenToGraph(d.focalPoint);
@@ -274,19 +278,19 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
   void _onScaleEnd(ScaleEndDetails _) {
     _draggedNode?.pinned = false;
     _draggedNode = null;
-  }
 
-
-  void _onTapUp(TapUpDetails d) {
-    if (_draggedNode != null) return;
-    final graphPos = _screenToGraph(d.localPosition);
-    // Always ensure at least 20 screen-px hit area regardless of zoom level
-    final minHitGraphPx = 20.0 / _scale;
-    final hit = _visibleNodes.cast<_Node?>().firstWhere(
-      (n) => (n!.pos - graphPos).distance < _nodeRadius(n.word) + minHitGraphPx,
-      orElse: () => null,
-    );
-    setState(() => _selected = hit == _selected ? null : hit);
+    // Tap detection: no significant movement → treat as tap, select node
+    if (!_tapMoved && _tapStartFocal != null) {
+      final graphPos = _screenToGraph(_tapStartFocal!);
+      final hitR = (20.0 / _scale).clamp(4.0, 150.0);
+      final hit = _visibleNodes.cast<_Node?>().firstWhere(
+        (n) => (n!.pos - graphPos).distance < _nodeRadius(n.word) + hitR,
+        orElse: () => null,
+      );
+      setState(() => _selected = hit == _selected ? null : hit);
+    }
+    _tapStartFocal = null;
+    _tapMoved = false;
   }
 
   // Mouse wheel zoom — zoom towards cursor position
@@ -399,7 +403,6 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
                   onScaleStart: _onScaleStart,
                   onScaleUpdate: _onScaleUpdate,
                   onScaleEnd: _onScaleEnd,
-                  onTapUp: _onTapUp,
                   child: RepaintBoundary(
                     child: CustomPaint(
                       painter: _GraphPainter(
@@ -745,9 +748,9 @@ class _GraphPainter extends CustomPainter {
       );
 
       // Obsidian style: show Korean label when selected, hovered, dragged, or zoomed in enough
-      final showLabel = isSel || isHov || isDrag || scale > 0.4;
+      final showLabel = isSel || isHov || isDrag || scale > 0.2;
       if (showLabel) {
-        final fs = isSel ? 13.0 : (scale > 4.0 ? 11.0 : 9.0);
+        final fs = isSel ? 13.0 : (scale > 1.0 ? 11.0 : scale > 0.5 ? 10.0 : 9.0);
         final tp = TextPainter(
           text: TextSpan(
             text: n.word.korean,
