@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/router/app_router.dart';
@@ -8,6 +9,26 @@ import '../../../core/services/auth_service.dart';
 import '../../../core/services/daily_session_service.dart';
 import '../../../core/services/polar_service.dart';
 import '../../../data/repositories/word_repository.dart';
+
+// ── User TOPIK Level Provider ─────────────────────────────
+final userTopikLevelProvider =
+    StateNotifierProvider<_UserLevelNotifier, int>((ref) => _UserLevelNotifier());
+
+class _UserLevelNotifier extends StateNotifier<int> {
+  static const _key = 'userTopikLevel';
+  _UserLevelNotifier() : super(1) { _load(); }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) state = prefs.getInt(_key) ?? 1;
+  }
+
+  Future<void> setLevel(int level) async {
+    if (mounted) state = level;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_key, level);
+  }
+}
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -97,7 +118,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
               // ── Stats row ──────────────────────────────
               _StatsRow(streak: _streak, learned: _totalLearned, todayStudied: todayStudied),
-              const SizedBox(height: AppSpacing.sectionGap),
+              const SizedBox(height: AppSpacing.sm),
+
+              // ── TOPIK Level selector ───────────────────
+              const _LevelSelector(),
+              const SizedBox(height: AppSpacing.listGap),
 
               // ── Today's session card ───────────────────
               _TodayCard(onStart: () => context.push(AppRoutes.dailySession)),
@@ -298,15 +323,111 @@ class _QuickAction extends StatelessWidget {
   );
 }
 
-// ── Sentence Spotlight ────────────────────────────────────
-class _SentenceSpotlight extends ConsumerWidget {
+// ── TOPIK Level Selector ─────────────────────────────────
+class _LevelSelector extends ConsumerWidget {
+  const _LevelSelector();
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final currentLevel = ref.watch(userTopikLevelProvider);
+    final isPremium = ref.watch(isPremiumProvider);
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: List.generate(6, (i) {
+          final lvl = i + 1;
+          final locked = lvl > 1 && !isPremium;
+          final selected = lvl == currentLevel;
+          return GestureDetector(
+            onTap: () {
+              if (locked) {
+                context.push(AppRoutes.premium);
+              } else {
+                ref.read(userTopikLevelProvider.notifier).setLevel(lvl);
+              }
+            },
+            child: Container(
+              margin: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              decoration: BoxDecoration(
+                color: selected ? AppColors.primary : AppColors.surface,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                border: Border.all(
+                  color: selected ? AppColors.primary : AppColors.border,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('TOPIK $lvl',
+                    style: TextStyle(
+                      fontSize: 12, fontWeight: FontWeight.w600,
+                      color: selected
+                          ? Colors.white
+                          : (locked ? AppColors.textMuted : AppColors.textSecondary),
+                    )),
+                  if (locked) ...[
+                    const SizedBox(width: 4),
+                    const Icon(Icons.lock_rounded, size: 10, color: AppColors.textMuted),
+                  ],
+                ],
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+// ── Sentence Spotlight ────────────────────────────────────
+class _SentenceSpotlight extends ConsumerStatefulWidget {
+  const _SentenceSpotlight();
+
+  @override
+  ConsumerState<_SentenceSpotlight> createState() => _SentenceSpotlightState();
+}
+
+class _SentenceSpotlightState extends ConsumerState<_SentenceSpotlight> {
+  late final PageController _pageCtrl;
+  int _page = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageCtrl = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageCtrl.dispose();
+    super.dispose();
+  }
+
+  /// From a level's 1200 words, batch into groups of 20 per day.
+  /// Each day show 7 evenly-spaced words from that day's batch.
+  /// Full cycle: 1200 / 20 = 60 days.
+  List<dynamic> _todayWords(List<dynamic> levelWords) {
+    if (levelWords.isEmpty) return [];
+    const batchSize = 20;
+    final groupCount = (levelWords.length / batchSize).ceil();
+    final dayIndex = DateTime.now().millisecondsSinceEpoch ~/ 86400000;
+    final groupIdx = dayIndex % groupCount;
+    final start = groupIdx * batchSize;
+    final end = (start + batchSize).clamp(0, levelWords.length);
+    final batch = levelWords.sublist(start, end);
+    // Pick 7 evenly-spaced indices from batch
+    const picks = [0, 3, 6, 9, 12, 15, 18];
+    return picks.where((p) => p < batch.length).map((p) => batch[p]).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final userLevel = ref.watch(userTopikLevelProvider);
     final repo = ref.read(wordRepositoryProvider);
-    final words = repo.getAllWords();
-    // Pick a daily-stable word for the spotlight
-    final seed = DateTime.now().millisecondsSinceEpoch ~/ 86400000;
-    final word = words.isEmpty ? null : words[seed % words.length];
+    final levelWords = repo.getAllWords().where((w) => w.level == userLevel).toList();
+    final words = _todayWords(levelWords);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -315,52 +436,105 @@ class _SentenceSpotlight extends ConsumerWidget {
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700,
             color: AppColors.textPrimary)),
         const SizedBox(height: AppSpacing.md),
-        Container(
-          padding: const EdgeInsets.all(AppSpacing.cardPad),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
-            border: Border.all(color: AppColors.border),
-            boxShadow: AppColors.subtleShadow,
+        SizedBox(
+          height: 175,
+          child: PageView.builder(
+            controller: _pageCtrl,
+            itemCount: words.isEmpty ? 1 : words.length,
+            onPageChanged: (i) => setState(() => _page = i),
+            itemBuilder: (context, i) {
+              if (words.isEmpty) {
+                return _buildEmptyCard();
+              }
+              return _buildWordCard(words[i]);
+            },
           ),
-          child: word == null
-              ? const Center(child: CircularProgressIndicator())
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: AppColors.topikBg(word.level),
-                          borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
-                        ),
-                        child: Text('TOPIK ${word.level}',
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
-                            color: AppColors.topikColor(word.level))),
-                      ),
-                    ]),
-                    const SizedBox(height: AppSpacing.md),
-                    Text(word.example,
-                      style: const TextStyle(
-                        fontFamily: 'NotoSansKR',
-                        fontSize: 20, fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary, height: 1.5)),
-                    const SizedBox(height: 6),
-                    Text(word.exampleTranslation,
-                      style: const TextStyle(
-                        fontSize: 14, color: AppColors.textSecondary, height: 1.5)),
-                    const SizedBox(height: AppSpacing.md),
-                    Wrap(spacing: 8, runSpacing: 8, children: [
-                      _WordChip(word.korean),
-                      if (word.partOfSpeech.isNotEmpty) _WordChip(word.partOfSpeech),
-                    ]),
-                  ],
-                ),
         ),
+        if (words.length > 1)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Center(child: _buildDots(words.length)),
+          ),
       ],
     );
   }
+
+  Widget _buildWordCard(dynamic word) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      padding: const EdgeInsets.all(AppSpacing.cardPad),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+        border: Border.all(color: AppColors.border),
+        boxShadow: AppColors.subtleShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppColors.topikBg(word.level),
+                borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+              ),
+              child: Text('TOPIK ${word.level}',
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
+                  color: AppColors.topikColor(word.level))),
+            ),
+          ]),
+          const SizedBox(height: AppSpacing.sm),
+          Expanded(
+            child: Text(word.example,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontFamily: 'NotoSansKR',
+                fontSize: 17, fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary, height: 1.5)),
+          ),
+          const SizedBox(height: 4),
+          Text(word.exampleTranslation,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 13, color: AppColors.textSecondary, height: 1.4)),
+          const SizedBox(height: AppSpacing.sm),
+          _WordChip(word.korean),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyCard() => Container(
+    margin: const EdgeInsets.symmetric(horizontal: 2),
+    padding: const EdgeInsets.all(AppSpacing.cardPad),
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+      border: Border.all(color: AppColors.border),
+    ),
+    child: const Center(
+      child: Text('Start a study session to see sentences here.',
+        textAlign: TextAlign.center,
+        style: TextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.5)),
+    ),
+  );
+
+  Widget _buildDots(int count) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: List.generate(count, (i) => AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      width: i == _page ? 14 : 6,
+      height: 6,
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      decoration: BoxDecoration(
+        color: i == _page ? AppColors.primary : AppColors.border,
+        borderRadius: BorderRadius.circular(3),
+      ),
+    )),
+  );
 }
 
 class _WordChip extends StatelessWidget {

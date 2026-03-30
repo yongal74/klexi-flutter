@@ -3,6 +3,7 @@
 // topic color coding, 1200-node default / full level on filter
 
 import 'dart:math' as math;
+import 'dart:ui' show PointMode;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -633,6 +634,27 @@ class _GraphPainter extends CustomPainter {
     if (nodes.isEmpty) return;
     final hov = _hovered;
 
+    // ── 0. Background dot grid (Obsidian-style) ──────────────────
+    if (scale > 0.12) {
+      const gridSpacing = 280.0; // graph-px between dots
+      final dotPaint = Paint()
+        ..color = Colors.white.withValues(alpha: 0.04)
+        ..strokeWidth = 1.5
+        ..strokeCap = StrokeCap.round;
+      final xMin = (-pan.dx / scale / gridSpacing).floor() - 1;
+      final xMax = ((size.width - pan.dx) / scale / gridSpacing).ceil() + 1;
+      final yMin = (-pan.dy / scale / gridSpacing).floor() - 1;
+      final yMax = ((size.height - pan.dy) / scale / gridSpacing).ceil() + 1;
+      final pts = <Offset>[];
+      for (var xi = xMin; xi <= xMax; xi++) {
+        for (var yi = yMin; yi <= yMax; yi++) {
+          pts.add(Offset(xi * gridSpacing * scale + pan.dx,
+                         yi * gridSpacing * scale + pan.dy));
+        }
+      }
+      canvas.drawPoints(PointMode.points, pts, dotPaint);
+    }
+
     // Active node = selected or hovered (for Obsidian-style edge highlight)
     final activeNode = selected ?? hov;
     final activeId = activeNode?.word.id;
@@ -696,19 +718,26 @@ class _GraphPainter extends CustomPainter {
       }
     }
 
-    // ── 3. Highlighted connection lines for active node (drawn on top) ──
+    // ── 3. Highlighted connection lines + glow for active node ──
     if (activeId != null && activeRelIds.isNotEmpty) {
       final activePos = posMap[activeId];
       if (activePos != null) {
-        final hlPaint = Paint()
+        final activeColor = (activeNode != null ? nodeColorFn(activeNode) : Colors.white);
+        // Glow pass (wide, dim)
+        final glowPaint = Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 2.0
-          ..color = (activeNode != null ? nodeColorFn(activeNode) : Colors.white)
-              .withOpacity(0.9);
+          ..strokeWidth = 6.0
+          ..color = activeColor.withValues(alpha: 0.12);
+        // Core pass (thin, bright)
+        final corePaint = Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.8
+          ..color = activeColor.withValues(alpha: 0.95);
         for (final relId in activeRelIds) {
           final rp = posMap[relId];
           if (rp == null) continue;
-          canvas.drawLine(activePos, rp, hlPaint);
+          canvas.drawLine(activePos, rp, glowPaint);
+          canvas.drawLine(activePos, rp, corePaint);
         }
       }
     }
@@ -726,29 +755,39 @@ class _GraphPainter extends CustomPainter {
       final isDrag = dragged?.word.id == n.word.id;
       final highlight = isSel || isHov || isDrag;
 
+      // Obsidian glow: outer soft rings (always subtle, strong on highlight)
       if (highlight) {
-        canvas.drawCircle(p, r + 14,
-            Paint()..color = color.withOpacity(0.14));
-        canvas.drawCircle(p, r + 7,
-            Paint()..color = color.withOpacity(0.22));
+        canvas.drawCircle(p, r + 18,
+            Paint()..color = color.withValues(alpha: 0.08));
+        canvas.drawCircle(p, r + 11,
+            Paint()..color = color.withValues(alpha: 0.18));
+        canvas.drawCircle(p, r + 5,
+            Paint()..color = color.withValues(alpha: 0.32));
+      } else {
+        // Subtle always-on glow for all nodes (Obsidian feel)
+        canvas.drawCircle(p, r + 4,
+            Paint()..color = color.withValues(alpha: 0.08));
       }
 
       canvas.drawCircle(
         p, r,
-        Paint()..color = (isSel || isDrag) ? color : color.withOpacity(isHov ? 0.88 : 0.68),
+        Paint()..color = (isSel || isDrag) ? color : color.withValues(alpha: isHov ? 0.92 : 0.72),
       );
       canvas.drawCircle(
         p, r,
         Paint()
           ..color = highlight
-              ? Colors.white.withOpacity(0.45)
-              : color.withOpacity(0.30)
+              ? Colors.white.withValues(alpha: 0.5)
+              : color.withValues(alpha: 0.35)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.4,
+          ..strokeWidth = highlight ? 1.6 : 1.2,
       );
 
-      // Obsidian style: show Korean label when selected, hovered, dragged, or zoomed in enough
-      final showLabel = isSel || isHov || isDrag || scale > 0.2;
+      // Label opacity: fade in as scale increases (0.2→0.35 range)
+      final labelAlpha = isSel || isHov || isDrag
+          ? 1.0
+          : ((scale - 0.2) / 0.15).clamp(0.0, 1.0);
+      final showLabel = labelAlpha > 0.0;
       if (showLabel) {
         final fs = isSel ? 13.0 : (scale > 1.0 ? 11.0 : scale > 0.5 ? 10.0 : 9.0);
         final tp = TextPainter(
@@ -758,12 +797,11 @@ class _GraphPainter extends CustomPainter {
               fontFamily: 'NotoSansKR',
               fontSize: fs,
               fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
-              color: Colors.white,
+              color: Colors.white.withValues(alpha: labelAlpha),
             ),
           ),
           textDirection: TextDirection.ltr,
         )..layout(maxWidth: 80);
-        // Draw label below dot (not inside — dot is small)
         tp.paint(canvas, p + Offset(-tp.width / 2, r + 2));
       }
 

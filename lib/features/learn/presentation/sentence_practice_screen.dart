@@ -11,6 +11,7 @@ import '../../../core/router/app_router.dart';
 import '../../../core/services/daily_session_service.dart'
     show dailySessionServiceProvider, lastSessionWordsProvider, DailySessionService;
 import '../../../core/services/polar_service.dart';
+import '../../../core/utils/tts_service.dart';
 import '../../../data/content/sentence_groups_data.dart';
 import '../../../data/content/sentence_groups_registry.dart';
 import '../../../data/models/word.dart';
@@ -33,6 +34,7 @@ class _SentencePracticeScreenState
   int _cardIndex = 0;
   bool _revealed = false;
   bool _allComplete = false;
+  bool _ttsPlaying = false;
 
   @override
   void initState() {
@@ -102,6 +104,17 @@ class _SentencePracticeScreenState
   void _reveal() {
     if (_revealed) return;
     setState(() => _revealed = true);
+  }
+
+  Future<void> _speak(String text) async {
+    if (_ttsPlaying) {
+      await ref.read(ttsServiceProvider).stop();
+      setState(() => _ttsPlaying = false);
+      return;
+    }
+    setState(() => _ttsPlaying = true);
+    await ref.read(ttsServiceProvider).speak(text, isPremium: true);
+    if (mounted) setState(() => _ttsPlaying = false);
   }
 
   void _next() {
@@ -211,6 +224,26 @@ class _SentencePracticeScreenState
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      // TTS button
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: GestureDetector(
+                          onTap: () => _speak(sentence.korean),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                            ),
+                            child: Icon(
+                              _ttsPlaying ? Icons.stop_rounded : Icons.volume_up_rounded,
+                              size: 18,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
                       // Korean sentence with highlights
                       _buildHighlightedSentence(sentence),
                       const SizedBox(height: AppSpacing.x2l),
