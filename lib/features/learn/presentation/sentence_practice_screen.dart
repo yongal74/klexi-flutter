@@ -362,8 +362,11 @@ class _SentencePracticeScreenState
       spans.add(TextSpan(
         text: word,
         style: const TextStyle(
-          color: AppColors.primary,
+          color: AppColors.textPrimary,
           fontWeight: FontWeight.w800,
+          decoration: TextDecoration.underline,
+          decorationColor: AppColors.primary,
+          decorationThickness: 2.5,
         ),
       ));
       remaining = remaining.substring(idx + word.length);
