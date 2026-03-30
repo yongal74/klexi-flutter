@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/services/analytics_service.dart';
 import '../../../core/utils/tts_service.dart';
 import '../../../data/models/word.dart';
 import '../../../data/repositories/word_repository.dart';
@@ -27,6 +28,7 @@ class _WordCardScreenState extends ConsumerState<WordCardScreen> {
     final words = repo.getAllWords();
     final w = words.firstWhere((w) => w.id == widget.wordId, orElse: () => words.first);
     setState(() => _word = w);
+    AnalyticsService.instance.logWordCardViewed(wordId: w.id, topikLevel: w.level);
   }
 
   @override

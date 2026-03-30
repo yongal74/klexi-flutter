@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/services/analytics_service.dart';
 import '../../../core/services/daily_session_service.dart'
     show dailySessionServiceProvider, lastSessionWordsProvider, DailySessionService;
 import '../../../core/services/polar_service.dart';
@@ -107,6 +108,7 @@ class _SentencePracticeScreenState
   }
 
   Future<void> _speak(String text) async {
+    AnalyticsService.instance.logTtsPlayed(source: 'sentence_practice');
     if (_ttsPlaying) {
       await ref.read(ttsServiceProvider).stop();
       setState(() => _ttsPlaying = false);
@@ -119,6 +121,9 @@ class _SentencePracticeScreenState
 
   void _next() {
     if (_cardIndex + 1 >= _sentences.length) {
+      AnalyticsService.instance.logSentencePracticeCompleted(
+        topikLevel: _group?.level ?? 1,
+      );
       setState(() => _allComplete = true);
     } else {
       setState(() {

@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/services/analytics_service.dart';
 import '../../../core/services/polar_service.dart';
 import '../../../data/models/word.dart';
 import '../../../data/repositories/word_repository.dart';
@@ -97,6 +98,7 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
     super.initState();
     _ticker = createTicker(_onTick)..start();
     _loadWords();
+    AnalyticsService.instance.logWordNetworkOpened();
   }
 
   @override
@@ -288,6 +290,9 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
         (n) => (n!.pos - graphPos).distance < _nodeRadius(n.word) + hitR,
         orElse: () => null,
       );
+      if (hit != null && hit != _selected) {
+        AnalyticsService.instance.logWordNetworkNodeTapped(wordId: hit.word.id);
+      }
       setState(() => _selected = hit == _selected ? null : hit);
     }
     _tapStartFocal = null;

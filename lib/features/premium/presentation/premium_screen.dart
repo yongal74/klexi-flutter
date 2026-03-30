@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_config.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/services/analytics_service.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/services/polar_service.dart';
 
@@ -19,6 +20,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
 
   Future<void> _subscribe() async {
     setState(() => _loading = true);
+    AnalyticsService.instance.logCheckoutStarted(plan: _yearly ? 'yearly' : 'monthly');
     try {
       final user = ref.read(currentUserProvider);
       final email = user?.email ?? '';
@@ -60,6 +62,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
       }
       final active = await PolarService.instance.verifyByEmail(email);
       if (active && mounted) {
+        AnalyticsService.instance.logPremiumActivated(plan: _yearly ? 'yearly' : 'monthly');
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Premium activated! 🎉')));
         Navigator.pop(context);
       } else if (mounted) {
