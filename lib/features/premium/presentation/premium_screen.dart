@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_config.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/services/analytics_service.dart';
-import '../../../core/services/auth_service.dart';
-import '../../../core/services/polar_service.dart';
+import '../../../core/services/purchase_service.dart';
 
 class PremiumScreen extends ConsumerStatefulWidget {
   const PremiumScreen({super.key});
@@ -16,60 +14,23 @@ class PremiumScreen extends ConsumerStatefulWidget {
 class _PremiumScreenState extends ConsumerState<PremiumScreen> {
   bool _yearly = true;
   bool _loading = false;
-  bool _checkingPayment = false;
 
   Future<void> _subscribe() async {
     setState(() => _loading = true);
     AnalyticsService.instance.logCheckoutStarted(plan: _yearly ? 'yearly' : 'monthly');
     try {
-      final user = ref.read(currentUserProvider);
-      final email = user?.email ?? '';
-
-      if (!AppConfig.isBackendConfigured || !AppConfig.isPolarConfigured) {
-        // 개발 모드: 즉시 프리미엄 부여
-        ref.read(premiumProvider.notifier).setPremium(true);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Dev mode: Premium activated')));
-          Navigator.pop(context);
-        }
-        return;
-      }
-
-      final checkout = await PolarService.instance.createCheckout(
-        yearly: _yearly, customerEmail: email);
-      await PolarService.instance.openCheckout(checkout.checkoutUrl);
-      if (mounted) setState(() { _checkingPayment = true; _loading = false; });
-    } catch (e) {
-      if (mounted) {
-        setState(() => _loading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')));
-      }
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
-  Future<void> _verifyPayment() async {
-    setState(() => _loading = true);
-    try {
-      final user = ref.read(currentUserProvider);
-      final email = user?.email ?? '';
-      if (email.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please sign in first')));
-        return;
-      }
-      final active = await PolarService.instance.verifyByEmail(email);
+      final active = await PurchaseService.instance.purchase(yearly: _yearly);
       if (active && mounted) {
         AnalyticsService.instance.logPremiumActivated(plan: _yearly ? 'yearly' : 'monthly');
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Premium activated! 🎉')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Premium activated!')));
         Navigator.pop(context);
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment not confirmed yet. Try again shortly.')));
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Verify failed: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Purchase failed: $e')));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -78,21 +39,15 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
   Future<void> _restore() async {
     setState(() => _loading = true);
     try {
-      final user = ref.read(currentUserProvider);
-      final email = user?.email ?? '';
-      if (email.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sign in with Google to restore')));
-        return;
-      }
-      final ok = await PolarService.instance.verifyByEmail(email);
-      if (ok && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Subscription restored! 🎉')));
-        Navigator.pop(context);
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No active subscription found.')));
+      final ok = await PurchaseService.instance.restorePurchases();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(ok ? 'Subscription restored!' : 'No active subscription found.')));
+        if (ok) Navigator.pop(context);
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Restore failed: $e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Restore failed: $e')));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -112,7 +67,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
       ),
       body: Column(
         children: [
-          // ── Fixed hero (always visible, never scrolls away) ──
+          // ── Fixed hero ──
           Container(
             decoration: const BoxDecoration(
               gradient: AppColors.primaryGradient,
@@ -141,7 +96,7 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
             ),
           ),
 
-          // ── Scrollable benefits + plans + buttons ──
+          // ── Scrollable content ──
           Expanded(
             child: SingleChildScrollView(
               child: Column(
@@ -163,40 +118,6 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
-
-                  // 결제 완료 후 확인 섹션
-                  if (_checkingPayment)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppColors.success.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                          border: Border.all(color: AppColors.success.withOpacity(0.4)),
-                        ),
-                        child: Column(children: [
-                          const Text('Payment completed?',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-                          const SizedBox(height: 6),
-                          const Text('Tap below to activate your subscription.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-                          const SizedBox(height: 12),
-                          SizedBox(width: double.infinity, child: ElevatedButton(
-                            onPressed: _loading ? null : _verifyPayment,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.success, foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                            ),
-                            child: _loading
-                                ? const SizedBox(width: 18, height: 18,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                : const Text('Activate Premium', style: TextStyle(fontWeight: FontWeight.w700)),
-                          )),
-                        ]),
-                      ),
-                    ),
 
                   // Plan selector
                   Padding(
@@ -249,18 +170,21 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
                   // Subscribe button
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                    child: ElevatedButton(
-                      onPressed: _loading ? null : _subscribe,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _loading ? null : _subscribe,
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: _loading
+                            ? const SizedBox(width: 22, height: 22,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                            : Text(_yearly ? 'Try Free for 7 Days · then \$49.99/yr' : 'Subscribe Monthly',
+                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
                       ),
-                      child: _loading
-                          ? const SizedBox(width: 22, height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                          : Text(_yearly ? 'Try Free for 7 Days · then \$49.99/yr' : 'Subscribe Monthly',
-                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
@@ -272,10 +196,10 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
                   ),
                   Padding(
                     padding: const EdgeInsets.all(AppSpacing.lg),
-                    child: Text(
+                    child: const Text(
                       'Cancel anytime. Subscription automatically renews unless canceled.',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                      style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
                   ),
                   SizedBox(height: MediaQuery.of(context).padding.bottom),
                 ],
@@ -301,7 +225,7 @@ class _Feature extends StatelessWidget {
       const SizedBox(width: 12),
       Expanded(child: Text(text, style: const TextStyle(
         fontSize: 15, fontWeight: FontWeight.w500,
-        color: Color(0xFF374151)))),  // 고급감 있는 다크 그레이 (textPrimary보다 한 톤 밝게)
+        color: Color(0xFF374151)))),
     ]),
   );
 }

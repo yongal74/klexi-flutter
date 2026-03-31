@@ -2,7 +2,6 @@ import * as admin from "firebase-admin";
 import express from "express";
 import cors from "cors";
 import { onRequest } from "firebase-functions/v2/https";
-import { setupPolarRoutes } from "./polar";
 import { setupAIChatRoutes } from "./ai-chat";
 import { setupAITTSRoutes } from "./ai-tts";
 
@@ -26,7 +25,6 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-setupPolarRoutes(app);
 setupAIChatRoutes(app);
 setupAITTSRoutes(app);
 

@@ -1,7 +1,7 @@
 name: klexi_flutter
 description: "Klexi — Learn Korean through sentences. TOPIK 1–6, Word Network, AI chat."
 publish_to: 'none'
-version: 1.0.6+44
+version: 1.0.6+45
 
 environment:
   sdk: ^3.6.0
@@ -50,7 +50,10 @@ dependencies:
   # Icons
   flutter_svg: ^2.0.10+1
 
-  # URL Launcher (Polar 결제 페이지 열기)
+  # In-App Purchase
+  purchases_flutter: ^9.0.0
+
+  # URL Launcher
   url_launcher: ^6.3.1
 
   # Notifications
