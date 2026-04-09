@@ -69,6 +69,7 @@ class PurchaseService {
       }
       if (pkg == null) throw Exception('Package not found');
 
+      // ignore: deprecated_member_use
       final result = await Purchases.purchasePackage(pkg);
       final active = result.customerInfo.entitlements.active.containsKey('premium');
       _notifier.setPremium(active);

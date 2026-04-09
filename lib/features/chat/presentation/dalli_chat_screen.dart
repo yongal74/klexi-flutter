@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_config.dart';
 import '../../../core/constants/app_spacing.dart';
@@ -43,7 +44,27 @@ class ChatMessage {
     this.wordPills = const [],
     DateTime? time,
   }) : time = time ?? DateTime.now();
+
+  Map<String, dynamic> toJson() => {
+    'text': text,
+    'isUser': isUser,
+    'wordPills': wordPills,
+    'time': time.millisecondsSinceEpoch,
+  };
+
+  factory ChatMessage.fromJson(Map<String, dynamic> json) => ChatMessage(
+    text: json['text'] as String,
+    isUser: json['isUser'] as bool,
+    wordPills: (json['wordPills'] as List<dynamic>?)
+        ?.map((e) => e as String)
+        .toList() ?? [],
+    time: DateTime.fromMillisecondsSinceEpoch(json['time'] as int),
+  );
 }
+
+// ── 채팅 히스토리 영속화 키 ────────────────────────────────
+const _kChatHistoryKey = 'dalli_chat_history';
+const _kMaxPersistedMessages = 50;
 
 // ── Providers ─────────────────────────────────────────────
 final chatMessagesProvider = StateProvider<List<ChatMessage>>((ref) => [
@@ -67,6 +88,18 @@ class _DalliChatScreenState extends ConsumerState<DalliChatScreen> {
   final _scroll = ScrollController();
   final _focus = FocusNode();
 
+  // 전송 중 여부 — 중복 요청 방지
+  bool _sending = false;
+
+  // SSE 타임아웃 상수
+  static const _kSseTimeout = Duration(seconds: 30);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHistory();
+  }
+
   @override
   void dispose() {
     _ctrl.dispose();
@@ -75,39 +108,80 @@ class _DalliChatScreenState extends ConsumerState<DalliChatScreen> {
     super.dispose();
   }
 
+  // ── 히스토리 복원 ──────────────────────────────────────
+  Future<void> _loadHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_kChatHistoryKey);
+      if (raw == null) return;
+      final list = (jsonDecode(raw) as List<dynamic>)
+          .map((e) => ChatMessage.fromJson(e as Map<String, dynamic>))
+          .toList();
+      if (list.isNotEmpty && mounted) {
+        ref.read(chatMessagesProvider.notifier).state = list;
+      }
+    } catch (e) {
+      debugPrint('[Dalli] 히스토리 로드 실패: $e');
+    }
+  }
+
+  // ── 히스토리 저장 ──────────────────────────────────────
+  Future<void> _saveHistory(List<ChatMessage> messages) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final toSave = messages.length > _kMaxPersistedMessages
+          ? messages.sublist(messages.length - _kMaxPersistedMessages)
+          : messages;
+      await prefs.setString(
+        _kChatHistoryKey,
+        jsonEncode(toSave.map((m) => m.toJson()).toList()),
+      );
+    } catch (e) {
+      debugPrint('[Dalli] 히스토리 저장 실패: $e');
+    }
+  }
+
   // 이전 메시지들 (API 호출용)
   final List<Map<String, String>> _history = [];
 
   void _send() async {
     final text = _ctrl.text.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty || _sending) return;
+
+    setState(() => _sending = true);
     _ctrl.clear();
 
     final msgs = ref.read(chatMessagesProvider.notifier);
-    msgs.update((s) => [...s, ChatMessage(text: text, isUser: true)]);
+    final newMessages = [...ref.read(chatMessagesProvider), ChatMessage(text: text, isUser: true)];
+    msgs.state = newMessages;
     _history.add({'role': 'user', 'content': text});
     _scrollDown();
+    await _saveHistory(newMessages);
 
     ref.read(dalliTypingProvider.notifier).state = true;
 
     if (!AppConfig.isBackendConfigured) {
-      // 개발 모드: 즉각 응답
       await Future.delayed(const Duration(milliseconds: 800));
       ref.read(dalliTypingProvider.notifier).state = false;
       final reply = ChatMessage(
         text: 'Backend URL not configured. Edit AppConfig.backendUrl.',
         isUser: false,
       );
-      msgs.update((s) => [...s, reply]);
+      final updated = [...ref.read(chatMessagesProvider), reply];
+      msgs.state = updated;
+      await _saveHistory(updated);
       _scrollDown();
+      if (mounted) setState(() => _sending = false);
       return;
     }
 
+    http.Client? client;
     try {
-      // SSE 스트리밍 호출
       final userLevel = ref.read(userTopikLevelProvider);
       final mode = ref.read(dalliModeProvider);
       final uri = Uri.parse('${AppConfig.backendUrl}/api/ai-chat');
+
+      client = http.Client();
       final request = http.Request('POST', uri)
         ..headers['Content-Type'] = 'application/json'
         ..body = json.encode({
@@ -116,48 +190,70 @@ class _DalliChatScreenState extends ConsumerState<DalliChatScreen> {
           'mode': mode.name,
         });
 
-      final response = await http.Client().send(request);
+      // 타임아웃 적용
+      final response = await client.send(request).timeout(
+        _kSseTimeout,
+        onTimeout: () => throw TimeoutException('서버 응답 시간 초과'),
+      );
 
       String accumulated = '';
       ref.read(dalliTypingProvider.notifier).state = false;
 
-      // 스트리밍 응답 파싱 (SSE 형식: "data: {...}\n\n")
-      await for (final chunk in response.stream.transform(utf8.decoder)) {
+      // SSE 스트림 — 타임아웃 포함
+      await response.stream
+          .transform(utf8.decoder)
+          .timeout(_kSseTimeout, onTimeout: (sink) => sink.close())
+          .forEach((chunk) {
         for (final line in chunk.split('\n')) {
           if (!line.startsWith('data: ')) continue;
           final payload = line.substring(6).trim();
           if (payload.isEmpty) continue;
           try {
             final parsed = json.decode(payload) as Map<String, dynamic>;
-            if (parsed['done'] == true) break;
+            if (parsed['done'] == true) return;
             final content = parsed['content'] as String? ?? '';
             accumulated += content;
 
-            // 실시간으로 마지막 메시지 업데이트
             final current = ref.read(chatMessagesProvider);
             if (current.isNotEmpty && !current.last.isUser) {
-              msgs.update((s) => [
-                ...s.sublist(0, s.length - 1),
+              msgs.state = [
+                ...current.sublist(0, current.length - 1),
                 ChatMessage(text: accumulated, isUser: false),
-              ]);
+              ];
             } else {
-              msgs.update((s) => [...s, ChatMessage(text: accumulated, isUser: false)]);
+              msgs.state = [...current, ChatMessage(text: accumulated, isUser: false)];
             }
             _scrollDown();
           } catch (_) {}
         }
-      }
+      });
 
       if (accumulated.isNotEmpty) {
         _history.add({'role': 'assistant', 'content': accumulated});
+        await _saveHistory(ref.read(chatMessagesProvider));
       }
+    } on TimeoutException {
+      ref.read(dalliTypingProvider.notifier).state = false;
+      final updated = [...ref.read(chatMessagesProvider), ChatMessage(
+        text: '응답 시간이 초과되었습니다. 다시 시도해 주세요.',
+        isUser: false,
+      )];
+      msgs.state = updated;
+      await _saveHistory(updated);
+      _scrollDown();
     } catch (e) {
       ref.read(dalliTypingProvider.notifier).state = false;
-      msgs.update((s) => [...s, ChatMessage(
+      final updated = [...ref.read(chatMessagesProvider), ChatMessage(
         text: 'Connection error. Check your internet connection.',
         isUser: false,
-      )]);
+      )];
+      msgs.state = updated;
+      await _saveHistory(updated);
       _scrollDown();
+    } finally {
+      // Client 반드시 닫기 — 소켓 누수 방지
+      client?.close();
+      if (mounted) setState(() => _sending = false);
     }
   }
 
@@ -214,7 +310,6 @@ class _DalliChatScreenState extends ConsumerState<DalliChatScreen> {
                     if (typing) ...[
                       const _TypingIndicator(),
                     ] else if (lastMsg != null) ...[
-                      // Dalli's current message — large
                       Text(
                         lastMsg.text,
                         textAlign: TextAlign.center,
@@ -245,6 +340,7 @@ class _DalliChatScreenState extends ConsumerState<DalliChatScreen> {
               controller: _ctrl,
               focusNode: _focus,
               onSend: _send,
+              sending: _sending,
             ),
           ],
         ),
@@ -272,7 +368,6 @@ class _Header extends StatelessWidget {
                 child: const Icon(Icons.arrow_back_ios, color: Colors.white70, size: 20),
               ),
               const SizedBox(width: 12),
-              // Dalli avatar
               Container(
                 width: 40, height: 40,
                 decoration: BoxDecoration(
@@ -299,7 +394,6 @@ class _Header extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          // Mode selector
           SizedBox(
             height: 36,
             child: ListView(
@@ -422,11 +516,13 @@ class _InputBar extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final VoidCallback onSend;
+  final bool sending;
 
   const _InputBar({
     required this.controller,
     required this.focusNode,
     required this.onSend,
+    required this.sending,
   });
 
   @override
@@ -451,8 +547,9 @@ class _InputBar extends StatelessWidget {
                 controller: controller,
                 focusNode: focusNode,
                 style: const TextStyle(color: Colors.white, fontSize: 15),
+                enabled: !sending,
                 decoration: InputDecoration(
-                  hintText: 'Type a message…',
+                  hintText: sending ? 'Dalli is responding…' : 'Type a message…',
                   hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
@@ -460,20 +557,30 @@ class _InputBar extends StatelessWidget {
                   fillColor: Colors.transparent,
                   filled: true,
                 ),
-                onSubmitted: (_) => onSend(),
+                onSubmitted: sending ? null : (_) => onSend(),
               ),
             ),
           ),
           const SizedBox(width: 10),
           GestureDetector(
-            onTap: onSend,
-            child: Container(
+            onTap: sending ? null : onSend,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
               width: 46, height: 46,
               decoration: BoxDecoration(
-                gradient: AppColors.primaryGradient,
+                gradient: sending ? null : AppColors.primaryGradient,
+                color: sending ? Colors.white12 : null,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.arrow_upward_rounded, color: Colors.white, size: 20),
+              child: sending
+                  ? const Center(
+                      child: SizedBox(
+                        width: 20, height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white54),
+                      ))
+                  : const Icon(Icons.arrow_upward_rounded,
+                      color: Colors.white, size: 20),
             ),
           ),
         ],

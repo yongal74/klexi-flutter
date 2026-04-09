@@ -41,9 +41,9 @@ const admin = __importStar(require("firebase-admin"));
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const https_1 = require("firebase-functions/v2/https");
-const polar_1 = require("./polar");
 const ai_chat_1 = require("./ai-chat");
 const ai_tts_1 = require("./ai-tts");
+const pronunciation_1 = require("./pronunciation");
 admin.initializeApp();
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({
@@ -59,8 +59,8 @@ app.use(express_1.default.json());
 app.get("/api/health", (_req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
-(0, polar_1.setupPolarRoutes)(app);
 (0, ai_chat_1.setupAIChatRoutes)(app);
 (0, ai_tts_1.setupAITTSRoutes)(app);
+(0, pronunciation_1.setupPronunciationRoutes)(app);
 exports.api = (0, https_1.onRequest)({ timeoutSeconds: 60, memory: "512MiB", region: "us-central1", invoker: "public" }, app);
 //# sourceMappingURL=index.js.map

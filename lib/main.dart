@@ -15,11 +15,15 @@ import 'core/services/analytics_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Firebase: skip on web/unsupported platforms gracefully
+  // Firebase 초기화 — 실패 시 로그 출력 후 앱 계속 실행
   try {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
     await AnalyticsService.instance.init();
-  } catch (_) {}
+  } catch (e, stack) {
+    debugPrint('[Firebase] 초기화 실패: $e');
+    debugPrint('[Firebase] $stack');
+    // Crashlytics 없이도 앱은 계속 실행됨
+  }
 
   await Hive.initFlutter();
   Hive.registerAdapter(WordAdapter());

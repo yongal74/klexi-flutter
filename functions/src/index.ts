@@ -4,6 +4,7 @@ import cors from "cors";
 import { onRequest } from "firebase-functions/v2/https";
 import { setupAIChatRoutes } from "./ai-chat";
 import { setupAITTSRoutes } from "./ai-tts";
+import { setupPronunciationRoutes } from "./pronunciation";
 
 admin.initializeApp();
 
@@ -27,5 +28,6 @@ app.get("/api/health", (_req, res) => {
 
 setupAIChatRoutes(app);
 setupAITTSRoutes(app);
+setupPronunciationRoutes(app);
 
 export const api = onRequest({ timeoutSeconds: 60, memory: "512MiB", region: "us-central1", invoker: "public" }, app);

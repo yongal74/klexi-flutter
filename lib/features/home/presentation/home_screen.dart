@@ -50,11 +50,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Future<void> _load() async {
     final session = ref.read(dailySessionServiceProvider);
-    // init() already called in main.dart; safe to call again (idempotent via Hive.openBox)
-    final streak = await session.getCurrentStreak();
-    final total  = await session.getTotalWordsStudied();
-    final today  = await session.getTodayStudiedCount();
-    if (mounted) setState(() { _streak = streak; _totalLearned = total; _todayStudied = today; });
+    // 병렬 호출로 성능 최적화 — setState는 1회만
+    final results = await Future.wait([
+      session.getCurrentStreak(),
+      session.getTotalWordsStudied(),
+      session.getTodayStudiedCount(),
+    ]);
+    if (mounted) {
+      setState(() {
+        _streak = results[0];
+        _totalLearned = results[1];
+        _todayStudied = results[2];
+      });
+    }
   }
 
   @override
@@ -89,7 +97,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             actions: [
               IconButton(
                 icon: const Icon(Icons.notifications_outlined, color: AppColors.textSecondary),
-                onPressed: () {},
+                onPressed: () => context.push(AppRoutes.notifSettings),
               ),
               Padding(
                 padding: const EdgeInsets.only(right: 12),
@@ -212,7 +220,7 @@ class _TodayCard extends StatelessWidget {
         const Text("Today's Session",
           style: TextStyle(fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w500)),
         const SizedBox(height: 6),
-        const Text('20 new words', style: TextStyle(
+        const Text('Daily Session', style: TextStyle(
           fontSize: 26, fontWeight: FontWeight.w800, color: Colors.white)),
         const SizedBox(height: 4),
         Text('Sentence-first learning', style: TextStyle(
