@@ -1,0 +1,24 @@
+# This file configures the analyzer, which statically analyzes Dart code to
+# check for errors, warnings, and lints.
+#
+# The issues identified by the analyzer are surfaced in the UI of Dart-enabled
+# IDEs (https://dart.dev/tools#ides-and-editors). The analyzer can also be
+# invoked from the command line by running `flutter analyze`.
+
+# The following line activates a set of recommended lints for Flutter apps,
+# packages, and plugins designed to encourage good coding practices.
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  errors:
+    # Treat unused imports and variables as warnings (not errors)
+    unused_import: warning
+    unused_local_variable: warning
+    dead_code: warning
+
+linter:
+  rules:
+    # Require braces in control flow to prevent off-by-one bugs
+    curly_braces_in_flow_control_structures: true
+    # Avoid bare catches that silently swallow exceptions
+    avoid_catches_without_on_clauses: true

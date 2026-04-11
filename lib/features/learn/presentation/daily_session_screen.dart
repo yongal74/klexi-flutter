@@ -8,7 +8,7 @@ import '../../../core/services/daily_session_service.dart';
 import '../../../core/services/purchase_service.dart';
 import '../../../data/models/word.dart';
 import '../../../data/repositories/word_repository.dart';
-import '../../home/presentation/home_screen.dart' show userTopikLevelProvider;
+import '../../../core/providers/user_level_provider.dart';
 
 class DailySessionScreen extends ConsumerStatefulWidget {
   const DailySessionScreen({super.key});

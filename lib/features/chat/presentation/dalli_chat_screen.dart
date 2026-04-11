@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_config.dart';
 import '../../../core/constants/app_spacing.dart';
-import '../../home/presentation/home_screen.dart' show userTopikLevelProvider;
+import '../../../core/providers/user_level_provider.dart';
 
 // ── Mode ─────────────────────────────────────────────────
 enum DalliMode { freeChat, wordReview, rolePlay, grammarCoach }

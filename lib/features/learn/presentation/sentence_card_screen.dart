@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_config.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/services/daily_session_service.dart';
-import '../../../core/services/polar_service.dart';
+import '../../../core/services/purchase_service.dart';
 import '../../../core/utils/tts_service.dart';
+import '../../../core/providers/user_level_provider.dart';
 import '../../../data/models/word.dart';
 import '../../../data/repositories/word_repository.dart';
 
@@ -58,7 +60,7 @@ class _SentenceCardScreenState extends ConsumerState<SentenceCardScreen>
           _loading = false;
         });
       } else {
-        final seed = DateTime.now().millisecondsSinceEpoch ~/ 86400000;
+        final seed = AppConfig.daySeed;
         final shuffled = List<Word>.from(lvlWords);
         for (int i = shuffled.length - 1; i > 0; i--) {
           final j = (seed * (i + 1)) % (i + 1);
@@ -81,7 +83,8 @@ class _SentenceCardScreenState extends ConsumerState<SentenceCardScreen>
       });
     } else {
       final session = ref.read(dailySessionServiceProvider);
-      final ids = await session.getTodayWordIds();
+      final userLevel = ref.read(userTopikLevelProvider);
+      final ids = await session.getTodayWordIds(isPremium: isPremium, userLevel: userLevel);
       final all = repo.getAllWords();
       final sessionWords = all
           .where((w) => ids.contains(w.id) && (isPremium || w.level == 1))

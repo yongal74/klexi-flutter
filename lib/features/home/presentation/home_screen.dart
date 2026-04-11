@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_config.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/providers/user_level_provider.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/services/analytics_service.dart';
 import '../../../core/services/auth_service.dart';
@@ -11,25 +12,7 @@ import '../../../core/services/daily_session_service.dart';
 import '../../../core/services/purchase_service.dart';
 import '../../../data/repositories/word_repository.dart';
 
-// ── User TOPIK Level Provider ─────────────────────────────
-final userTopikLevelProvider =
-    StateNotifierProvider<_UserLevelNotifier, int>((ref) => _UserLevelNotifier());
-
-class _UserLevelNotifier extends StateNotifier<int> {
-  static const _key = 'userTopikLevel';
-  _UserLevelNotifier() : super(1) { _load(); }
-
-  Future<void> _load() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (mounted) state = prefs.getInt(_key) ?? 1;
-  }
-
-  Future<void> setLevel(int level) async {
-    if (mounted) state = level;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_key, level);
-  }
-}
+export '../../../core/providers/user_level_provider.dart' show userTopikLevelProvider;
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -425,7 +408,7 @@ class _SentenceSpotlightState extends ConsumerState<_SentenceSpotlight> {
     if (levelWords.isEmpty) return [];
     const batchSize = 20;
     final groupCount = (levelWords.length / batchSize).ceil();
-    final dayIndex = DateTime.now().millisecondsSinceEpoch ~/ 86400000;
+    final dayIndex = AppConfig.daySeed;
     final groupIdx = dayIndex % groupCount;
     final start = groupIdx * batchSize;
     final end = (start + batchSize).clamp(0, levelWords.length);

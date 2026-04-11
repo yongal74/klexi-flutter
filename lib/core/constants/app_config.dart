@@ -11,4 +11,8 @@ class AppConfig {
 
   // ── 설정 여부 확인 ────────────────────────────────────────────────────────
   static bool get isBackendConfigured => true;
+
+  // ── 날짜 시드 (오늘 기준) ─────────────────────────────────────────────────
+  static const int msPerDay = 86400000;
+  static int get daySeed => DateTime.now().millisecondsSinceEpoch ~/ msPerDay;
 }
