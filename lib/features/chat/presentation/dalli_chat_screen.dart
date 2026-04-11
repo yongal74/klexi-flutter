@@ -147,6 +147,7 @@ class _DalliChatScreenState extends ConsumerState<DalliChatScreen> {
   void _send() async {
     final text = _ctrl.text.trim();
     if (text.isEmpty || _sending) return;
+    if (!mounted) return;
 
     setState(() => _sending = true);
     _ctrl.clear();
@@ -161,7 +162,6 @@ class _DalliChatScreenState extends ConsumerState<DalliChatScreen> {
     ref.read(dalliTypingProvider.notifier).state = true;
 
     if (!AppConfig.isBackendConfigured) {
-      await Future.delayed(const Duration(milliseconds: 800));
       ref.read(dalliTypingProvider.notifier).state = false;
       final reply = ChatMessage(
         text: 'Backend URL not configured. Edit AppConfig.backendUrl.',
@@ -224,7 +224,9 @@ class _DalliChatScreenState extends ConsumerState<DalliChatScreen> {
               msgs.state = [...current, ChatMessage(text: accumulated, isUser: false)];
             }
             _scrollDown();
-          } catch (_) {}
+          } catch (e) {
+            debugPrint('[Dalli] SSE parse error: $e');
+          }
         }
       });
 

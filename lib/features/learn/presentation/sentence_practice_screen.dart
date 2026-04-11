@@ -10,7 +10,7 @@ import '../../../core/constants/app_spacing.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/services/analytics_service.dart';
 import '../../../core/services/daily_session_service.dart'
-    show dailySessionServiceProvider, lastSessionWordsProvider, DailySessionService;
+    show dailySessionServiceProvider, lastSessionWordsProvider;
 import '../../../core/services/polar_service.dart';
 import '../../../core/utils/tts_service.dart';
 import '../../../data/content/sentence_groups_data.dart';

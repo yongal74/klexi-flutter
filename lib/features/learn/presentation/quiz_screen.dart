@@ -6,8 +6,8 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/services/analytics_service.dart';
-import '../../../core/services/daily_session_service.dart' show dailySessionServiceProvider, lastSessionWordsProvider, DailySessionService;
-import '../../../core/services/polar_service.dart';
+import '../../../core/services/daily_session_service.dart' show dailySessionServiceProvider, lastSessionWordsProvider;
+import '../../../core/services/purchase_service.dart';
 import '../../../data/models/word.dart';
 import '../../../data/repositories/word_repository.dart';
 

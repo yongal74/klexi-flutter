@@ -79,7 +79,6 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
 
   // Physics ticker (replaces AnimationController.addListener)
   late Ticker _ticker;
-  int _tick = 0;
   final math.Random _rng = math.Random(42);
 
   // Search
@@ -159,7 +158,6 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
     setState(() {
       _nodes = nodes;
       _loading = false;
-      _tick = 0;
     });
 
     _resetView();
@@ -184,7 +182,6 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
 
   void _onTick(Duration elapsed) {
     if (!mounted || _nodes.isEmpty) return;
-    _tick++;
 
     final hasCursor = _hoverPos != null;
     final t = elapsed.inMilliseconds / 1000.0;
@@ -341,7 +338,7 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
       }
     }
     final repo = ref.read(wordRepositoryProvider);
-    setState(() { _levelFilter = lvl; _topicFilter = ''; _tick = 0; });
+    setState(() { _levelFilter = lvl; _topicFilter = ''; });
     _buildNodes(repo.getAllWords());
   }
 
@@ -445,11 +442,9 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
                   onGroupChanged: (v) => setState(() {
                     _groupBy = v;
                     _topicFilter = '';
-                    _tick = 0;
                   }),
                   onTopicChanged: (v) => setState(() {
                     _topicFilter = v;
-                    _tick = 0;
                   }),
                 ),
               ),
@@ -495,7 +490,7 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
                       GestureDetector(
                         onTap: () {
                           final repo = ref.read(wordRepositoryProvider);
-                          setState(() { _expanded = !_expanded; _tick = 0; });
+                          setState(() { _expanded = !_expanded; });
                           _buildNodes(repo.getAllWords());
                         },
                         child: Container(

@@ -246,6 +246,9 @@ class _Body extends StatelessWidget {
                               yearly
                                 ? 'Try Free for 7 Days · then ${yearlyPrice ?? '…'}/yr'
                                 : 'Subscribe Monthly · ${monthlyPrice ?? '…'}/mo',
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
                     ),
                   ),
@@ -386,8 +389,16 @@ class _PlanCard extends StatelessWidget {
                       child: SizedBox(
                         width: 16, height: 16,
                         child: CircularProgressIndicator(strokeWidth: 2))))
-                : Text(price!, style: const TextStyle(
-                    fontSize: 24, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                : SizedBox(
+                    height: 32,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(price!, style: const TextStyle(
+                          fontSize: 24, fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary)),
+                    ),
+                  ),
             Text(period, style: const TextStyle(
               fontSize: 12, color: AppColors.textMuted)),
           ],

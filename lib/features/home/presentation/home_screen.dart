@@ -8,7 +8,7 @@ import '../../../core/router/app_router.dart';
 import '../../../core/services/analytics_service.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/services/daily_session_service.dart';
-import '../../../core/services/polar_service.dart';
+import '../../../core/services/purchase_service.dart';
 import '../../../data/repositories/word_repository.dart';
 
 // ── User TOPIK Level Provider ─────────────────────────────
@@ -107,6 +107,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ? CircleAvatar(
                           radius: 16,
                           backgroundImage: NetworkImage(user!.photoUrl!),
+                          onBackgroundImageError: (_, __) {},
                         )
                       : CircleAvatar(
                           radius: 16,
@@ -402,6 +403,8 @@ class _SentenceSpotlight extends ConsumerStatefulWidget {
 class _SentenceSpotlightState extends ConsumerState<_SentenceSpotlight> {
   late final PageController _pageCtrl;
   int _page = 0;
+  int? _cachedLevel;
+  List<dynamic> _cachedWords = [];
 
   @override
   void initState() {
@@ -435,9 +438,13 @@ class _SentenceSpotlightState extends ConsumerState<_SentenceSpotlight> {
   @override
   Widget build(BuildContext context) {
     final userLevel = ref.watch(userTopikLevelProvider);
-    final repo = ref.read(wordRepositoryProvider);
-    final levelWords = repo.getAllWords().where((w) => w.level == userLevel).toList();
-    final words = _todayWords(levelWords);
+    if (_cachedLevel != userLevel) {
+      final repo = ref.read(wordRepositoryProvider);
+      final levelWords = repo.getAllWords().where((w) => w.level == userLevel).toList();
+      _cachedWords = _todayWords(levelWords);
+      _cachedLevel = userLevel;
+    }
+    final words = _cachedWords;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
