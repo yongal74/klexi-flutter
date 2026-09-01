@@ -10,13 +10,16 @@ admin.initializeApp();
 
 const app = express();
 
+const allowedOrigins = [
+  "https://klexi-30ab5.web.app",
+  "https://klexi-30ab5.firebaseapp.com",
+  ...(process.env.FUNCTIONS_EMULATOR === "true"
+    ? ["http://localhost:3000", "http://localhost:8080"]
+    : []),
+];
+
 app.use(cors({
-  origin: [
-    "https://klexi-30ab5.web.app",
-    "https://klexi-30ab5.firebaseapp.com",
-    "http://localhost:3000",
-    "http://localhost:8080",
-  ],
+  origin: allowedOrigins,
   credentials: true,
 }));
 

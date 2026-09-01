@@ -3,7 +3,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_config.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/services/daily_session_service.dart';
@@ -108,7 +110,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   iconBg: const Color(0xFFF0F4FF),
                   iconColor: const Color(0xFF818CF8),
                   title: 'Privacy Policy',
-                  onTap: () {},
+                  onTap: () => _openUrl('${AppConfig.backendUrl}/privacy'),
                 ),
                 _Divider(),
                 _TapTile(
@@ -116,7 +118,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   iconBg: const Color(0xFFF0F4FF),
                   iconColor: const Color(0xFF818CF8),
                   title: 'Terms of Use',
-                  onTap: () {},
+                  onTap: () => _openUrl('${AppConfig.backendUrl}/terms'),
                 ),
               ],
             ),
@@ -163,6 +165,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 iconColor: const Color(0xFFEF4444),
                 title: 'Sign Out',
                 onTap: _signOut,
+              ),
+              _Divider(),
+              _TapTile(
+                icon: Icons.delete_forever_rounded,
+                iconBg: const Color(0xFFFFF0F0),
+                iconColor: const Color(0xFFEF4444),
+                title: 'Delete Account',
+                onTap: _deleteAccount,
               ),
             ]),
 
@@ -215,6 +225,64 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       await ref.read(authServiceProvider).signOut();
       ref.read(currentUserProvider.notifier).state = null;
       if (mounted) context.go(AppRoutes.auth);
+    }
+  }
+
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open link')));
+      }
+    }
+  }
+
+  Future<void> _deleteAccount() async {
+    final user = ref.read(currentUserProvider);
+    if (user == null || user.isGuest) {
+      await showDialog<void>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Sign in required'),
+          content: const Text(
+              'Sign in with Google to delete your account. Guest data is stored only '
+              'on this device and is removed automatically when you uninstall the app.'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context),
+              child: const Text('OK')),
+          ],
+        ),
+      );
+      return;
+    }
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Delete Account'),
+        content: const Text(
+            'This permanently deletes your account and study history. '
+            'This cannot be undone. Continue?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: AppColors.error))),
+        ],
+      ),
+    );
+    if (confirm != true || !mounted) return;
+
+    try {
+      await ref.read(authServiceProvider).deleteAccount();
+      ref.read(currentUserProvider.notifier).state = null;
+      if (mounted) context.go(AppRoutes.auth);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not delete account: $e')));
+      }
     }
   }
 }

@@ -92,6 +92,62 @@ class AuthService {
     _currentUser = null;
   }
 
+  /// Permanently deletes the signed-in user's Firebase Auth account and local
+  /// study data. Required by Google Play's account-deletion policy.
+  /// Throws [AuthException] if there is no signed-in (non-guest) user.
+  Future<void> deleteAccount() async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) {
+      throw AuthException('not_signed_in', 'No signed-in Google account to delete');
+    }
+    final uid = user.uid;
+
+    try {
+      await user.delete();
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        // Firebase requires a fresh sign-in for security-sensitive operations.
+        final account = await _googleSignIn.signIn();
+        if (account == null) {
+          throw AuthException('reauth_cancelled', 'Re-authentication was cancelled');
+        }
+        final googleAuth = await account.authentication;
+        final credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+        await user.reauthenticateWithCredential(credential);
+        await user.delete();
+      } else {
+        rethrow;
+      }
+    }
+
+    await _deleteLocalData(uid);
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_userIdKey);
+    await prefs.remove('fcm_token');
+
+    await _googleSignIn.signOut();
+    _currentUser = null;
+  }
+
+  Future<void> _deleteLocalData(String uid) async {
+    try {
+      final boxName = 'study_records_$uid';
+      if (Hive.isBoxOpen(boxName)) {
+        await Hive.box(boxName).deleteFromDisk();
+      } else if (await Hive.boxExists(boxName)) {
+        final box = await Hive.openBox<dynamic>(boxName);
+        await box.deleteFromDisk();
+      }
+    } catch (e) {
+      debugPrint('[Auth] Local data cleanup warning: $e');
+      // Account deletion already succeeded server-side; don't block on this.
+    }
+  }
+
   /// 게스트 → Google 계정 업그레이드 (학습 데이터 마이그레이션)
   Future<KlexiUser?> upgradeGuestWithGoogle() async {
     final guestUser = _currentUser;

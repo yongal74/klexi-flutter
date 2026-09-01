@@ -30,15 +30,22 @@ class NotificationService {
   }
 
   Future<bool> requestPermission() async {
-    final result = await _plugin
+    final iosResult = await _plugin
         .resolvePlatformSpecificImplementation<
             IOSFlutterLocalNotificationsPlugin>()
         ?.requestPermissions(alert: true, badge: true, sound: true);
-    return result ?? false;
+    // Android 13+ requires an explicit runtime request or POST_NOTIFICATIONS
+    // is silently denied and scheduled notifications never show.
+    final androidResult = await _plugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
+    return (iosResult ?? androidResult) ?? false;
   }
 
   Future<void> scheduleDailyReminder(TimeOfDay time) async {
     await initialize();
+    await requestPermission();
     await cancelAll();
 
     final now = DateTime.now();

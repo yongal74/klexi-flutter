@@ -53,6 +53,9 @@ functions/node_modules/
 functions/lib/
 Daily-Word-Mastery/
 
+# Firebase CLI local deploy cache
+.firebase/
+
 # Android signing — NEVER commit these
 android/key.properties
 android/klexi-release.jks

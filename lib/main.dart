@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'core/router/app_router.dart';
 import 'core/services/daily_session_service.dart';
+import 'core/services/fcm_service.dart';
 import 'core/services/purchase_service.dart';
 import 'core/theme/app_theme.dart';
 import 'data/models/word.dart';
@@ -19,6 +22,9 @@ void main() async {
   try {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
     await AnalyticsService.instance.init();
+    // Requests POST_NOTIFICATIONS (Android 13+) / APNs permission and registers
+    // the push token. Was previously defined but never called — FCM push was dead.
+    unawaited(FcmService().initialize());
   } catch (e, stack) {
     debugPrint('[Firebase] 초기화 실패: $e');
     debugPrint('[Firebase] $stack');

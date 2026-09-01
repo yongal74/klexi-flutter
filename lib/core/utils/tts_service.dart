@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import '../constants/app_config.dart';
+import '../services/analytics_service.dart';
 
 // Mobile-only imports — guarded at runtime with kIsWeb
 import 'tts_service_mobile.dart' if (dart.library.html) 'tts_service_web.dart'
@@ -92,7 +93,9 @@ class TtsService {
         await platform.playFile(file);
         return true;
       }
-    } catch (_) {}
+    } catch (e, st) {
+      AnalyticsService.instance.recordError(e, st, fatal: false);
+    }
     return false;
   }
 
@@ -121,7 +124,9 @@ class TtsService {
         await platform.playFile(file);
         return true;
       }
-    } catch (_) {}
+    } catch (e, st) {
+      AnalyticsService.instance.recordError(e, st, fatal: false);
+    }
     return false;
   }
 
