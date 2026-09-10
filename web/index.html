@@ -1,46 +1,101 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
-  <base href="$FLUTTER_BASE_HREF">
-
-  <meta charset="UTF-8">
-  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
-
-  <!-- iOS meta tags & icons -->
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="klexi_flutter">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
-
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
-
-  <title>klexi_flutter</title>
-  <link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Klexi — Learn Korean, one word a day</title>
+<meta name="description" content="Klexi is a Korean-language learning app: TOPIK-levelled vocabulary, spaced review, quizzes, AI conversation practice and pronunciation scoring.">
+<link rel="icon" type="image/png" href="favicon.png"/>
+<link rel="apple-touch-icon" href="icons/Icon-192.png">
+<meta property="og:title" content="Klexi — Learn Korean, one word a day">
+<meta property="og:description" content="TOPIK-levelled vocabulary, spaced review, quizzes, AI conversation practice and pronunciation scoring.">
+<meta property="og:type" content="website">
+<style>
+  :root {
+    --bg: #FFFFFF;
+    --bg-soft: #F2F3F8;
+    --text: #1A1A2E;
+    --muted: #6B7280;
+    --accent: #5A6FD6;
+    --accent-soft: #667EEA;
+    --border: #E6E8F0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141423;
+      --bg-soft: #1E1E35;
+      --text: #F4F5FB;
+      --muted: #A3A9BD;
+      --accent: #8C9BEE;
+      --accent-soft: #A3AFF3;
+      --border: #2C2C48;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    margin: 0; background: var(--bg); color: var(--text); line-height: 1.6;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 20px; }
+  header { padding: 64px 0 40px; text-align: center; }
+  .logo { width: 84px; height: 84px; border-radius: 22px; margin-bottom: 20px; }
+  h1 { font-size: 34px; margin: 0 0 10px; letter-spacing: -0.5px; }
+  .tagline { font-size: 18px; color: var(--muted); margin: 0 0 28px; }
+  .cta {
+    display: inline-block; background: var(--accent); color: #fff; text-decoration: none;
+    font-weight: 600; font-size: 16px; padding: 14px 28px; border-radius: 12px; min-height: 44px;
+  }
+  .cta:hover { filter: brightness(1.08); }
+  .note { font-size: 13px; color: var(--muted); margin-top: 12px; }
+  section { padding: 8px 0 40px; }
+  h2 { font-size: 20px; margin: 32px 0 14px; }
+  .features { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); padding: 0; margin: 0; list-style: none; }
+  .features li { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; }
+  .features strong { display: block; margin-bottom: 4px; font-size: 15px; }
+  .features span { font-size: 14px; color: var(--muted); }
+  footer { border-top: 1px solid var(--border); padding: 28px 0 56px; font-size: 14px; color: var(--muted); }
+  footer a { color: var(--accent-soft); }
+  .links a { margin-right: 16px; display: inline-block; padding: 6px 0; }
+</style>
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
+<div class="wrap">
 
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
-  <script src="flutter_bootstrap.js" async></script>
+  <header>
+    <img class="logo" src="icons/Icon-192.png" alt="Klexi app icon">
+    <h1>Klexi</h1>
+    <p class="tagline">Learn Korean, one word a day.</p>
+    <a class="cta" href="https://play.google.com/store/apps/details?id=com.twentykorean.app">Get it on Google Play</a>
+    <p class="note">Android 7.0 and later. Free to start.</p>
+  </header>
+
+  <section>
+    <h2>What Klexi does</h2>
+    <ul class="features">
+      <li><strong>TOPIK-levelled vocabulary</strong><span>Words grouped by TOPIK level 1–6, so you always study at the right difficulty.</span></li>
+      <li><strong>Daily sessions &amp; review</strong><span>A short set each day, with words coming back on a spaced schedule until they stick.</span></li>
+      <li><strong>Quizzes &amp; word network</strong><span>Multiple-choice checks and a visual map of how words relate to each other.</span></li>
+      <li><strong>Dalli, your AI tutor</strong><span>Practise real conversation in Korean — free chat, role play, grammar coaching and word review.</span></li>
+      <li><strong>Pronunciation coach</strong><span>Record a phrase and get a score plus syllable-by-syllable feedback.</span></li>
+      <li><strong>Theme packs</strong><span>Focused sets for travel, food, work and everyday situations.</span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Support</h2>
+    <p>Questions, bug reports or account issues:
+      <a href="mailto:aiwx2035@gmail.com">aiwx2035@gmail.com</a></p>
+  </section>
+
+  <footer>
+    <p class="links">
+      <a href="/privacy">Privacy Policy</a>
+      <a href="/terms">Terms of Service</a>
+      <a href="/delete-account">Delete Account</a>
+    </p>
+    <p>&copy; 2026 Klexi. Klexi is an independent app and is not affiliated with the TOPIK examination body.</p>
+  </footer>
+
+</div>
 </body>
 </html>

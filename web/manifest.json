@@ -1,11 +1,11 @@
 {
-    "name": "klexi_flutter",
-    "short_name": "klexi_flutter",
-    "start_url": ".",
+    "name": "Klexi — Learn Korean",
+    "short_name": "Klexi",
+    "start_url": "/",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#FFFFFF",
+    "theme_color": "#5A6FD6",
+    "description": "Korean-language learning app: TOPIK-levelled vocabulary, spaced review, quizzes, AI conversation practice and pronunciation scoring.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
