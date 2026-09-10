@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import '../constants/app_config.dart';
+import '../providers/tts_speed_provider.dart';
 import '../services/analytics_service.dart';
 
 // Mobile-only imports — guarded at runtime with kIsWeb
@@ -21,6 +22,7 @@ enum TtsSpeed {
 /// 3. flutter_tts — 웹: 브라우저 SpeechSynthesis / 모바일: 기기 내장 TTS
 class TtsService {
   final Dio _dio;
+  final Ref _ref;
   final FlutterTts _tts = FlutterTts();
   bool _ttsInitialized = false;
 
@@ -28,32 +30,35 @@ class TtsService {
   static const String _clovaVoice = 'nara';
   static const String _googleVoice = 'ko-KR-Neural2-C';
 
-  TtsService(this._dio);
+  TtsService(this._dio, this._ref);
 
   /// 단어 또는 문장 발음
+  /// [speed] 를 주지 않으면 설정 화면의 "Slow TTS Speed" 값을 따른다.
   Future<void> speak(
     String text, {
-    TtsSpeed speed = TtsSpeed.normal,
+    TtsSpeed? speed,
     bool isPremium = false,
   }) async {
+    final rate =
+        speed ?? (_ref.read(slowTtsProvider) ? TtsSpeed.slow : TtsSpeed.normal);
     // 웹에서는 항상 flutter_tts (브라우저 SpeechSynthesis) 사용
     if (kIsWeb) {
-      await _speakWithTts(text, speed);
+      await _speakWithTts(text, rate);
       return;
     }
 
     if (isPremium) {
       // 1순위: Naver CLOVA Voice
-      final success = await _speakWithClova(text, speed);
+      final success = await _speakWithClova(text, rate);
       if (success) return;
 
       // 2순위: Google Cloud TTS Neural2
-      final googleSuccess = await _speakWithGoogle(text, speed);
+      final googleSuccess = await _speakWithGoogle(text, rate);
       if (googleSuccess) return;
     }
 
     // 3순위: 기기 내장 TTS
-    await _speakWithTts(text, speed);
+    await _speakWithTts(text, rate);
   }
 
   /// flutter_tts — 웹(브라우저 SpeechSynthesis) + 모바일(기기 TTS) 공용
@@ -146,7 +151,7 @@ class TtsService {
 // Riverpod Provider
 final ttsServiceProvider = Provider<TtsService>((ref) {
   final dio = ref.watch(dioProvider);
-  return TtsService(dio);
+  return TtsService(dio, ref);
 });
 
 final dioProvider = Provider<Dio>((ref) {

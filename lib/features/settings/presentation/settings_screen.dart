@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/tts_speed_provider.dart';
 import '../../../core/constants/app_config.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/services/auth_service.dart';
@@ -18,9 +19,6 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  bool _notificationsEnabled = true;
-  bool _slowTts = false;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -59,20 +57,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   iconBg: const Color(0xFFEEF1FF),
                   iconColor: const Color(0xFF667EEA),
                   title: 'Slow TTS Speed',
-                  subtitle: 'Speak at 0.75× speed for easier listening',
-                  value: _slowTts,
-                  onChanged: (v) => setState(() => _slowTts = v),
+                  subtitle: 'Speak more slowly for easier listening',
+                  value: ref.watch(slowTtsProvider),
+                  onChanged: (v) => ref.read(slowTtsProvider.notifier).set(v),
                 ),
-                _Divider(),
-                _SwitchTile(
-                  icon: Icons.notifications_rounded,
-                  iconBg: const Color(0xFFFFF4E6),
-                  iconColor: const Color(0xFFFF8C42),
-                  title: 'Daily Reminders',
-                  subtitle: 'Get notified to study every day',
-                  value: _notificationsEnabled,
-                  onChanged: (v) => setState(() => _notificationsEnabled = v),
-                ),
+                // "Daily Reminders" 스위치는 제거했다 — 로컬 state 만 바꾸고
+                // 실제 예약과 무관했다. 아래 Notifications 항목이 진짜 설정이다.
               ],
             ),
 

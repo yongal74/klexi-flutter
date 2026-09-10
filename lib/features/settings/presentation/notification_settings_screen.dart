@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/services/analytics_service.dart';
 import '../../../core/services/notification_service.dart';
 
 class NotificationSettingsScreen extends ConsumerStatefulWidget {
@@ -51,8 +52,24 @@ class _NotificationSettingsScreenState
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text('Settings saved')));
       }
-    } catch (e) {
-      debugPrint('[NotifSettings] save error: $e');
+    } on NotificationScheduleException catch (e) {
+      // build52 까지는 여기서 예외를 삼켜, 예약이 실패해도 사용자에게는
+      // "Settings saved" 로 보였다.
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(e.message),
+          backgroundColor: AppColors.error,
+          duration: const Duration(seconds: 5),
+        ));
+      }
+    } on Exception catch (e, stack) {
+      AnalyticsService.instance.recordError(e, stack);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Could not save notification settings'),
+          backgroundColor: AppColors.error,
+        ));
+      }
     }
   }
 

@@ -1,7 +1,7 @@
 name: klexi_flutter
 description: "Klexi — Learn Korean through sentences. TOPIK 1–6, Word Network, AI chat."
 publish_to: 'none'
-version: 1.0.6+52
+version: 1.0.6+53
 
 environment:
   sdk: ^3.6.0
@@ -59,6 +59,9 @@ dependencies:
   # Notifications
   flutter_local_notifications: ^18.0.0
   timezone: ^0.9.4
+  # tz.local 을 기기 타임존으로 맞추기 위해 필요. 없으면 UTC 로 잡혀
+  # 예약 시각이 어긋나고 서머타임 전환 후 1시간 밀린다.
+  flutter_timezone: ^4.1.0
 
   # Utilities
   shared_preferences: ^2.5.3
