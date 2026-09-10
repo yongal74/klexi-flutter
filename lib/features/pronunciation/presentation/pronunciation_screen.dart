@@ -11,6 +11,7 @@ import '../../../core/services/pronunciation_service.dart';
 import '../../../core/utils/tts_service.dart';
 import '../../../data/models/word.dart';
 import '../../../data/repositories/word_repository.dart';
+import '../../../core/providers/user_level_provider.dart';
 
 class PronunciationScreen extends ConsumerStatefulWidget {
   const PronunciationScreen({super.key});
@@ -59,7 +60,10 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen>
       final repo = ref.read(wordRepositoryProvider);
       final session = ref.read(dailySessionServiceProvider);
       final isPremium = ref.read(isPremiumProvider);
-      final ids = await session.getTodayWordIds();
+      final ids = await session.getTodayWordIds(
+        isPremium: isPremium,
+        userLevel: ref.read(userTopikLevelProvider),
+      );
       final all = repo.getAllWords();
       _sessionWords = all
           .where((w) => ids.contains(w.id) && (isPremium || w.level == 1))

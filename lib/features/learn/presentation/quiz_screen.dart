@@ -11,6 +11,7 @@ import '../../../core/services/daily_session_service.dart'
 import '../../../core/services/purchase_service.dart';
 import '../../../data/models/word.dart';
 import '../../../data/repositories/word_repository.dart';
+import '../../../core/providers/user_level_provider.dart';
 
 /// Global provider to pass wrong word IDs from quiz to review screen.
 final quizWrongWordsProvider = StateProvider<List<String>>((ref) => []);
@@ -67,7 +68,10 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
           .take(20)
           .toList();
     } else {
-      final ids = await session.getTodayWordIds();
+      final ids = await session.getTodayWordIds(
+        isPremium: isPremium,
+        userLevel: ref.read(userTopikLevelProvider),
+      );
       todayWords = all
           .where((w) => ids.contains(w.id) && (isPremium || w.level == 1))
           .take(20)

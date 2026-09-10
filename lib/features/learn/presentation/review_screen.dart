@@ -9,6 +9,7 @@ import '../../../core/services/polar_service.dart';
 import '../../../data/models/word.dart';
 import '../../../data/repositories/word_repository.dart';
 import 'quiz_screen.dart';
+import '../../../core/providers/user_level_provider.dart';
 
 class ReviewScreen extends ConsumerStatefulWidget {
   const ReviewScreen({super.key});
@@ -60,7 +61,10 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen>
             .where((w) => lastIds.contains(w.id) && (isPremium || w.level == 1))
             .toList();
       } else {
-        final todaySession = await session.getTodaySession();
+        final todaySession = await session.getTodaySession(
+          isPremium: isPremium,
+          userLevel: ref.read(userTopikLevelProvider),
+        );
         final todayIds = todaySession.words.map((w) => w.id).toSet();
         srsWords = all
             .where(

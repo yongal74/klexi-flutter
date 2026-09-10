@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/services/daily_session_service.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -17,7 +18,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     try {
       final authService = ref.read(authServiceProvider);
       final user = await authService.signInWithGoogle();
-      if (user != null && mounted) {
+      if (user == null) return; // 사용자가 취소함
+      // 학습기록 박스를 먼저 연다 — 홈이 열리자마자 세션을 읽기 때문에
+      // 여기서 기다리지 않으면 빈 세션이 잠깐 보인다.
+      await DailySessionService.instance.init(user.id);
+      if (mounted) {
         ref.read(currentUserProvider.notifier).state = user;
         context.go('/home');
       }
@@ -35,6 +40,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     setState(() => _loading = true);
     try {
       final user = await ref.read(authServiceProvider).signInAsGuest();
+      await DailySessionService.instance.init(user.id);
       if (mounted) {
         ref.read(currentUserProvider.notifier).state = user;
         context.go('/home');

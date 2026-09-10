@@ -28,11 +28,13 @@ class PurchaseService {
   PurchaseService._();
   static final PurchaseService instance = PurchaseService._();
 
-  late PremiumNotifier _notifier;
+  PremiumNotifier? _notifier;
 
   void attachNotifier(PremiumNotifier notifier) {
     _notifier = notifier;
   }
+
+  void _setPremium(bool value) => _notifier?.setPremium(value);
 
   Future<void> initialize() async {
     await Purchases.configure(
@@ -41,14 +43,14 @@ class PurchaseService {
 
     Purchases.addCustomerInfoUpdateListener((customerInfo) {
       final active = customerInfo.entitlements.active.containsKey('premium');
-      _notifier.setPremium(active);
+      _setPremium(active);
     });
 
     try {
       final customerInfo = await Purchases.getCustomerInfo();
       final active = customerInfo.entitlements.active.containsKey('premium');
-      _notifier.setPremium(active);
-    } catch (e) {
+      _setPremium(active);
+    } on Exception catch (e) {
       debugPrint('RevenueCat init error: $e');
     }
   }
@@ -73,7 +75,7 @@ class PurchaseService {
       final result = await Purchases.purchasePackage(pkg);
       final active =
           result.customerInfo.entitlements.active.containsKey('premium');
-      _notifier.setPremium(active);
+      _setPremium(active);
       return active;
     } on PlatformException catch (e) {
       final errorCode = PurchasesErrorHelper.getErrorCode(e);
@@ -88,11 +90,35 @@ class PurchaseService {
     try {
       final customerInfo = await Purchases.restorePurchases();
       final active = customerInfo.entitlements.active.containsKey('premium');
-      _notifier.setPremium(active);
+      _setPremium(active);
       return active;
-    } catch (e) {
+    } on Exception catch (e) {
       debugPrint('Restore error: $e');
       return false;
+    }
+  }
+
+  /// 로그인한 사용자를 RevenueCat 에 연결한다. 이걸 호출해야 구독이
+  /// 기기가 아니라 계정에 묶이고, 로그아웃 시 엔타이틀먼트가 따라 내려간다.
+  Future<void> logIn(String uid) async {
+    try {
+      final result = await Purchases.logIn(uid);
+      _setPremium(
+        result.customerInfo.entitlements.active.containsKey('premium'),
+      );
+    } on Exception catch (e) {
+      debugPrint('RevenueCat logIn error: $e');
+    }
+  }
+
+  /// 로그아웃/계정삭제 시 호출. 실패해도 로컬 프리미엄 상태는 반드시 내린다.
+  Future<void> logOut() async {
+    try {
+      await Purchases.logOut();
+    } on Exception catch (e) {
+      debugPrint('RevenueCat logOut error: $e');
+    } finally {
+      _setPremium(false);
     }
   }
 }

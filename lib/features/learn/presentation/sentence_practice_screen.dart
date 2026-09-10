@@ -17,6 +17,7 @@ import '../../../data/content/sentence_groups_data.dart';
 import '../../../data/content/sentence_groups_registry.dart';
 import '../../../data/models/word.dart';
 import '../../../data/repositories/word_repository.dart';
+import '../../../core/providers/user_level_provider.dart';
 
 class SentencePracticeScreen extends ConsumerStatefulWidget {
   const SentencePracticeScreen({super.key});
@@ -54,7 +55,10 @@ class _SentencePracticeScreenState
     if (lastIds.isNotEmpty) {
       sessionWordIds = lastIds.take(20).toList();
     } else {
-      sessionWordIds = await session.getTodayWordIds();
+      sessionWordIds = await session.getTodayWordIds(
+        isPremium: isPremium,
+        userLevel: ref.read(userTopikLevelProvider),
+      );
     }
 
     // Find matching sentence group from pre-generated data

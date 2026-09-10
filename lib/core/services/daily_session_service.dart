@@ -2,6 +2,7 @@
 // Picks 20 words for today's session using a simple SRS algorithm.
 // Persists study history in Hive.
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
@@ -87,16 +88,120 @@ class DailySessionService {
   DailySessionService._();
   static final DailySessionService instance = DailySessionService._();
 
-  static const String _boxName = 'study_records';
+  /// build52 이전에 쓰던 '기기 공용' 박스. uid 구분이 없어서 같은 기기의
+  /// 서로 다른 사용자가 학습 기록을 공유했다. 첫 사용자에게 1회 이관 후 삭제한다.
+  static const String _legacyBoxName = 'study_records';
   static const int _sessionSize = 20;
 
+  static String boxNameFor(String uid) => 'study_records_$uid';
+
   Box<Map>? _box;
+  String? _uid;
+
+  /// 현재 박스가 열려 있는 사용자 id (없으면 null).
+  String? get currentUid => _uid;
 
   // ── Lifecycle ──────────────────────────────────────────────
 
-  Future<void> init() async {
-    if (_box != null && _box!.isOpen) return; // idempotent
-    _box = await Hive.openBox<Map>(_boxName);
+  /// [uid] 전용 학습기록 박스를 연다. 게스트는 `guest_...` id를 그대로 쓴다.
+  /// 같은 uid로 다시 부르면 아무 일도 하지 않는다(idempotent).
+  Future<void> init(String uid) async {
+    if (_uid == uid && _box != null && _box!.isOpen) return;
+
+    final previous = _box;
+    final boxName = boxNameFor(uid);
+    final box = await Hive.openBox<Map>(boxName);
+    await _migrateLegacyBox(box);
+
+    _box = box;
+    _uid = uid;
+
+    // 다른 사용자의 박스가 열려 있었으면 닫는다(삭제는 하지 않음).
+    if (previous != null && previous.isOpen && previous.name != boxName) {
+      await previous.close();
+    }
+  }
+
+  /// 인증 상태가 바뀌었을 때 박스를 갈아끼운다.
+  Future<void> switchUser(String uid) => init(uid);
+
+  /// 로그아웃 시 호출 — 박스를 닫되 데이터는 남긴다.
+  Future<void> closeForSignOut() async {
+    final box = _box;
+    _box = null;
+    _uid = null;
+    if (box != null && box.isOpen) await box.close();
+  }
+
+  /// 계정 삭제 시 호출 — [uid]의 박스를 디스크에서 지운다.
+  Future<void> deleteDataForUser(String uid) async {
+    final boxName = boxNameFor(uid);
+    if (_uid == uid) {
+      _box = null;
+      _uid = null;
+    }
+    if (Hive.isBoxOpen(boxName)) {
+      await Hive.box<Map>(boxName).deleteFromDisk();
+    } else if (await Hive.boxExists(boxName)) {
+      final box = await Hive.openBox<Map>(boxName);
+      await box.deleteFromDisk();
+    }
+  }
+
+  /// 게스트 → 정식 계정 업그레이드 시 학습기록을 옮긴다.
+  /// 이관 후 [toUid] 박스가 현재 박스가 된다.
+  Future<void> migrateUser({
+    required String fromUid,
+    required String toUid,
+  }) async {
+    if (fromUid == toUid) return;
+    final fromName = boxNameFor(fromUid);
+    try {
+      if (!Hive.isBoxOpen(fromName) && !await Hive.boxExists(fromName)) {
+        await init(toUid);
+        return;
+      }
+      final from = Hive.isBoxOpen(fromName)
+          ? Hive.box<Map>(fromName)
+          : await Hive.openBox<Map>(fromName);
+      final to = await Hive.openBox<Map>(boxNameFor(toUid));
+      for (final key in from.keys) {
+        final value = from.get(key);
+        if (value == null) continue;
+        await to.put(key, value);
+      }
+      await from.deleteFromDisk();
+      _box = to;
+      _uid = toUid;
+      debugPrint('[DailySession] 게스트 기록 이관 완료: $fromUid → $toUid');
+    } on Exception catch (e) {
+      debugPrint('[DailySession] 게스트 기록 이관 실패: $e');
+      await init(toUid);
+    }
+  }
+
+  /// 공용 박스 `study_records`가 남아 있으면 [target]으로 1회 이관 후 삭제한다.
+  /// 이미 [target]에 있는 키는 덮어쓰지 않는다(최신 기록 우선).
+  Future<void> _migrateLegacyBox(Box<Map> target) async {
+    try {
+      if (!await Hive.boxExists(_legacyBoxName)) return;
+      final legacy = Hive.isBoxOpen(_legacyBoxName)
+          ? Hive.box<Map>(_legacyBoxName)
+          : await Hive.openBox<Map>(_legacyBoxName);
+      var moved = 0;
+      for (final key in legacy.keys) {
+        if (target.containsKey(key)) continue;
+        final value = legacy.get(key);
+        if (value == null) continue;
+        await target.put(key, value);
+        moved++;
+      }
+      await legacy.deleteFromDisk();
+      debugPrint('[DailySession] 공용 박스 이관 완료: $moved건 → ${target.name}');
+    } on Exception catch (e) {
+      // 이관 실패 시 원본을 남겨 다음 실행에 재시도한다(데이터 손실 방지).
+      debugPrint('[DailySession] 공용 박스 이관 실패(원본 유지): $e');
+    }
   }
 
   // ── Session Building ───────────────────────────────────────
@@ -106,8 +211,10 @@ class DailySessionService {
   ///   1. Words due for SRS review today
   ///   2. New words that have never been studied
   ///   3. Filler from user's current level (프리미엄) or level 1 (무료)
-  Future<DailySession> getTodaySession(
-      {bool isPremium = false, int userLevel = 1}) async {
+  Future<DailySession> getTodaySession({
+    required bool isPremium,
+    required int userLevel,
+  }) async {
     final box = _box;
     if (box == null) {
       throw StateError(
@@ -221,8 +328,10 @@ class DailySessionService {
   // ── Statistics ─────────────────────────────────────────────
 
   /// Returns today's 20 word IDs for the session.
-  Future<List<String>> getTodayWordIds(
-      {bool isPremium = false, int userLevel = 1}) async {
+  Future<List<String>> getTodayWordIds({
+    required bool isPremium,
+    required int userLevel,
+  }) async {
     final session =
         await getTodaySession(isPremium: isPremium, userLevel: userLevel);
     return session.words.map((w) => w.id).toList();

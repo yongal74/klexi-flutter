@@ -299,9 +299,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
 // ── Profile Card ───────────────────────────────────────────────
 
-class _ProfileCard extends ConsumerWidget {
+class _ProfileCard extends ConsumerStatefulWidget {
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ProfileCard> createState() => _ProfileCardState();
+}
+
+class _ProfileCardState extends ConsumerState<_ProfileCard> {
+  bool _upgrading = false;
+
+  /// 게스트 → Google 업그레이드. 학습기록은 AuthService 가 새 uid 박스로 옮긴다.
+  Future<void> _upgradeToGoogle() async {
+    setState(() => _upgrading = true);
+    try {
+      final user = await ref.read(authServiceProvider).upgradeGuestWithGoogle();
+      if (user != null && mounted) {
+        ref.read(currentUserProvider.notifier).state = user;
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Signed in. Your progress is now backed up.')));
+      }
+    } on AuthException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Sign-in failed: ${e.message}')));
+      }
+    } finally {
+      if (mounted) setState(() => _upgrading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
     final displayName =
         user?.displayName ?? user?.email?.split('@').first ?? 'Guest';
@@ -309,76 +336,111 @@ class _ProfileCard extends ConsumerWidget {
     final photoUrl = user?.photoUrl;
     final initial = displayName.isNotEmpty ? displayName[0].toUpperCase() : 'G';
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-        ),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.25),
-              shape: BoxShape.circle,
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: photoUrl != null
-                ? Image.network(photoUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Center(
-                        child: Text(initial,
-                            style: const TextStyle(
-                                fontSize: 26,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white))))
-                : Center(
-                    child: Text(initial,
-                        style: const TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white))),
+    final row = Row(
+      children: [
+        Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.25),
+            shape: BoxShape.circle,
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+          clipBehavior: Clip.antiAlias,
+          child: photoUrl != null
+              ? Image.network(photoUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Center(
+                      child: Text(initial,
+                          style: const TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white))))
+              : Center(
+                  child: Text(initial,
+                      style: const TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white))),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                displayName,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (email.isNotEmpty) ...[
+                const SizedBox(height: 2),
                 Text(
-                  displayName,
+                  email,
                   style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                    color: Colors.white70,
+                    fontSize: 12,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (email.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    email,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 12,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
               ],
+            ],
+          ),
+        ),
+      ],
+    );
+
+    if (user?.isGuest != true) return _card(row);
+
+    return _card(
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          row,
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 44,
+            child: FilledButton.icon(
+              onPressed: _upgrading ? null : _upgradeToGoogle,
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: const Color(0xFF5A3E8C),
+                disabledBackgroundColor: Colors.white70,
+              ),
+              icon: _upgrading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.cloud_upload_outlined, size: 18),
+              label: Text(_upgrading
+                  ? 'Signing in\u2026'
+                  : 'Sign in with Google to back up progress'),
             ),
           ),
         ],
       ),
     );
   }
+
+  Widget _card(Widget child) => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+          ),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: child,
+      );
 }
 
 // ── Premium Banner ─────────────────────────────────────────────
