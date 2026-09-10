@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 11 이하(API 30 이하) 자동 백업 규칙 — build53/WP-05
+  data_extraction_rules.xml 과 같은 대상만 백업한다. minSdk 24 라 두 파일 모두 필요.
+-->
+<full-backup-content>
+    <include domain="file" path="app_flutter"/>
+    <include domain="sharedpref" path="."/>
+</full-backup-content>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12+ (API 31+) 백업/기기이전 규칙 — build53/WP-05
+
+  명시적 allowlist 방식: <include> 를 하나라도 쓰면 나열된 것만 백업된다.
+  - file/app_flutter : Hive 박스(study_records_*, dalli_chat_history 등). Hive.initFlutter()
+                       가 getApplicationDocumentsDirectory() 를 쓰므로 app_flutter 아래에 있다.
+  - sharedpref       : 학습 설정·온보딩 완료 여부 등 SharedPreferences.
+  캐시 디렉토리(TTS 캐시, 발음 녹음 klexi_pronunciation.m4a)는 getTemporaryDirectory() =
+  cacheDir 이고, Android 백업은 cacheDir 를 처음부터 제외하므로 별도 규칙이 필요 없다.
+
+  주의: SharedPreferences 의 'fcm_token' 은 기기별 값이라 새 기기로 복원되면 안 되지만
+  백업 규칙은 파일 단위라 키 하나만 제외할 수 없다. 근본 해결은 클라이언트에서 토큰을
+  prefs 에 저장하지 않고 매 실행 getToken() 으로 재조회하는 것(트랙 B, fcm_service.dart:71).
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <include domain="file" path="app_flutter"/>
+        <include domain="sharedpref" path="."/>
+    </cloud-backup>
+    <device-transfer>
+        <include domain="file" path="app_flutter"/>
+        <include domain="sharedpref" path="."/>
+    </device-transfer>
+</data-extraction-rules>
