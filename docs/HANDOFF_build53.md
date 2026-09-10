@@ -24,7 +24,7 @@
 | `flutter test` | ✅ CI(ubuntu)에서 92건 전부 통과 · ❌ Windows 로컬은 여전히 무응답 |
 | debug APK 빌드 | ✅ 성공 (Gradle 298초) |
 | 에뮬레이터 스모크 | ❌ **미완** — 3절 참조 |
-| Firebase 배포 | ❌ 미실행 (형님 보류 결정) |
+| Firebase 배포 | ❌ 미실행 — **형님 승인만 남음**(백엔드는 현재 정상 가동 중, 09-10 11:59Z `/api/health` 200) |
 | 릴리즈 AAB | ❌ 미실행 |
 
 ---
@@ -60,11 +60,12 @@ flutter run -d emulator-5554
 
 ### 3-2. 백엔드 배포 (형님 결정 대기)
 
-**선결 조건**: Firebase `klexi-30ab5` 프로젝트의 **Blaze 결제가 살아 있어야 한다.**
-2026-09-01 기록상 `billing is disabled` 로 `api` 함수가 503 이었다. 결제 상태를
-먼저 확인하지 않으면 배포가 실패한다.
+**선결 조건 없음 — 형님 승인만 남았다.**
+2026-09-10 11:59Z 직접 확인: `GET /api/health` → **200** (`{"status":"ok"}`),
+`GET /` → 200. 즉 Blaze 결제는 활성이고 `api` 함수도 살아 있다.
+(2026-09-01 오전 기록의 `billing is disabled` 는 같은 날 오후에 해소됐다.
+이 세션에서 그 옛 기록을 근거로 "배포 실패 가능"이라고 보고한 것은 오류였다.)
 
-결제 확인 후:
 ```powershell
 firebase deploy --only functions,hosting --project klexi-30ab5
 ```
@@ -215,7 +216,7 @@ flutter build appbundle --release
 
 | # | 항목 | 시점 |
 |---|---|---|
-| 1 | 🔴 **Firebase `klexi-30ab5` Blaze 결제 상태 확인/복구** | 백엔드 배포 전 (선결) |
+| 1 | ~~Firebase Blaze 결제 확인~~ — **이미 활성, 조치 불필요**(09-10 11:59Z `/api/health` 200 확인) | — |
 | 2 | OpenAI 대시보드 월 사용 **하드캡** 설정 | 백엔드 배포 전 |
 | 3 | Play Console 데이터 보안 양식에 **광고ID·음성녹음(제3자 OpenAI)** 반영 | build53 제출 전 |
 | 4 | GitHub Actions 시크릿 `KEYSTORE_BASE64`·`KEY_PROPERTIES` 등록 | 급하지 않음(릴리즈는 로컬 빌드, 없으면 CI 가 자동 skip) |
