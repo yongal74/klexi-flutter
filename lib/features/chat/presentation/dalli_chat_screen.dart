@@ -15,18 +15,27 @@ enum DalliMode { freeChat, wordReview, rolePlay, grammarCoach }
 extension DalliModeLabel on DalliMode {
   String get label {
     switch (this) {
-      case DalliMode.freeChat:     return 'Free Chat';
-      case DalliMode.wordReview:   return 'Word Review';
-      case DalliMode.rolePlay:     return 'Role Play';
-      case DalliMode.grammarCoach: return 'Grammar Coach';
+      case DalliMode.freeChat:
+        return 'Free Chat';
+      case DalliMode.wordReview:
+        return 'Word Review';
+      case DalliMode.rolePlay:
+        return 'Role Play';
+      case DalliMode.grammarCoach:
+        return 'Grammar Coach';
     }
   }
+
   String get icon {
     switch (this) {
-      case DalliMode.freeChat:     return '💬';
-      case DalliMode.wordReview:   return '📚';
-      case DalliMode.rolePlay:     return '🎭';
-      case DalliMode.grammarCoach: return '✏️';
+      case DalliMode.freeChat:
+        return '💬';
+      case DalliMode.wordReview:
+        return '📚';
+      case DalliMode.rolePlay:
+        return '🎭';
+      case DalliMode.grammarCoach:
+        return '✏️';
     }
   }
 }
@@ -46,20 +55,21 @@ class ChatMessage {
   }) : time = time ?? DateTime.now();
 
   Map<String, dynamic> toJson() => {
-    'text': text,
-    'isUser': isUser,
-    'wordPills': wordPills,
-    'time': time.millisecondsSinceEpoch,
-  };
+        'text': text,
+        'isUser': isUser,
+        'wordPills': wordPills,
+        'time': time.millisecondsSinceEpoch,
+      };
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) => ChatMessage(
-    text: json['text'] as String,
-    isUser: json['isUser'] as bool,
-    wordPills: (json['wordPills'] as List<dynamic>?)
-        ?.map((e) => e as String)
-        .toList() ?? [],
-    time: DateTime.fromMillisecondsSinceEpoch(json['time'] as int),
-  );
+        text: json['text'] as String,
+        isUser: json['isUser'] as bool,
+        wordPills: (json['wordPills'] as List<dynamic>?)
+                ?.map((e) => e as String)
+                .toList() ??
+            [],
+        time: DateTime.fromMillisecondsSinceEpoch(json['time'] as int),
+      );
 }
 
 // ── 채팅 히스토리 영속화 키 ────────────────────────────────
@@ -68,12 +78,12 @@ const _kMaxPersistedMessages = 50;
 
 // ── Providers ─────────────────────────────────────────────
 final chatMessagesProvider = StateProvider<List<ChatMessage>>((ref) => [
-  ChatMessage(
-    text: "안녕하세요! I'm Dalli 👋\nWhat would you like to practice today?",
-    isUser: false,
-    wordPills: ['안녕하세요', '연습'],
-  ),
-]);
+      ChatMessage(
+        text: "안녕하세요! I'm Dalli 👋\nWhat would you like to practice today?",
+        isUser: false,
+        wordPills: ['안녕하세요', '연습'],
+      ),
+    ]);
 final dalliModeProvider = StateProvider<DalliMode>((ref) => DalliMode.freeChat);
 final dalliTypingProvider = StateProvider<bool>((ref) => false);
 
@@ -153,7 +163,10 @@ class _DalliChatScreenState extends ConsumerState<DalliChatScreen> {
     _ctrl.clear();
 
     final msgs = ref.read(chatMessagesProvider.notifier);
-    final newMessages = [...ref.read(chatMessagesProvider), ChatMessage(text: text, isUser: true)];
+    final newMessages = [
+      ...ref.read(chatMessagesProvider),
+      ChatMessage(text: text, isUser: true)
+    ];
     msgs.state = newMessages;
     _history.add({'role': 'user', 'content': text});
     _scrollDown();
@@ -185,16 +198,18 @@ class _DalliChatScreenState extends ConsumerState<DalliChatScreen> {
       final request = http.Request('POST', uri)
         ..headers['Content-Type'] = 'application/json'
         ..body = json.encode({
-          'messages': _history.length > 8 ? _history.sublist(_history.length - 8) : _history,
+          'messages': _history.length > 8
+              ? _history.sublist(_history.length - 8)
+              : _history,
           'userLevel': userLevel,
           'mode': mode.name,
         });
 
       // 타임아웃 적용
       final response = await client.send(request).timeout(
-        _kSseTimeout,
-        onTimeout: () => throw TimeoutException('서버 응답 시간 초과'),
-      );
+            _kSseTimeout,
+            onTimeout: () => throw TimeoutException('서버 응답 시간 초과'),
+          );
 
       String accumulated = '';
       ref.read(dalliTypingProvider.notifier).state = false;
@@ -221,7 +236,10 @@ class _DalliChatScreenState extends ConsumerState<DalliChatScreen> {
                 ChatMessage(text: accumulated, isUser: false),
               ];
             } else {
-              msgs.state = [...current, ChatMessage(text: accumulated, isUser: false)];
+              msgs.state = [
+                ...current,
+                ChatMessage(text: accumulated, isUser: false)
+              ];
             }
             _scrollDown();
           } catch (e) {
@@ -236,19 +254,25 @@ class _DalliChatScreenState extends ConsumerState<DalliChatScreen> {
       }
     } on TimeoutException {
       ref.read(dalliTypingProvider.notifier).state = false;
-      final updated = [...ref.read(chatMessagesProvider), ChatMessage(
-        text: '응답 시간이 초과되었습니다. 다시 시도해 주세요.',
-        isUser: false,
-      )];
+      final updated = [
+        ...ref.read(chatMessagesProvider),
+        ChatMessage(
+          text: '응답 시간이 초과되었습니다. 다시 시도해 주세요.',
+          isUser: false,
+        )
+      ];
       msgs.state = updated;
       await _saveHistory(updated);
       _scrollDown();
     } catch (e) {
       ref.read(dalliTypingProvider.notifier).state = false;
-      final updated = [...ref.read(chatMessagesProvider), ChatMessage(
-        text: 'Connection error. Check your internet connection.',
-        isUser: false,
-      )];
+      final updated = [
+        ...ref.read(chatMessagesProvider),
+        ChatMessage(
+          text: 'Connection error. Check your internet connection.',
+          isUser: false,
+        )
+      ];
       msgs.state = updated;
       await _saveHistory(updated);
       _scrollDown();
@@ -276,7 +300,8 @@ class _DalliChatScreenState extends ConsumerState<DalliChatScreen> {
     final messages = ref.watch(chatMessagesProvider);
     final mode = ref.watch(dalliModeProvider);
     final typing = ref.watch(dalliTypingProvider);
-    final lastMsg = messages.isNotEmpty && !messages.last.isUser ? messages.last : null;
+    final lastMsg =
+        messages.isNotEmpty && !messages.last.isUser ? messages.last : null;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0D0E1A),
@@ -284,9 +309,11 @@ class _DalliChatScreenState extends ConsumerState<DalliChatScreen> {
         child: Column(
           children: [
             // ── Header ──────────────────────────────────
-            _Header(mode: mode, onModeChange: (m) {
-              ref.read(dalliModeProvider.notifier).state = m;
-            }),
+            _Header(
+                mode: mode,
+                onModeChange: (m) {
+                  ref.read(dalliModeProvider.notifier).state = m;
+                }),
 
             // ── History bubbles ──────────────────────────
             if (messages.length > 1)
@@ -294,7 +321,8 @@ class _DalliChatScreenState extends ConsumerState<DalliChatScreen> {
                 height: 80,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   itemCount: messages.length - 1,
                   itemBuilder: (_, i) => _HistoryBubble(messages[i]),
                 ),
@@ -326,9 +354,12 @@ class _DalliChatScreenState extends ConsumerState<DalliChatScreen> {
                       if (lastMsg.wordPills.isNotEmpty) ...[
                         const SizedBox(height: AppSpacing.lg),
                         Wrap(
-                          spacing: 8, runSpacing: 8,
+                          spacing: 8,
+                          runSpacing: 8,
                           alignment: WrapAlignment.center,
-                          children: lastMsg.wordPills.map((p) => _WordPill(p)).toList(),
+                          children: lastMsg.wordPills
+                              .map((p) => _WordPill(p))
+                              .toList(),
                         ),
                       ],
                     ],
@@ -367,28 +398,37 @@ class _Header extends StatelessWidget {
             children: [
               GestureDetector(
                 onTap: () => Navigator.of(context).pop(),
-                child: const Icon(Icons.arrow_back_ios, color: Colors.white70, size: 20),
+                child: const Icon(Icons.arrow_back_ios,
+                    color: Colors.white70, size: 20),
               ),
               const SizedBox(width: 12),
               Container(
-                width: 40, height: 40,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
                   gradient: AppColors.primaryGradient,
                   shape: BoxShape.circle,
                 ),
                 child: const Center(
-                  child: Text('D', style: TextStyle(
-                    color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
+                  child: Text('D',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800)),
                 ),
               ),
               const SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Dalli', style: TextStyle(
-                    color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
-                  Text('AI Korean Tutor', style: TextStyle(
-                    color: Colors.white.withOpacity(0.5), fontSize: 12)),
+                  const Text('Dalli',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700)),
+                  Text('AI Korean Tutor',
+                      style: TextStyle(
+                          color: Colors.white.withOpacity(0.5), fontSize: 12)),
                 ],
               ),
               const Spacer(),
@@ -400,26 +440,33 @@ class _Header extends StatelessWidget {
             height: 36,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              children: DalliMode.values.map((m) => Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: GestureDetector(
-                  onTap: () => onModeChange(m),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: m == mode
-                          ? AppColors.primary
-                          : Colors.white.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
-                    ),
-                    child: Text('${m.icon} ${m.label}', style: TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.w600,
-                      color: m == mode ? Colors.white : Colors.white60,
-                    )),
-                  ),
-                ),
-              )).toList(),
+              children: DalliMode.values
+                  .map((m) => Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: GestureDetector(
+                          onTap: () => onModeChange(m),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: m == mode
+                                  ? AppColors.primary
+                                  : Colors.white.withOpacity(0.08),
+                              borderRadius:
+                                  BorderRadius.circular(AppSpacing.radiusPill),
+                            ),
+                            child: Text('${m.icon} ${m.label}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color:
+                                      m == mode ? Colors.white : Colors.white60,
+                                )),
+                          ),
+                        ),
+                      ))
+                  .toList(),
             ),
           ),
         ],
@@ -431,14 +478,16 @@ class _Header extends StatelessWidget {
 class _OnlineDot extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Row(children: [
-    Container(
-      width: 8, height: 8,
-      decoration: const BoxDecoration(
-        color: AppColors.success, shape: BoxShape.circle),
-    ),
-    const SizedBox(width: 4),
-    const Text('Online', style: TextStyle(color: AppColors.success, fontSize: 12)),
-  ]);
+        Container(
+          width: 8,
+          height: 8,
+          decoration: const BoxDecoration(
+              color: AppColors.success, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 4),
+        const Text('Online',
+            style: TextStyle(color: AppColors.success, fontSize: 12)),
+      ]);
 }
 
 // ── History bubble ────────────────────────────────────────
@@ -479,17 +528,19 @@ class _WordPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-    decoration: BoxDecoration(
-      color: AppColors.primary.withOpacity(0.2),
-      borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
-      border: Border.all(color: AppColors.primary.withOpacity(0.4)),
-    ),
-    child: Text(text, style: const TextStyle(
-      fontFamily: 'NotoSansKR',
-      fontSize: 15, fontWeight: FontWeight.w600,
-      color: Colors.white)),
-  );
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+          border: Border.all(color: AppColors.primary.withOpacity(0.4)),
+        ),
+        child: Text(text,
+            style: const TextStyle(
+                fontFamily: 'NotoSansKR',
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.white)),
+      );
 }
 
 // ── Typing indicator ─────────────────────────────────────
@@ -498,19 +549,19 @@ class _TypingIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: const Text('Dalli is typing…',
-          style: TextStyle(color: Colors.white60, fontSize: 16)),
-      ),
-    ],
-  );
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Text('Dalli is typing…',
+                style: TextStyle(color: Colors.white60, fontSize: 16)),
+          ),
+        ],
+      );
 }
 
 // ── Input bar ─────────────────────────────────────────────
@@ -531,7 +582,7 @@ class _InputBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.fromLTRB(
-        16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
+          16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
       decoration: BoxDecoration(
         color: const Color(0xFF1A1B2E),
         border: Border(top: BorderSide(color: Colors.white.withOpacity(0.08))),
@@ -551,11 +602,12 @@ class _InputBar extends StatelessWidget {
                 style: const TextStyle(color: Colors.white, fontSize: 15),
                 enabled: !sending,
                 decoration: InputDecoration(
-                  hintText: sending ? 'Dalli is responding…' : 'Type a message…',
+                  hintText:
+                      sending ? 'Dalli is responding…' : 'Type a message…',
                   hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 12),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   fillColor: Colors.transparent,
                   filled: true,
                 ),
@@ -568,7 +620,8 @@ class _InputBar extends StatelessWidget {
             onTap: sending ? null : onSend,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              width: 46, height: 46,
+              width: 46,
+              height: 46,
               decoration: BoxDecoration(
                 gradient: sending ? null : AppColors.primaryGradient,
                 color: sending ? Colors.white12 : null,
@@ -577,10 +630,11 @@ class _InputBar extends StatelessWidget {
               child: sending
                   ? const Center(
                       child: SizedBox(
-                        width: 20, height: 20,
-                        child: CircularProgressIndicator(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
                           strokeWidth: 2, color: Colors.white54),
-                      ))
+                    ))
                   : const Icon(Icons.arrow_upward_rounded,
                       color: Colors.white, size: 20),
             ),

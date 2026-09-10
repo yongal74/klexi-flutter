@@ -188,20 +188,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Reset Session'),
-        content: const Text('This will clear all study history and serve fresh words. Continue?'),
+        content: const Text(
+            'This will clear all study history and serve fresh words. Continue?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, true),
-            child: const Text('Reset', style: TextStyle(color: Color(0xFF0284C7)))),
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Reset',
+                  style: TextStyle(color: Color(0xFF0284C7)))),
         ],
       ),
     );
     if (confirm == true && mounted) {
       await ref.read(dailySessionServiceProvider).resetSession();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Session reset! New words will be served.')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Session reset! New words will be served.')));
       }
     }
   }
@@ -213,11 +217,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         title: const Text('Sign Out'),
         content: const Text('Are you sure you want to sign out?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, true),
-            child: const Text('Sign Out',
-              style: TextStyle(color: AppColors.error))),
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Sign Out',
+                  style: TextStyle(color: AppColors.error))),
         ],
       ),
     );
@@ -232,8 +238,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final uri = Uri.parse(url);
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open link')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Could not open link')));
       }
     }
   }
@@ -249,8 +255,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               'Sign in with Google to delete your account. Guest data is stored only '
               'on this device and is removed automatically when you uninstall the app.'),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context),
-              child: const Text('OK')),
+            TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK')),
           ],
         ),
       );
@@ -265,10 +272,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             'This permanently deletes your account and study history. '
             'This cannot be undone. Continue?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: AppColors.error))),
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Delete',
+                  style: TextStyle(color: AppColors.error))),
         ],
       ),
     );
@@ -281,7 +291,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not delete account: $e')));
+            SnackBar(content: Text('Could not delete account: $e')));
       }
     }
   }
@@ -293,7 +303,8 @@ class _ProfileCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
-    final displayName = user?.displayName ?? user?.email?.split('@').first ?? 'Guest';
+    final displayName =
+        user?.displayName ?? user?.email?.split('@').first ?? 'Guest';
     final email = user?.email ?? '';
     final photoUrl = user?.photoUrl;
     final initial = displayName.isNotEmpty ? displayName[0].toUpperCase() : 'G';
@@ -319,13 +330,20 @@ class _ProfileCard extends ConsumerWidget {
             ),
             clipBehavior: Clip.antiAlias,
             child: photoUrl != null
-                ? Image.network(photoUrl, fit: BoxFit.cover,
+                ? Image.network(photoUrl,
+                    fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Center(
-                      child: Text(initial, style: const TextStyle(
-                        fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white))))
+                        child: Text(initial,
+                            style: const TextStyle(
+                                fontSize: 26,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white))))
                 : Center(
-                    child: Text(initial, style: const TextStyle(
-                      fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white))),
+                    child: Text(initial,
+                        style: const TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white))),
           ),
           const SizedBox(width: 16),
           Expanded(

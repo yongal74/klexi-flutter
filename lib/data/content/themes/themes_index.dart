@@ -17,12 +17,19 @@ typedef ThemeWord = Word;
 
 List<Word> getThemeWords(String themeId) {
   switch (themeId) {
-    case 'kdrama':  return kdramaWords;
-    case 'kpop':    return kpopWords;
-    case 'kfood':   return kfoodWords;
-    case 'manners': return mannersWords;
-    case 'slang':   return slangWords;
-    case 'travel':  return travelWords;
-    default:        return [];
+    case 'kdrama':
+      return kdramaWords;
+    case 'kpop':
+      return kpopWords;
+    case 'kfood':
+      return kfoodWords;
+    case 'manners':
+      return mannersWords;
+    case 'slang':
+      return slangWords;
+    case 'travel':
+      return travelWords;
+    default:
+      return [];
   }
 }

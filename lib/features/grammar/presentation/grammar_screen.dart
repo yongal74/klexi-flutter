@@ -21,9 +21,11 @@ class _GrammarScreenState extends ConsumerState<GrammarScreen> {
     var list = kGrammarData;
     if (_level > 0) list = list.where((g) => g.level == _level).toList();
     if (_search.isNotEmpty) {
-      list = list.where((g) =>
-        g.title.toLowerCase().contains(_search.toLowerCase()) ||
-        g.meaning.toLowerCase().contains(_search.toLowerCase())).toList();
+      list = list
+          .where((g) =>
+              g.title.toLowerCase().contains(_search.toLowerCase()) ||
+              g.meaning.toLowerCase().contains(_search.toLowerCase()))
+          .toList();
     }
     return list;
   }
@@ -41,7 +43,7 @@ class _GrammarScreenState extends ConsumerState<GrammarScreen> {
           // Search
           Padding(
             padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
+                AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
             child: TextField(
               onChanged: (v) => setState(() => _search = v),
               decoration: const InputDecoration(
@@ -59,13 +61,20 @@ class _GrammarScreenState extends ConsumerState<GrammarScreen> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               children: [
-                _LevelTab(label: 'All', value: 0, current: _level,
-                  onTap: (v) => setState(() => _level = v)),
-                ...List.generate(6, (i) => _LevelTab(
-                  label: 'L${i + 1}', value: i + 1, current: _level,
-                  onTap: (v) => setState(() => _level = v),
-                  color: AppColors.topikColor(i + 1),
-                )),
+                _LevelTab(
+                    label: 'All',
+                    value: 0,
+                    current: _level,
+                    onTap: (v) => setState(() => _level = v)),
+                ...List.generate(
+                    6,
+                    (i) => _LevelTab(
+                          label: 'L${i + 1}',
+                          value: i + 1,
+                          current: _level,
+                          onTap: (v) => setState(() => _level = v),
+                          color: AppColors.topikColor(i + 1),
+                        )),
               ],
             ),
           ),
@@ -77,8 +86,8 @@ class _GrammarScreenState extends ConsumerState<GrammarScreen> {
             child: Row(
               children: [
                 Text('${_filtered.length} patterns',
-                  style: const TextStyle(
-                    fontSize: 13, color: AppColors.textMuted)),
+                    style: const TextStyle(
+                        fontSize: 13, color: AppColors.textMuted)),
               ],
             ),
           ),
@@ -88,13 +97,14 @@ class _GrammarScreenState extends ConsumerState<GrammarScreen> {
           Expanded(
             child: ListView.separated(
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
+                  AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
               itemCount: _filtered.length,
-              separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.listGap),
+              separatorBuilder: (_, __) =>
+                  const SizedBox(height: AppSpacing.listGap),
               itemBuilder: (_, i) => _GrammarCard(
                 pattern: _filtered[i],
-                onTap: () => context.push(
-                  AppRoutes.grammarDetail.replaceFirst(':id', _filtered[i].id)),
+                onTap: () => context.push(AppRoutes.grammarDetail
+                    .replaceFirst(':id', _filtered[i].id)),
               ),
             ),
           ),
@@ -124,16 +134,18 @@ class _GrammarCard extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 36, height: 36,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
                 color: AppColors.topikBg(pattern.level),
                 borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
               ),
               child: Center(
                 child: Text('${pattern.level}',
-                  style: TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w700,
-                    color: AppColors.topikColor(pattern.level))),
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.topikColor(pattern.level))),
               ),
             ),
             const SizedBox(width: AppSpacing.md),
@@ -142,27 +154,30 @@ class _GrammarCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(pattern.title,
-                    style: const TextStyle(
-                      fontFamily: 'NotoSansKR',
-                      fontSize: 18, fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary)),
+                      style: const TextStyle(
+                          fontFamily: 'NotoSansKR',
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary)),
                   const SizedBox(height: 2),
                   Text(pattern.meaning,
-                    style: const TextStyle(
-                      fontSize: 13, color: AppColors.textSecondary)),
+                      style: const TextStyle(
+                          fontSize: 13, color: AppColors.textSecondary)),
                   if (pattern.examples.isNotEmpty) ...[
                     const SizedBox(height: 6),
                     Text(pattern.examples.first.korean,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontFamily: 'NotoSansKR',
-                        fontSize: 13, color: AppColors.textMuted)),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontFamily: 'NotoSansKR',
+                            fontSize: 13,
+                            color: AppColors.textMuted)),
                   ],
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 20),
+            const Icon(Icons.chevron_right,
+                color: AppColors.textMuted, size: 20),
           ],
         ),
       ),
@@ -178,8 +193,11 @@ class _LevelTab extends StatelessWidget {
   final Color? color;
 
   const _LevelTab({
-    required this.label, required this.value,
-    required this.current, required this.onTap, this.color,
+    required this.label,
+    required this.value,
+    required this.current,
+    required this.onTap,
+    this.color,
   });
 
   @override
@@ -197,9 +215,11 @@ class _LevelTab extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
           border: Border.all(color: active ? c : c.withOpacity(0.3)),
         ),
-        child: Text(label, style: TextStyle(
-          fontSize: 13, fontWeight: FontWeight.w600,
-          color: active ? Colors.white : c)),
+        child: Text(label,
+            style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: active ? Colors.white : c)),
       ),
     );
   }

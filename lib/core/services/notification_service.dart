@@ -14,7 +14,8 @@ class NotificationService {
     if (_initialized) return;
     tz_data.initializeTimeZones();
 
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
@@ -49,14 +50,15 @@ class NotificationService {
     await cancelAll();
 
     final now = DateTime.now();
-    var scheduledDate = DateTime(
-      now.year, now.month, now.day, time.hour, time.minute);
+    var scheduledDate =
+        DateTime(now.year, now.month, now.day, time.hour, time.minute);
     if (scheduledDate.isBefore(now)) {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
     }
 
     const androidDetails = AndroidNotificationDetails(
-      'klexi_daily', 'Daily Reminder',
+      'klexi_daily',
+      'Daily Reminder',
       channelDescription: 'Daily Korean learning reminder',
       importance: Importance.high,
       priority: Priority.high,
@@ -91,7 +93,8 @@ class NotificationService {
   }) async {
     await initialize();
     const androidDetails = AndroidNotificationDetails(
-      'klexi_misc', 'Klexi Notifications',
+      'klexi_misc',
+      'Klexi Notifications',
       channelDescription: 'App notifications',
       importance: Importance.defaultImportance,
     );

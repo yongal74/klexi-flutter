@@ -108,7 +108,8 @@ class _LevelWordsScreenState extends ConsumerState<LevelWordsScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 72, height: 72,
+                  width: 72,
+                  height: 72,
                   decoration: BoxDecoration(
                     gradient: AppColors.primaryGradient,
                     shape: BoxShape.circle,
@@ -120,14 +121,16 @@ class _LevelWordsScreenState extends ConsumerState<LevelWordsScreen> {
                 const SizedBox(height: 20),
                 Text('TOPIK ${widget.level} — Pro Only',
                     style: const TextStyle(
-                        fontSize: 20, fontWeight: FontWeight.w800,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary)),
                 const SizedBox(height: 10),
                 Text(
                     'Upgrade to Klexi Pro to access Level ${widget.level} '
                     'and all 7,200 TOPIK words.',
                     style: const TextStyle(
-                        fontSize: 14, color: AppColors.textSecondary,
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
                         height: 1.5),
                     textAlign: TextAlign.center),
                 const SizedBox(height: 28),
@@ -226,8 +229,8 @@ class _LevelWordsScreenState extends ConsumerState<LevelWordsScreen> {
             ),
             actions: [
               TextButton.icon(
-                onPressed: () => context.push(
-                    '${AppRoutes.sentenceCard}?level=${widget.level}'),
+                onPressed: () => context
+                    .push('${AppRoutes.sentenceCard}?level=${widget.level}'),
                 icon: const Icon(Icons.play_arrow_rounded,
                     color: Colors.white, size: 18),
                 label: const Text('Practice',
@@ -254,8 +257,7 @@ class _LevelWordsScreenState extends ConsumerState<LevelWordsScreen> {
                           size: 20, color: AppColors.textMuted),
                       filled: true,
                       fillColor: AppColors.surfaceAlt,
-                      contentPadding:
-                          const EdgeInsets.symmetric(vertical: 10),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
                       border: OutlineInputBorder(
                         borderRadius:
                             BorderRadius.circular(AppSpacing.radiusPill),
@@ -267,11 +269,12 @@ class _LevelWordsScreenState extends ConsumerState<LevelWordsScreen> {
                 const SizedBox(width: 8),
                 PopupMenuButton<String>(
                   onSelected: _setSort,
-                  icon: const Icon(Icons.sort,
-                      color: AppColors.textSecondary),
+                  icon: const Icon(Icons.sort, color: AppColors.textSecondary),
                   itemBuilder: (_) => const [
-                    PopupMenuItem(value: 'default', child: Text('Default order')),
-                    PopupMenuItem(value: 'alpha', child: Text('A → Z (Korean)')),
+                    PopupMenuItem(
+                        value: 'default', child: Text('Default order')),
+                    PopupMenuItem(
+                        value: 'alpha', child: Text('A → Z (Korean)')),
                     PopupMenuItem(value: 'pos', child: Text('Part of speech')),
                   ],
                 ),
@@ -305,9 +308,8 @@ class _LevelWordsScreenState extends ConsumerState<LevelWordsScreen> {
                   levelColor: color,
                   onTap: () => context.push(
                       '${AppRoutes.sentenceCard}?level=${widget.level}&wordId=${_filtered[i].id}'),
-                  onSpeak: () => ref
-                      .read(ttsServiceProvider)
-                      .speak(_filtered[i].korean),
+                  onSpeak: () =>
+                      ref.read(ttsServiceProvider).speak(_filtered[i].korean),
                 );
               },
               childCount: _filtered.length,
@@ -349,11 +351,11 @@ class _WordRow extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg, vertical: 12),
+        padding:
+            const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 12),
         decoration: const BoxDecoration(
-          border: Border(
-              bottom: BorderSide(color: AppColors.border, width: 0.5)),
+          border:
+              Border(bottom: BorderSide(color: AppColors.border, width: 0.5)),
         ),
         child: Row(children: [
           // Korean + pronunciation
@@ -387,13 +389,12 @@ class _WordRow extends StatelessWidget {
               children: [
                 Text(word.english,
                     style: const TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textSecondary)),
+                        fontSize: 14, color: AppColors.textSecondary)),
                 if (word.partOfSpeech.isNotEmpty)
                   Container(
                     margin: const EdgeInsets.only(top: 3),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 7, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                     decoration: BoxDecoration(
                       color: levelColor.withOpacity(0.10),
                       borderRadius: BorderRadius.circular(6),

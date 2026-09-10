@@ -39,8 +39,8 @@ List<Map<String, String>> _trimHistory(
     List<Map<String, String>> history, int maxTokens) {
   // Simple trim: keep last N messages if too long
   const avgCharsPerToken = 4;
-  var totalChars = history.fold<int>(
-      0, (sum, m) => sum + (m['content']?.length ?? 0));
+  var totalChars =
+      history.fold<int>(0, (sum, m) => sum + (m['content']?.length ?? 0));
   final result = [...history];
   while (totalChars > maxTokens * avgCharsPerToken && result.length > 2) {
     totalChars -= result.removeAt(0)['content']!.length;
@@ -95,8 +95,7 @@ void main() {
     });
 
     test('assistant message not user', () {
-      expect(
-          _isUserMessage({'role': 'assistant', 'content': 'hello'}), false);
+      expect(_isUserMessage({'role': 'assistant', 'content': 'hello'}), false);
     });
   });
 

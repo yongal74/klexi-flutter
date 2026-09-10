@@ -33,8 +33,7 @@ class AnalyticsService {
 
   // ── User Properties ──────────────────────────────────────────────────────
 
-  Future<void> setUserId(String? userId) =>
-      _fa.setUserId(id: userId);
+  Future<void> setUserId(String? userId) => _fa.setUserId(id: userId);
 
   Future<void> setTopikLevel(int level) =>
       _fa.setUserProperty(name: 'topik_level', value: level.toString());

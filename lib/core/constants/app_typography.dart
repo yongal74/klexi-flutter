@@ -107,7 +107,7 @@ abstract class AppTypography {
     fontWeight: FontWeight.w400,
     color: AppColors.textSecondary,
     height: 1.4,
-    letterSpacing: 4.0,  // 음절 사이 간격
+    letterSpacing: 4.0, // 음절 사이 간격
   );
 
   // ── Button: 16px Bold — 버튼 텍스트 ──────────────────

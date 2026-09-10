@@ -2,13 +2,13 @@
 // Drama-style learning sentences for each theme (8 sentences × 6 themes = 48 total)
 
 class ThemeSentence {
-  final String theme;       // 'kdrama', 'kpop', 'travel', 'kfood', 'manners', 'slang'
-  final int level;          // 1-6
-  final String korean;      // Full Korean sentence (drama-style, natural)
-  final String english;     // English translation
+  final String theme; // 'kdrama', 'kpop', 'travel', 'kfood', 'manners', 'slang'
+  final int level; // 1-6
+  final String korean; // Full Korean sentence (drama-style, natural)
+  final String english; // English translation
   final List<String> targetWords; // Key words to learn from this sentence
-  final String context;     // Situation context
-  final String grammar;     // Grammar point used
+  final String context; // Situation context
+  final String grammar; // Grammar point used
 
   const ThemeSentence({
     required this.theme,
@@ -58,7 +58,8 @@ final List<ThemeSentence> kdramaSentences = [
     korean: '너를 처음 봤을 때부터 좋아했어.',
     english: 'I liked you from the first moment I saw you.',
     targetWords: ['처음', '봤을 때', '좋아하다'],
-    context: 'A character confesses that their feelings started from the very beginning',
+    context:
+        'A character confesses that their feelings started from the very beginning',
     grammar: '-(으)ㄹ 때부터',
   ),
   ThemeSentence(
@@ -94,7 +95,8 @@ final List<ThemeSentence> kdramaSentences = [
     korean: '이렇게 될 줄은 꿈에도 몰랐어.',
     english: 'I never even dreamed it would turn out like this.',
     targetWords: ['이렇게', '되다', '꿈에도', '모르다'],
-    context: 'A character reflects on an unexpected turn of events — shock or disbelief',
+    context:
+        'A character reflects on an unexpected turn of events — shock or disbelief',
     grammar: '-(으)ㄹ 줄 모르다',
   ),
 ];
@@ -172,7 +174,8 @@ final List<ThemeSentence> kpopSentences = [
     korean: '그들의 음악이 내 힘든 시절을 버티게 해줬어.',
     english: 'Their music helped me get through the hard times.',
     targetWords: ['음악', '힘들다', '시절', '버티다', '해주다'],
-    context: 'A fan writes a heartfelt letter explaining what the group means to them',
+    context:
+        'A fan writes a heartfelt letter explaining what the group means to them',
     grammar: '-게 해주다',
   ),
 ];
@@ -230,7 +233,8 @@ final List<ThemeSentence> travelSentences = [
     theme: 'travel',
     level: 3,
     korean: '여기 전통 시장에서 파는 음식이 맛있기로 유명하다고 들었어요.',
-    english: 'I heard this traditional market is famous for its delicious food.',
+    english:
+        'I heard this traditional market is famous for its delicious food.',
     targetWords: ['전통 시장', '유명하다', '듣다'],
     context: 'A traveller shares what they read before arriving',
     grammar: '-다고 듣다',
@@ -248,7 +252,8 @@ final List<ThemeSentence> travelSentences = [
     theme: 'travel',
     level: 5,
     korean: '이 골목을 걷다 보면 마치 조선 시대로 돌아간 것 같아요.',
-    english: 'As you walk through this alley, it feels as if you have returned to the Joseon era.',
+    english:
+        'As you walk through this alley, it feels as if you have returned to the Joseon era.',
     targetWords: ['골목', '걷다 보면', '조선 시대', '돌아가다'],
     context: 'A guide describes the atmosphere of a historic neighbourhood',
     grammar: '-다 보면',
@@ -283,7 +288,8 @@ final List<ThemeSentence> kfoodSentences = [
     korean: '삼겹살에 소주 한 잔 어때요?',
     english: 'How about a glass of soju with samgyeopsal?',
     targetWords: ['삼겹살', '소주', '어때요'],
-    context: 'A colleague suggests going out for a Korean BBQ dinner after work',
+    context:
+        'A colleague suggests going out for a Korean BBQ dinner after work',
     grammar: '-(으)ㄹ까요',
   ),
   ThemeSentence(
@@ -292,14 +298,16 @@ final List<ThemeSentence> kfoodSentences = [
     korean: '된장찌개는 따뜻하고 구수해서 겨울에 딱이에요.',
     english: 'Doenjang-jjigae is warm and savory, perfect for winter.',
     targetWords: ['된장찌개', '따뜻하다', '구수하다', '딱이다'],
-    context: 'Someone explains why Korean stew is the ultimate winter comfort food',
+    context:
+        'Someone explains why Korean stew is the ultimate winter comfort food',
     grammar: '-아/어서',
   ),
   ThemeSentence(
     theme: 'kfood',
     level: 3,
     korean: '먹어 봤자 익숙하지 않으면 맛을 모를 수도 있어요.',
-    english: "Even if you try it, you might not appreciate the taste if you're not used to it.",
+    english:
+        "Even if you try it, you might not appreciate the taste if you're not used to it.",
     targetWords: ['익숙하다', '맛', '알다', '-ㄹ 수도 있다'],
     context: 'A discussion about acquiring a taste for fermented Korean foods',
     grammar: '-아/어 봤자',
@@ -308,7 +316,8 @@ final List<ThemeSentence> kfoodSentences = [
     theme: 'kfood',
     level: 3,
     korean: '이 집 냉면은 먹을수록 빠져드는 맛이에요.',
-    english: "This restaurant's naengmyeon has a taste that draws you in the more you eat.",
+    english:
+        "This restaurant's naengmyeon has a taste that draws you in the more you eat.",
     targetWords: ['냉면', '먹을수록', '빠져들다'],
     context: 'A food blogger describes their favourite naengmyeon spot',
     grammar: '-(으)ㄹ수록',
@@ -317,18 +326,22 @@ final List<ThemeSentence> kfoodSentences = [
     theme: 'kfood',
     level: 4,
     korean: '처음에는 김치 냄새가 낯설었는데, 이제는 없으면 허전해요.',
-    english: 'At first the smell of kimchi was unfamiliar, but now I feel empty without it.',
+    english:
+        'At first the smell of kimchi was unfamiliar, but now I feel empty without it.',
     targetWords: ['냄새', '낯설다', '허전하다', '없으면'],
-    context: 'A foreigner describes how kimchi became an essential part of their diet',
+    context:
+        'A foreigner describes how kimchi became an essential part of their diet',
     grammar: '-(으)ㄴ데 이제는',
   ),
   ThemeSentence(
     theme: 'kfood',
     level: 5,
     korean: '한국의 식문화는 단순히 먹는 것을 넘어 함께 나누는 정을 중시해요.',
-    english: 'Korean food culture goes beyond simply eating — it values sharing and warmth.',
+    english:
+        'Korean food culture goes beyond simply eating — it values sharing and warmth.',
     targetWords: ['식문화', '넘다', '나누다', '정', '중시하다'],
-    context: 'A cultural essay explaining the communal philosophy behind Korean meals',
+    context:
+        'A cultural essay explaining the communal philosophy behind Korean meals',
     grammar: '-(으)ㄹ 뿐만 아니라',
   ),
 ];
@@ -343,7 +356,8 @@ final List<ThemeSentence> mannersSentences = [
     korean: '안녕하세요, 처음 뵙겠습니다.',
     english: "Hello, it's nice to meet you for the first time.",
     targetWords: ['안녕하세요', '처음', '뵙다'],
-    context: 'A formal first introduction — bowing and greeting a new colleague',
+    context:
+        'A formal first introduction — bowing and greeting a new colleague',
     grammar: '-겠습니다',
   ),
   ThemeSentence(
@@ -386,7 +400,8 @@ final List<ThemeSentence> mannersSentences = [
     theme: 'manners',
     level: 3,
     korean: '선배님께 먼저 인사를 드리는 게 한국 직장 문화예요.',
-    english: 'Greeting your senior colleagues first is Korean workplace culture.',
+    english:
+        'Greeting your senior colleagues first is Korean workplace culture.',
     targetWords: ['선배', '먼저', '인사 드리다', '직장 문화'],
     context: 'Explaining hierarchy and greetings in a Korean office setting',
     grammar: '-는 게 N이다',
@@ -395,18 +410,22 @@ final List<ThemeSentence> mannersSentences = [
     theme: 'manners',
     level: 4,
     korean: '아무리 친해도 공공장소에서 큰 소리로 �騒들면 안 돼요.',
-    english: 'No matter how close you are, making loud noise in public is not okay.',
+    english:
+        'No matter how close you are, making loud noise in public is not okay.',
     targetWords: ['아무리', '공공장소', '떠들다', '안 되다'],
-    context: 'A reminder about public conduct and keeping noise levels down in Korea',
+    context:
+        'A reminder about public conduct and keeping noise levels down in Korea',
     grammar: '아무리 -아/어도',
   ),
   ThemeSentence(
     theme: 'manners',
     level: 5,
     korean: '빈손으로 방문하는 것보다 작은 선물이라도 가져가는 편이 낫습니다.',
-    english: 'It is better to bring even a small gift than to visit empty-handed.',
+    english:
+        'It is better to bring even a small gift than to visit empty-handed.',
     targetWords: ['빈손', '방문하다', '선물', '-이라도', '낫다'],
-    context: 'Explaining Korean gift-giving etiquette when visiting someone\'s home',
+    context:
+        'Explaining Korean gift-giving etiquette when visiting someone\'s home',
     grammar: '-(으)ㄹ지라도',
   ),
 ];
@@ -475,16 +494,19 @@ final List<ThemeSentence> slangSentences = [
     korean: '걔는 TMI를 너무 많이 공유하는 편이야.',
     english: 'That person tends to share way too much information.',
     targetWords: ['TMI', '공유하다', '-는 편이다'],
-    context: 'Describing someone who overshares personal details in conversation',
+    context:
+        'Describing someone who overshares personal details in conversation',
     grammar: '-는 편이다',
   ),
   ThemeSentence(
     theme: 'slang',
     level: 5,
     korean: '요즘 MZ세대 사이에서 유행하는 표현들을 이해 못 하면 아재 소리 들어.',
-    english: "If you can't understand the trendy expressions among Gen MZ these days, people will call you old.",
+    english:
+        "If you can't understand the trendy expressions among Gen MZ these days, people will call you old.",
     targetWords: ['MZ세대', '유행하다', '표현', '아재'],
-    context: 'A discussion about generational language gaps and keeping up with slang',
+    context:
+        'A discussion about generational language gaps and keeping up with slang',
     grammar: '-으면 N 소리 듣다',
   ),
 ];
@@ -505,4 +527,6 @@ List<ThemeSentence> getThemeSentences(String theme) =>
     kAllThemeSentences.where((s) => s.theme == theme).toList();
 
 List<ThemeSentence> getThemeSentencesByLevel(String theme, int level) =>
-    kAllThemeSentences.where((s) => s.theme == theme && s.level == level).toList();
+    kAllThemeSentences
+        .where((s) => s.theme == theme && s.level == level)
+        .toList();

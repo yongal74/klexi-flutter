@@ -4,7 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/router/app_router.dart';
-import '../../../core/services/daily_session_service.dart' show dailySessionServiceProvider, todayStudiedCountProvider;
+import '../../../core/services/daily_session_service.dart'
+    show dailySessionServiceProvider, todayStudiedCountProvider;
 import '../../../core/services/purchase_service.dart';
 import '../../../data/repositories/word_repository.dart';
 
@@ -25,11 +26,13 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
 
   Future<void> _load() async {
     final session = ref.read(dailySessionServiceProvider);
-    final today  = await session.getTodayStudiedCount();
+    final today = await session.getTodayStudiedCount();
     if (mounted) {
       // Seed the live provider so it reflects the current state
       ref.read(todayStudiedCountProvider.notifier).state = today;
-      setState(() { _todayDone = today; });
+      setState(() {
+        _todayDone = today;
+      });
     }
   }
 
@@ -61,16 +64,20 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text("Today's Progress",
-                    style: TextStyle(fontSize: 12, color: Colors.white70)),
+                      style: TextStyle(fontSize: 12, color: Colors.white70)),
                   const SizedBox(height: 8),
                   FittedBox(
                     fit: BoxFit.scaleDown,
                     alignment: Alignment.centerLeft,
                     child: Row(children: [
-                      Text('$todayDone', style: const TextStyle(
-                        fontSize: 36, fontWeight: FontWeight.w800, color: Colors.white)),
-                      const Text(' / 20 words', style: TextStyle(
-                        fontSize: 18, color: Colors.white70)),
+                      Text('$todayDone',
+                          style: const TextStyle(
+                              fontSize: 36,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white)),
+                      const Text(' / 20 words',
+                          style:
+                              TextStyle(fontSize: 18, color: Colors.white70)),
                     ]),
                   ),
                   const SizedBox(height: 12),
@@ -90,9 +97,8 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                       backgroundColor: Colors.white,
                       foregroundColor: AppColors.primary,
                     ),
-                    child: Text(
-                      todayDone == 0 ? 'Start Session' : 'Continue',
-                      style: const TextStyle(fontWeight: FontWeight.w700)),
+                    child: Text(todayDone == 0 ? 'Start Session' : 'Continue',
+                        style: const TextStyle(fontWeight: FontWeight.w700)),
                   ),
                 ],
               ),
@@ -101,15 +107,19 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
 
             // ── TOPIK Levels ──────────────────────────────────
             const Text('TOPIK Levels',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary)),
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary)),
             const SizedBox(height: AppSpacing.md),
             _LevelGrid(),
             const SizedBox(height: AppSpacing.sectionGap),
 
             const Text('Practice Modes',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary)),
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary)),
             const SizedBox(height: AppSpacing.md),
 
             _PracticeCard(
@@ -177,10 +187,22 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
 
 // ── TOPIK Level Grid ───────────────────────────────────────
 class _LevelGrid extends ConsumerWidget {
-  static const _names = ['Beginner', 'Elementary', 'Intermediate',
-      'Upper-Int.', 'Advanced', 'Master'];
-  static const _ranges = ['1–800', '801–2,000', '2,001–3,500',
-      '3,501–5,000', '5,001–6,500', '6,501+'];
+  static const _names = [
+    'Beginner',
+    'Elementary',
+    'Intermediate',
+    'Upper-Int.',
+    'Advanced',
+    'Master'
+  ];
+  static const _ranges = [
+    '1–800',
+    '801–2,000',
+    '2,001–3,500',
+    '3,501–5,000',
+    '5,001–6,500',
+    '6,501+'
+  ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -209,7 +231,9 @@ class _LevelGrid extends ConsumerWidget {
           child: Container(
             padding: const EdgeInsets.all(AppSpacing.cardPad),
             decoration: BoxDecoration(
-              color: locked ? AppColors.surface.withOpacity(0.7) : AppColors.surface,
+              color: locked
+                  ? AppColors.surface.withOpacity(0.7)
+                  : AppColors.surface,
               borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
               border: Border.all(
                   color: locked ? AppColors.border : color.withOpacity(0.3)),
@@ -220,14 +244,16 @@ class _LevelGrid extends ConsumerWidget {
               children: [
                 Row(children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: locked ? AppColors.textMuted : color,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text('TOPIK $lvl',
                         style: const TextStyle(
-                            fontSize: 11, fontWeight: FontWeight.w800,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
                             color: Colors.white)),
                   ),
                   const Spacer(),
@@ -241,7 +267,8 @@ class _LevelGrid extends ConsumerWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
                         color: locked ? AppColors.textMuted : color)),
                 const SizedBox(height: 2),
                 Text(locked ? 'Pro only' : '$count words',
@@ -271,8 +298,12 @@ class _PracticeCard extends ConsumerWidget {
   final bool isPro;
 
   const _PracticeCard({
-    required this.icon, required this.title, required this.subtitle,
-    required this.color, required this.onTap, this.isPro = false,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+    this.isPro = false,
   });
 
   @override
@@ -290,45 +321,56 @@ class _PracticeCard extends ConsumerWidget {
         ),
         child: Row(children: [
           Container(
-            width: 52, height: 52,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
               color: color.withOpacity(locked ? 0.06 : 0.12),
               borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
             ),
-            child: Center(child: Text(
-                locked ? '🔒' : icon,
-                style: const TextStyle(fontSize: 26))),
+            child: Center(
+                child: Text(locked ? '🔒' : icon,
+                    style: const TextStyle(fontSize: 26))),
           ),
           const SizedBox(width: AppSpacing.md),
-          Expanded(child: Column(
+          Expanded(
+              child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(children: [
-                Text(title, style: TextStyle(
-                  fontSize: 16, fontWeight: FontWeight.w700,
-                  color: locked ? AppColors.textMuted : AppColors.textPrimary)),
+                Text(title,
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: locked
+                            ? AppColors.textMuted
+                            : AppColors.textPrimary)),
                 if (locked) ...[
                   const SizedBox(width: 6),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Text('Pro',
                         style: TextStyle(
-                            fontSize: 10, fontWeight: FontWeight.w700,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
                             color: AppColors.primary)),
                   ),
                 ],
               ]),
-              Text(subtitle, style: TextStyle(
-                fontSize: 13,
-                color: locked ? AppColors.textMuted : AppColors.textSecondary)),
+              Text(subtitle,
+                  style: TextStyle(
+                      fontSize: 13,
+                      color: locked
+                          ? AppColors.textMuted
+                          : AppColors.textSecondary)),
             ],
           )),
-          Icon(Icons.arrow_forward_ios, size: 14,
-              color: locked ? AppColors.textMuted : color),
+          Icon(Icons.arrow_forward_ios,
+              size: 14, color: locked ? AppColors.textMuted : color),
         ]),
       ),
     );

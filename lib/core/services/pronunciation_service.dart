@@ -10,10 +10,10 @@ import '../constants/app_config.dart';
 // ── Model ─────────────────────────────────────────────────────────────────
 
 class PronunciationResult {
-  final int score;           // 0–100
-  final String transcript;   // what the server heard
-  final String expected;     // normalised expected text
-  final String feedback;     // human-readable feedback
+  final int score; // 0–100
+  final String transcript; // what the server heard
+  final String expected; // normalised expected text
+  final String feedback; // human-readable feedback
   final List<PhonemeDetail> details;
 
   const PronunciationResult({
@@ -106,10 +106,10 @@ class PronunciationService {
 // ── Providers ─────────────────────────────────────────────────────────────
 
 final _dioProvider = Provider<Dio>((ref) => Dio(BaseOptions(
-  baseUrl: '${AppConfig.backendUrl}/api',
-  connectTimeout: const Duration(seconds: 10),
-  receiveTimeout: const Duration(seconds: 30),
-)));
+      baseUrl: '${AppConfig.backendUrl}/api',
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 30),
+    )));
 
 final pronunciationServiceProvider = Provider<PronunciationService>((ref) {
   final dio = ref.watch(_dioProvider);

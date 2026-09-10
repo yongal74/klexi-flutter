@@ -71,7 +71,8 @@ class PurchaseService {
 
       // ignore: deprecated_member_use
       final result = await Purchases.purchasePackage(pkg);
-      final active = result.customerInfo.entitlements.active.containsKey('premium');
+      final active =
+          result.customerInfo.entitlements.active.containsKey('premium');
       _notifier.setPremium(active);
       return active;
     } on PlatformException catch (e) {

@@ -14,9 +14,10 @@ import '../../../data/repositories/word_repository.dart';
 
 class SentenceCardScreen extends ConsumerStatefulWidget {
   final int? level;
-  final String? wordId;   // browse from a specific word in the level list
-  final int startIndex;   // start at this index in today's session
-  const SentenceCardScreen({super.key, this.level, this.wordId, this.startIndex = 0});
+  final String? wordId; // browse from a specific word in the level list
+  final int startIndex; // start at this index in today's session
+  const SentenceCardScreen(
+      {super.key, this.level, this.wordId, this.startIndex = 0});
   @override
   ConsumerState<SentenceCardScreen> createState() => _SentenceCardScreenState();
 }
@@ -25,7 +26,8 @@ class _SentenceCardScreenState extends ConsumerState<SentenceCardScreen>
     with SingleTickerProviderStateMixin {
   List<Word> _words = [];
   int _index = 0;
-  bool _browseMode = false; // true when launched from word list (no study rating)
+  bool _browseMode =
+      false; // true when launched from word list (no study rating)
   bool _revealed = false;
   bool _loading = true;
 
@@ -34,7 +36,8 @@ class _SentenceCardScreenState extends ConsumerState<SentenceCardScreen>
   @override
   void initState() {
     super.initState();
-    _flipCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 400));
+    _flipCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 400));
     _load();
   }
 
@@ -64,9 +67,15 @@ class _SentenceCardScreenState extends ConsumerState<SentenceCardScreen>
         final shuffled = List<Word>.from(lvlWords);
         for (int i = shuffled.length - 1; i > 0; i--) {
           final j = (seed * (i + 1)) % (i + 1);
-          final tmp = shuffled[i]; shuffled[i] = shuffled[j]; shuffled[j] = tmp;
+          final tmp = shuffled[i];
+          shuffled[i] = shuffled[j];
+          shuffled[j] = tmp;
         }
-        setState(() { _words = shuffled; _browseMode = true; _loading = false; });
+        setState(() {
+          _words = shuffled;
+          _browseMode = true;
+          _loading = false;
+        });
       }
     } else if (widget.wordId != null) {
       // Single-word browse from daily session tile tap
@@ -84,7 +93,8 @@ class _SentenceCardScreenState extends ConsumerState<SentenceCardScreen>
     } else {
       final session = ref.read(dailySessionServiceProvider);
       final userLevel = ref.read(userTopikLevelProvider);
-      final ids = await session.getTodayWordIds(isPremium: isPremium, userLevel: userLevel);
+      final ids = await session.getTodayWordIds(
+          isPremium: isPremium, userLevel: userLevel);
       final all = repo.getAllWords();
       final sessionWords = all
           .where((w) => ids.contains(w.id) && (isPremium || w.level == 1))
@@ -92,7 +102,8 @@ class _SentenceCardScreenState extends ConsumerState<SentenceCardScreen>
           .toList();
       setState(() {
         _words = sessionWords;
-        _index = widget.startIndex.clamp(0, sessionWords.isEmpty ? 0 : sessionWords.length - 1);
+        _index = widget.startIndex
+            .clamp(0, sessionWords.isEmpty ? 0 : sessionWords.length - 1);
         _loading = false;
       });
     }
@@ -129,8 +140,8 @@ class _SentenceCardScreenState extends ConsumerState<SentenceCardScreen>
           builder: (_) => AlertDialog(
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppSpacing.radiusXl)),
-            title: const Text('Session Complete! 🎉',
-                textAlign: TextAlign.center),
+            title:
+                const Text('Session Complete! 🎉', textAlign: TextAlign.center),
             content: const Text(
                 'Great work! Practice what you learned or continue with more words.',
                 textAlign: TextAlign.center),
@@ -190,12 +201,14 @@ class _SentenceCardScreenState extends ConsumerState<SentenceCardScreen>
           children: [
             // ── Progress bar ───────────────────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
               child: Row(
                 children: [
                   IconButton(
                     onPressed: () => context.pop(),
-                    icon: const Icon(Icons.close, color: AppColors.textSecondary),
+                    icon:
+                        const Icon(Icons.close, color: AppColors.textSecondary),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -204,14 +217,16 @@ class _SentenceCardScreenState extends ConsumerState<SentenceCardScreen>
                       child: LinearProgressIndicator(
                         value: (_index + 1) / _words.length,
                         backgroundColor: AppColors.border,
-                        valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+                        valueColor:
+                            const AlwaysStoppedAnimation(AppColors.primary),
                         minHeight: 6,
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Text('${_index + 1}/${_words.length}',
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                      style: const TextStyle(
+                          fontSize: 12, color: AppColors.textSecondary)),
                 ],
               ),
             ),
@@ -235,16 +250,19 @@ class _SentenceCardScreenState extends ConsumerState<SentenceCardScreen>
                       children: [
                         // Level badge
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 4),
                           decoration: BoxDecoration(
                             color: AppColors.topikBg(word.level),
-                            borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                            borderRadius:
+                                BorderRadius.circular(AppSpacing.radiusPill),
                           ),
                           child: Text(
                             'TOPIK ${word.level}  •  ${word.category}',
                             style: TextStyle(
-                              fontSize: 11, fontWeight: FontWeight.w600,
-                              color: AppColors.topikColor(word.level)),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.topikColor(word.level)),
                           ),
                         ),
                         const SizedBox(height: AppSpacing.x2l),
@@ -258,16 +276,20 @@ class _SentenceCardScreenState extends ConsumerState<SentenceCardScreen>
                               child: FittedBox(
                                 fit: BoxFit.scaleDown,
                                 child: Text(word.korean,
-                                  style: const TextStyle(
-                                    fontFamily: 'NotoSansKR',
-                                    fontSize: 44, fontWeight: FontWeight.w700,
-                                    color: AppColors.textPrimary, letterSpacing: 2)),
+                                    style: const TextStyle(
+                                        fontFamily: 'NotoSansKR',
+                                        fontSize: 44,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.textPrimary,
+                                        letterSpacing: 2)),
                               ),
                             ),
                             IconButton(
                               icon: const Icon(Icons.volume_up_rounded,
-                                size: 26, color: AppColors.primary),
-                              onPressed: () => ref.read(ttsServiceProvider).speak(word.korean),
+                                  size: 26, color: AppColors.primary),
+                              onPressed: () => ref
+                                  .read(ttsServiceProvider)
+                                  .speak(word.korean),
                             ),
                           ],
                         ),
@@ -276,8 +298,11 @@ class _SentenceCardScreenState extends ConsumerState<SentenceCardScreen>
                         SizedBox(
                           height: 22,
                           child: Text(
-                            word.pronunciation.isEmpty ? '' : '[${word.pronunciation}]',
-                            style: const TextStyle(fontSize: 13, color: AppColors.textMuted),
+                            word.pronunciation.isEmpty
+                                ? ''
+                                : '[${word.pronunciation}]',
+                            style: const TextStyle(
+                                fontSize: 13, color: AppColors.textMuted),
                           ),
                         ),
                         const SizedBox(height: AppSpacing.x2l),
@@ -289,18 +314,20 @@ class _SentenceCardScreenState extends ConsumerState<SentenceCardScreen>
                           children: [
                             Expanded(
                               child: Text(word.example,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontFamily: 'NotoSansKR',
-                                  fontSize: 16, height: 1.7,
-                                  color: AppColors.textPrimary,
-                                  fontWeight: FontWeight.w500)),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                      fontFamily: 'NotoSansKR',
+                                      fontSize: 16,
+                                      height: 1.7,
+                                      color: AppColors.textPrimary,
+                                      fontWeight: FontWeight.w500)),
                             ),
                             IconButton(
                               icon: const Icon(Icons.volume_up_outlined,
-                                size: 18, color: AppColors.textMuted),
-                              onPressed: () => ref.read(ttsServiceProvider).speak(
-                                word.example, speed: TtsSpeed.slow),
+                                  size: 18, color: AppColors.textMuted),
+                              onPressed: () => ref
+                                  .read(ttsServiceProvider)
+                                  .speak(word.example, speed: TtsSpeed.slow),
                             ),
                           ],
                         ),
@@ -317,21 +344,26 @@ class _SentenceCardScreenState extends ConsumerState<SentenceCardScreen>
                             duration: const Duration(milliseconds: 300),
                             child: Column(
                               children: [
-                                Divider(color: AppColors.border, height: AppSpacing.x2l),
+                                Divider(
+                                    color: AppColors.border,
+                                    height: AppSpacing.x2l),
                                 FittedBox(
                                   fit: BoxFit.scaleDown,
                                   child: Text(word.english,
-                                    style: const TextStyle(
-                                      fontSize: 17, fontWeight: FontWeight.w700,
-                                      color: AppColors.primary)),
+                                      style: const TextStyle(
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.primary)),
                                 ),
                                 const SizedBox(height: AppSpacing.sm),
                                 Text(word.exampleTranslation,
-                                  textAlign: TextAlign.center,
-                                  maxLines: 3,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: 12, color: AppColors.textSecondary, height: 1.5)),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.textSecondary,
+                                        height: 1.5)),
                               ],
                             ),
                           ),
@@ -347,7 +379,8 @@ class _SentenceCardScreenState extends ConsumerState<SentenceCardScreen>
                             opacity: _revealed ? 0.0 : 1.0,
                             duration: const Duration(milliseconds: 200),
                             child: const Text('Tap to reveal',
-                              style: TextStyle(fontSize: 13, color: AppColors.textMuted)),
+                                style: TextStyle(
+                                    fontSize: 13, color: AppColors.textMuted)),
                           ),
                         ),
                       ],
@@ -367,17 +400,23 @@ class _SentenceCardScreenState extends ConsumerState<SentenceCardScreen>
                   top: false,
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
+                        AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
                     child: Row(
                       children: [
-                        _RatingBtn(label: 'Again', color: AppColors.error,
-                          onTap: () => _next(1)),
+                        _RatingBtn(
+                            label: 'Again',
+                            color: AppColors.error,
+                            onTap: () => _next(1)),
                         const SizedBox(width: AppSpacing.sm),
-                        _RatingBtn(label: 'Good', color: AppColors.warning,
-                          onTap: () => _next(3)),
+                        _RatingBtn(
+                            label: 'Good',
+                            color: AppColors.warning,
+                            onTap: () => _next(3)),
                         const SizedBox(width: AppSpacing.sm),
-                        _RatingBtn(label: 'Easy', color: AppColors.success,
-                          onTap: () => _next(5)),
+                        _RatingBtn(
+                            label: 'Easy',
+                            color: AppColors.success,
+                            onTap: () => _next(5)),
                       ],
                     ),
                   ),
@@ -395,25 +434,26 @@ class _RatingBtn extends StatelessWidget {
   final String label;
   final Color color;
   final VoidCallback onTap;
-  const _RatingBtn({required this.label, required this.color, required this.onTap});
+  const _RatingBtn(
+      {required this.label, required this.color, required this.onTap});
 
   @override
   Widget build(BuildContext context) => Expanded(
-    child: GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 13),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.12),
-          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          border: Border.all(color: color.withOpacity(0.3)),
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 13),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              border: Border.all(color: color.withOpacity(0.3)),
+            ),
+            child: Center(
+              child: Text(label,
+                  style: TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w600, color: color)),
+            ),
+          ),
         ),
-        child: Center(
-          child: Text(label,
-            style: TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w600, color: color)),
-        ),
-      ),
-    ),
-  );
+      );
 }

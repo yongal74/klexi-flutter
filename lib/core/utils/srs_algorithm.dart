@@ -29,7 +29,8 @@ class SrsAlgorithm {
     }
 
     // Ease factor 조정
-    easeFactor = easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+    easeFactor =
+        easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
     if (easeFactor < _minEaseFactor) easeFactor = _minEaseFactor;
 
     final nextReview = DateTime.now().add(Duration(days: interval));
@@ -45,13 +46,13 @@ class SrsAlgorithm {
   }
 
   static SrsCard createNew(String wordId) => SrsCard(
-    wordId: wordId,
-    easeFactor: _initialEaseFactor,
-    interval: 1,
-    repetitions: 0,
-    nextReview: DateTime.now().add(const Duration(days: 1)),
-    lastReview: DateTime.now(),
-  );
+        wordId: wordId,
+        easeFactor: _initialEaseFactor,
+        interval: 1,
+        repetitions: 0,
+        nextReview: DateTime.now().add(const Duration(days: 1)),
+        lastReview: DateTime.now(),
+      );
 
   static bool isDue(SrsCard card) =>
       DateTime.now().isAfter(card.nextReview) ||
@@ -61,7 +62,7 @@ class SrsAlgorithm {
 class SrsCard {
   final String wordId;
   final double easeFactor;
-  final int interval;       // days
+  final int interval; // days
   final int repetitions;
   final DateTime nextReview;
   final DateTime lastReview;
@@ -76,20 +77,20 @@ class SrsCard {
   });
 
   Map<String, dynamic> toJson() => {
-    'wordId': wordId,
-    'easeFactor': easeFactor,
-    'interval': interval,
-    'repetitions': repetitions,
-    'nextReview': nextReview.toIso8601String(),
-    'lastReview': lastReview.toIso8601String(),
-  };
+        'wordId': wordId,
+        'easeFactor': easeFactor,
+        'interval': interval,
+        'repetitions': repetitions,
+        'nextReview': nextReview.toIso8601String(),
+        'lastReview': lastReview.toIso8601String(),
+      };
 
   factory SrsCard.fromJson(Map<String, dynamic> json) => SrsCard(
-    wordId: json['wordId'] as String,
-    easeFactor: (json['easeFactor'] as num).toDouble(),
-    interval: json['interval'] as int,
-    repetitions: json['repetitions'] as int,
-    nextReview: DateTime.parse(json['nextReview'] as String),
-    lastReview: DateTime.parse(json['lastReview'] as String),
-  );
+        wordId: json['wordId'] as String,
+        easeFactor: (json['easeFactor'] as num).toDouble(),
+        interval: json['interval'] as int,
+        repetitions: json['repetitions'] as int,
+        nextReview: DateTime.parse(json['nextReview'] as String),
+        lastReview: DateTime.parse(json['lastReview'] as String),
+      );
 }

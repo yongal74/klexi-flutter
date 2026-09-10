@@ -48,8 +48,8 @@ class _NotificationSettingsScreenState
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Settings saved')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Settings saved')));
       }
     } catch (e) {
       debugPrint('[NotifSettings] save error: $e');
@@ -67,69 +67,75 @@ class _NotificationSettingsScreenState
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      onPopInvokedWithResult: (didPop, _) async {
-        if (didPop) await _save();
-      },
-      child: Scaffold(
-      backgroundColor: AppColors.bg,
-      appBar: AppBar(
-        title: const Text('Notifications'),
-        backgroundColor: AppColors.surface,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Column(
-                children: [
-                  // Enable toggle
-                  ListTile(
-                    title: const Text('Daily Reminder',
-                      style: TextStyle(fontWeight: FontWeight.w600)),
-                    subtitle: const Text('Get reminded to practice every day'),
-                    trailing: Switch(
-                      value: _enabled,
-                      onChanged: (v) => setState(() => _enabled = v),
-                      activeColor: AppColors.primary,
-                    ),
+        onPopInvokedWithResult: (didPop, _) async {
+          if (didPop) await _save();
+        },
+        child: Scaffold(
+          backgroundColor: AppColors.bg,
+          appBar: AppBar(
+            title: const Text('Notifications'),
+            backgroundColor: AppColors.surface,
+          ),
+          body: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+                    border: Border.all(color: AppColors.border),
                   ),
-                  const Divider(height: 1, indent: 16, endIndent: 16),
-
-                  // Time picker
-                  ListTile(
-                    enabled: _enabled,
-                    title: const Text('Reminder Time'),
-                    trailing: GestureDetector(
-                      onTap: _enabled ? _pickTime : null,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: _enabled
-                              ? AppColors.primary.withOpacity(0.1)
-                              : AppColors.surfaceAlt,
-                          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                        ),
-                        child: Text(
-                          _time.format(context),
-                          style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w700,
-                            color: _enabled ? AppColors.primary : AppColors.textMuted),
+                  child: Column(
+                    children: [
+                      // Enable toggle
+                      ListTile(
+                        title: const Text('Daily Reminder',
+                            style: TextStyle(fontWeight: FontWeight.w600)),
+                        subtitle:
+                            const Text('Get reminded to practice every day'),
+                        trailing: Switch(
+                          value: _enabled,
+                          onChanged: (v) => setState(() => _enabled = v),
+                          activeColor: AppColors.primary,
                         ),
                       ),
-                    ),
+                      const Divider(height: 1, indent: 16, endIndent: 16),
+
+                      // Time picker
+                      ListTile(
+                        enabled: _enabled,
+                        title: const Text('Reminder Time'),
+                        trailing: GestureDetector(
+                          onTap: _enabled ? _pickTime : null,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: _enabled
+                                  ? AppColors.primary.withOpacity(0.1)
+                                  : AppColors.surfaceAlt,
+                              borderRadius:
+                                  BorderRadius.circular(AppSpacing.radiusMd),
+                            ),
+                            child: Text(
+                              _time.format(context),
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: _enabled
+                                      ? AppColors.primary
+                                      : AppColors.textMuted),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
-    ));
+          ),
+        ));
   }
 }

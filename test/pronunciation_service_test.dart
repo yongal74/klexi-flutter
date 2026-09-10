@@ -35,13 +35,25 @@ void main() {
     });
 
     test('score 0 is valid', () {
-      final json = {'score': 0, 'transcript': '', 'expected': '', 'feedback': '', 'details': []};
+      final json = {
+        'score': 0,
+        'transcript': '',
+        'expected': '',
+        'feedback': '',
+        'details': []
+      };
       final result = PronunciationResult.fromJson(json);
       expect(result.score, 0);
     });
 
     test('score 100 is valid', () {
-      final json = {'score': 100, 'transcript': '완벽', 'expected': '완벽', 'feedback': 'Perfect!', 'details': []};
+      final json = {
+        'score': 100,
+        'transcript': '완벽',
+        'expected': '완벽',
+        'feedback': 'Perfect!',
+        'details': []
+      };
       final result = PronunciationResult.fromJson(json);
       expect(result.score, 100);
     });
@@ -57,14 +69,16 @@ void main() {
 
   group('PhonemeDetail.fromJson', () {
     test('parses correct match', () {
-      final d = PhonemeDetail.fromJson({'expected': '가', 'heard': '가', 'correct': true});
+      final d = PhonemeDetail.fromJson(
+          {'expected': '가', 'heard': '가', 'correct': true});
       expect(d.expected, '가');
       expect(d.heard, '가');
       expect(d.correct, true);
     });
 
     test('parses mismatch', () {
-      final d = PhonemeDetail.fromJson({'expected': '나', 'heard': '다', 'correct': false});
+      final d = PhonemeDetail.fromJson(
+          {'expected': '나', 'heard': '다', 'correct': false});
       expect(d.correct, false);
     });
 

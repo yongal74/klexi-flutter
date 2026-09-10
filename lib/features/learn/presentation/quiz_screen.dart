@@ -6,7 +6,8 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/services/analytics_service.dart';
-import '../../../core/services/daily_session_service.dart' show dailySessionServiceProvider, lastSessionWordsProvider;
+import '../../../core/services/daily_session_service.dart'
+    show dailySessionServiceProvider, lastSessionWordsProvider;
 import '../../../core/services/purchase_service.dart';
 import '../../../data/models/word.dart';
 import '../../../data/repositories/word_repository.dart';
@@ -16,7 +17,7 @@ final quizWrongWordsProvider = StateProvider<List<String>>((ref) => []);
 
 class _QuizQuestion {
   final Word word;
-  final List<String> options;   // 4 English meanings
+  final List<String> options; // 4 English meanings
   final int correctIndex;
 
   const _QuizQuestion({
@@ -38,7 +39,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
   bool _loading = true;
 
   int _current = 0;
-  int? _selectedOption;     // null = not answered yet
+  int? _selectedOption; // null = not answered yet
   int _correctCount = 0;
   final List<String> _wrongWordIds = [];
 
@@ -132,7 +133,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
         topikLevel: level,
       );
       setState(() {
-        _current++;  // triggers _finished
+        _current++; // triggers _finished
         _selectedOption = null;
       });
     } else {
@@ -349,8 +350,8 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
                     ),
                     Text(
                       '$percent% correct',
-                      style: const TextStyle(
-                          fontSize: 14, color: Colors.white70),
+                      style:
+                          const TextStyle(fontSize: 14, color: Colors.white70),
                     ),
                   ],
                 ),
@@ -374,8 +375,8 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
                         color: AppColors.surface,
                         borderRadius:
                             BorderRadius.circular(AppSpacing.radiusLg),
-                        border: Border.all(
-                            color: AppColors.error.withOpacity(0.2)),
+                        border:
+                            Border.all(color: AppColors.error.withOpacity(0.2)),
                       ),
                       child: Row(
                         children: [
@@ -430,8 +431,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
                   width: double.infinity,
                   height: AppSpacing.buttonH,
                   child: ElevatedButton(
-                    onPressed: () =>
-                        context.push(AppRoutes.reviewSession),
+                    onPressed: () => context.push(AppRoutes.reviewSession),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
@@ -442,13 +442,12 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
                     ),
                     child: const Text(
                       'Review Wrong Words →',
-                      style: TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w600),
+                      style:
+                          TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                     ),
                   ),
                 ),
-              if (wrongWords.isNotEmpty)
-                const SizedBox(height: AppSpacing.md),
+              if (wrongWords.isNotEmpty) const SizedBox(height: AppSpacing.md),
               SizedBox(
                 width: double.infinity,
                 height: AppSpacing.buttonH,
@@ -458,8 +457,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
                     foregroundColor: AppColors.textSecondary,
                     side: const BorderSide(color: AppColors.border),
                     shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(AppSpacing.radiusMd),
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
                     ),
                   ),
                   child: const Text(

@@ -45,7 +45,8 @@ class _ClozeQuizScreenState extends ConsumerState<ClozeQuizScreen> {
     final others = <String>[];
     // Add 3 random distractors from same level if possible
     final rng = Random();
-    final candidates = _quiz.where((w) => w.id != target.id).toList()..shuffle(rng);
+    final candidates = _quiz.where((w) => w.id != target.id).toList()
+      ..shuffle(rng);
     for (final w in candidates.take(3)) {
       others.add(w.korean);
     }
@@ -77,18 +78,26 @@ class _ClozeQuizScreenState extends ConsumerState<ClozeQuizScreen> {
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.radiusXl)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSpacing.radiusXl)),
         title: const Text('Quiz Complete!', textAlign: TextAlign.center),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
           Text('$_correct / ${_quiz.length}',
-            style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w800, color: AppColors.primary)),
+              style: const TextStyle(
+                  fontSize: 40,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.primary)),
           const SizedBox(height: 8),
           Text('${(_correct / _quiz.length * 100).round()}% correct',
-            style: const TextStyle(color: AppColors.textSecondary)),
+              style: const TextStyle(color: AppColors.textSecondary)),
         ]),
         actions: [
-          TextButton(onPressed: () { Navigator.pop(context); context.pop(); },
-            child: const Text('Done')),
+          TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                context.pop();
+              },
+              child: const Text('Done')),
         ],
       ),
     );
@@ -96,8 +105,10 @@ class _ClozeQuizScreenState extends ConsumerState<ClozeQuizScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    if (_quiz.isEmpty) return const Scaffold(body: Center(child: Text('No quiz available')));
+    if (_loading)
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (_quiz.isEmpty)
+      return const Scaffold(body: Center(child: Text('No quiz available')));
 
     final word = _quiz[_index];
 
@@ -116,7 +127,7 @@ class _ClozeQuizScreenState extends ConsumerState<ClozeQuizScreen> {
             padding: const EdgeInsets.only(right: 16),
             child: Center(
               child: Text('${_index + 1}/${_quiz.length}',
-                style: const TextStyle(color: AppColors.textSecondary)),
+                  style: const TextStyle(color: AppColors.textSecondary)),
             ),
           ),
         ],
@@ -134,7 +145,8 @@ class _ClozeQuizScreenState extends ConsumerState<ClozeQuizScreen> {
                     child: LinearProgressIndicator(
                       value: (_index + 1) / _quiz.length,
                       backgroundColor: AppColors.border,
-                      valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+                      valueColor:
+                          const AlwaysStoppedAnimation(AppColors.primary),
                       minHeight: 6,
                     ),
                   ),
@@ -146,27 +158,35 @@ class _ClozeQuizScreenState extends ConsumerState<ClozeQuizScreen> {
                     padding: const EdgeInsets.all(AppSpacing.cardPadLg),
                     decoration: BoxDecoration(
                       color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+                      borderRadius:
+                          BorderRadius.circular(AppSpacing.radiusCard),
                       boxShadow: AppColors.cardShadow,
                     ),
                     child: Column(
                       children: [
                         Text('Fill in the Korean word:',
-                          style: Theme.of(context).textTheme.titleSmall),
+                            style: Theme.of(context).textTheme.titleSmall),
                         const SizedBox(height: AppSpacing.lg),
                         Text(sentence,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 18, height: 1.6, color: AppColors.textPrimary)),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                                fontSize: 18,
+                                height: 1.6,
+                                color: AppColors.textPrimary)),
                         const SizedBox(height: AppSpacing.md),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 10),
                           decoration: const BoxDecoration(
-                            border: Border(bottom: BorderSide(color: AppColors.primary, width: 2.5)),
+                            border: Border(
+                                bottom: BorderSide(
+                                    color: AppColors.primary, width: 2.5)),
                           ),
                           child: const Text('?',
-                            style: TextStyle(
-                              fontSize: 22, fontWeight: FontWeight.w800,
-                              color: AppColors.primary)),
+                              style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.primary)),
                         ),
                       ],
                     ),
@@ -183,8 +203,15 @@ class _ClozeQuizScreenState extends ConsumerState<ClozeQuizScreen> {
                     Color border = AppColors.border;
                     Color text = AppColors.textPrimary;
                     if (_selected != null) {
-                      if (isCorrect) { bg = AppColors.success.withOpacity(0.12); border = AppColors.success; text = AppColors.success; }
-                      else if (isSelected) { bg = AppColors.error.withOpacity(0.12); border = AppColors.error; text = AppColors.error; }
+                      if (isCorrect) {
+                        bg = AppColors.success.withOpacity(0.12);
+                        border = AppColors.success;
+                        text = AppColors.success;
+                      } else if (isSelected) {
+                        bg = AppColors.error.withOpacity(0.12);
+                        border = AppColors.error;
+                        text = AppColors.error;
+                      }
                     }
                     return Padding(
                       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -193,17 +220,21 @@ class _ClozeQuizScreenState extends ConsumerState<ClozeQuizScreen> {
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 16, horizontal: 20),
                           decoration: BoxDecoration(
                             color: bg,
-                            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                            borderRadius:
+                                BorderRadius.circular(AppSpacing.radiusMd),
                             border: Border.all(color: border, width: 1.5),
                           ),
                           child: Text(ch,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontFamily: 'NotoSansKR',
-                              fontSize: 18, fontWeight: FontWeight.w600, color: text)),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  fontFamily: 'NotoSansKR',
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: text)),
                         ),
                       ),
                     );
@@ -214,12 +245,13 @@ class _ClozeQuizScreenState extends ConsumerState<ClozeQuizScreen> {
               ),
             ),
           ),
-
           if (_selected != null)
             Padding(
               padding: EdgeInsets.fromLTRB(
-                AppSpacing.lg, AppSpacing.sm,
-                AppSpacing.lg, AppSpacing.lg + MediaQuery.of(context).padding.bottom),
+                  AppSpacing.lg,
+                  AppSpacing.sm,
+                  AppSpacing.lg,
+                  AppSpacing.lg + MediaQuery.of(context).padding.bottom),
               child: ElevatedButton(
                 onPressed: _next,
                 child: Text(_index + 1 >= _quiz.length ? 'Finish' : 'Next'),

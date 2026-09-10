@@ -42,7 +42,8 @@ class StudyRecord {
     const intervals = [1, 3, 7, 14, 30, 60];
     int idx = (timesStudied - 1).clamp(0, intervals.length - 1);
     // If user pressed Again more than twice, step back one level
-    if (hardCount - easyCount > 2) idx = (idx - 1).clamp(0, intervals.length - 1);
+    if (hardCount - easyCount > 2)
+      idx = (idx - 1).clamp(0, intervals.length - 1);
     return intervals[idx];
   }
 
@@ -104,10 +105,12 @@ class DailySessionService {
   ///   1. Words due for SRS review today
   ///   2. New words that have never been studied
   ///   3. Filler from user's current level (프리미엄) or level 1 (무료)
-  Future<DailySession> getTodaySession({bool isPremium = false, int userLevel = 1}) async {
+  Future<DailySession> getTodaySession(
+      {bool isPremium = false, int userLevel = 1}) async {
     final box = _box;
     if (box == null) {
-      throw StateError('DailySessionService not initialised. Call init() first.');
+      throw StateError(
+          'DailySessionService not initialised. Call init() first.');
     }
 
     final repo = WordRepository.instance;
@@ -153,7 +156,8 @@ class DailySessionService {
 
     // Fill any remaining slots with extra due words
     if (selected.length < _sessionSize) {
-      selected.addAll(dueWords.skip(dueSlots).take(_sessionSize - selected.length));
+      selected
+          .addAll(dueWords.skip(dueSlots).take(_sessionSize - selected.length));
     }
 
     // 부족 시 filler: 프리미엄 유저는 현재 레벨, 무료 유저는 level 1
@@ -167,11 +171,13 @@ class DailySessionService {
     }
 
     // Build contextual sentences from word examples
-    final sentences = selected.map((w) => GeneratedSentence(
-      korean: w.example,
-      english: w.exampleTranslation,
-      focusWordId: w.id,
-    )).toList();
+    final sentences = selected
+        .map((w) => GeneratedSentence(
+              korean: w.example,
+              english: w.exampleTranslation,
+              focusWordId: w.id,
+            ))
+        .toList();
 
     return DailySession(
       date: DateTime.now(),
@@ -214,8 +220,10 @@ class DailySessionService {
   // ── Statistics ─────────────────────────────────────────────
 
   /// Returns today's 20 word IDs for the session.
-  Future<List<String>> getTodayWordIds({bool isPremium = false, int userLevel = 1}) async {
-    final session = await getTodaySession(isPremium: isPremium, userLevel: userLevel);
+  Future<List<String>> getTodayWordIds(
+      {bool isPremium = false, int userLevel = 1}) async {
+    final session =
+        await getTodaySession(isPremium: isPremium, userLevel: userLevel);
     return session.words.map((w) => w.id).toList();
   }
 
@@ -283,7 +291,9 @@ class DailySessionService {
       if (raw == null) continue;
       final ms = (raw['lastStudied'] as int?) ?? 0;
       final d = DateTime.fromMillisecondsSinceEpoch(ms);
-      if (d.year == today.year && d.month == today.month && d.day == today.day) {
+      if (d.year == today.year &&
+          d.month == today.month &&
+          d.day == today.day) {
         count++;
       }
     }
@@ -315,8 +325,8 @@ class DailySessionService {
     if (studiedDates.isEmpty) return 0;
 
     int streak = 0;
-    var checkDate = DateTime(
-        DateTime.now().year, DateTime.now().month, DateTime.now().day);
+    var checkDate =
+        DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
 
     while (studiedDates.contains(checkDate)) {
       streak++;

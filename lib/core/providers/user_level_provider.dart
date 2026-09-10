@@ -6,7 +6,9 @@ final userTopikLevelProvider =
 
 class UserLevelNotifier extends StateNotifier<int> {
   static const _key = 'userTopikLevel';
-  UserLevelNotifier() : super(1) { _load(); }
+  UserLevelNotifier() : super(1) {
+    _load();
+  }
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();

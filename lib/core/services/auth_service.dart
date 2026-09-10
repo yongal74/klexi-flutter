@@ -11,7 +11,12 @@ class KlexiUser {
   final String? email;
   final String? photoUrl;
   final bool isGuest;
-  const KlexiUser({required this.id, this.displayName, this.email, this.photoUrl, this.isGuest = false});
+  const KlexiUser(
+      {required this.id,
+      this.displayName,
+      this.email,
+      this.photoUrl,
+      this.isGuest = false});
 }
 
 class AuthService {
@@ -52,7 +57,8 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
 
-      final userCredential = await _firebaseAuth.signInWithCredential(credential);
+      final userCredential =
+          await _firebaseAuth.signInWithCredential(credential);
       final firebaseUser = userCredential.user;
       if (firebaseUser == null) return null;
 
@@ -98,7 +104,8 @@ class AuthService {
   Future<void> deleteAccount() async {
     final user = _firebaseAuth.currentUser;
     if (user == null) {
-      throw AuthException('not_signed_in', 'No signed-in Google account to delete');
+      throw AuthException(
+          'not_signed_in', 'No signed-in Google account to delete');
     }
     final uid = user.uid;
 
@@ -109,7 +116,8 @@ class AuthService {
         // Firebase requires a fresh sign-in for security-sensitive operations.
         final account = await _googleSignIn.signIn();
         if (account == null) {
-          throw AuthException('reauth_cancelled', 'Re-authentication was cancelled');
+          throw AuthException(
+              'reauth_cancelled', 'Re-authentication was cancelled');
         }
         final googleAuth = await account.authentication;
         final credential = GoogleAuthProvider.credential(
@@ -160,7 +168,8 @@ class AuthService {
     return user;
   }
 
-  Future<void> _migrateHiveData({required String fromId, required String toId}) async {
+  Future<void> _migrateHiveData(
+      {required String fromId, required String toId}) async {
     try {
       const boxName = 'study_records';
       final prefs = await SharedPreferences.getInstance();
@@ -177,7 +186,8 @@ class AuthService {
           if (val != null) await newBox.put(key, val);
         }
         await oldBox.deleteFromDisk();
-        debugPrint('[Auth] Hive box migration complete: $oldBoxName → ${boxName}_$toId');
+        debugPrint(
+            '[Auth] Hive box migration complete: $oldBoxName → ${boxName}_$toId');
       }
     } catch (e) {
       debugPrint('[Auth] Migration warning: $e');
@@ -196,7 +206,7 @@ class AuthException implements Exception {
 
 // ── Riverpod ─────────────────────────────────────────────────────────────────
 final authServiceProvider = Provider<AuthService>((ref) => AuthService());
-final currentUserProvider  = StateProvider<KlexiUser?>((ref) => null);
-final isSignedInProvider   = Provider<bool>((ref) =>
+final currentUserProvider = StateProvider<KlexiUser?>((ref) => null);
+final isSignedInProvider = Provider<bool>((ref) =>
     ref.watch(currentUserProvider) != null &&
     !(ref.watch(currentUserProvider)?.isGuest ?? true));

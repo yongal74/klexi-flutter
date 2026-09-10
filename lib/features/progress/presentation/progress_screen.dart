@@ -113,7 +113,8 @@ class ProgressScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 8),
-              _StatsRow(streak: data.streak, totalWords: data.totalWordsStudied),
+              _StatsRow(
+                  streak: data.streak, totalWords: data.totalWordsStudied),
               const SizedBox(height: 24),
               _SectionTitle(title: 'Weekly Activity'),
               const SizedBox(height: 12),
@@ -246,7 +247,8 @@ class _WeeklyGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final maxVal = activity.isEmpty ? 1 : activity.reduce((a, b) => a > b ? a : b);
+    final maxVal =
+        activity.isEmpty ? 1 : activity.reduce((a, b) => a > b ? a : b);
     final effectiveMax = maxVal > 0 ? maxVal : 1;
 
     return Container(
@@ -304,8 +306,7 @@ class _WeeklyGrid extends StatelessWidget {
                   color: isToday
                       ? const Color(0xFF667EEA)
                       : const Color(0xFF9CA3AF),
-                  fontWeight:
-                      isToday ? FontWeight.w700 : FontWeight.normal,
+                  fontWeight: isToday ? FontWeight.w700 : FontWeight.normal,
                 ),
               ),
             ],

@@ -17,14 +17,17 @@ class _ThemeDetailScreenState extends ConsumerState<ThemeDetailScreen> {
   int _level = 0;
 
   List<ThemeWord> get _all => getThemeWords(widget.themeId);
-  List<ThemeWord> get _filtered => _level == 0
-      ? _all
-      : _all.where((w) => w.level == _level).toList();
+  List<ThemeWord> get _filtered =>
+      _level == 0 ? _all : _all.where((w) => w.level == _level).toList();
 
   String get _name {
     const names = {
-      'kdrama': 'K-Drama', 'kpop': 'K-Pop', 'kfood': 'K-Food',
-      'manners': 'Manners', 'slang': 'Slang', 'travel': 'Travel',
+      'kdrama': 'K-Drama',
+      'kpop': 'K-Pop',
+      'kfood': 'K-Food',
+      'manners': 'Manners',
+      'slang': 'Slang',
+      'travel': 'Travel',
     };
     return names[widget.themeId] ?? widget.themeId;
   }
@@ -45,15 +48,22 @@ class _ThemeDetailScreenState extends ConsumerState<ThemeDetailScreen> {
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+                  horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
               children: [
-                _LevelChip(label: 'All', value: 0, current: _level,
-                  onTap: (v) => setState(() => _level = v)),
-                ...List.generate(6, (i) => _LevelChip(
-                  label: 'L${i + 1}', value: i + 1, current: _level,
-                  onTap: (v) => setState(() => _level = v),
-                  color: AppColors.topikColor(i + 1),
-                )),
+                _LevelChip(
+                    label: 'All',
+                    value: 0,
+                    current: _level,
+                    onTap: (v) => setState(() => _level = v)),
+                ...List.generate(
+                    6,
+                    (i) => _LevelChip(
+                          label: 'L${i + 1}',
+                          value: i + 1,
+                          current: _level,
+                          onTap: (v) => setState(() => _level = v),
+                          color: AppColors.topikColor(i + 1),
+                        )),
               ],
             ),
           ),
@@ -62,7 +72,8 @@ class _ThemeDetailScreenState extends ConsumerState<ThemeDetailScreen> {
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             child: Row(children: [
               Text('${_filtered.length} words',
-                style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
+                  style: const TextStyle(
+                      fontSize: 13, color: AppColors.textMuted)),
             ]),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -70,9 +81,10 @@ class _ThemeDetailScreenState extends ConsumerState<ThemeDetailScreen> {
           Expanded(
             child: ListView.separated(
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
+                  AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
               itemCount: _filtered.length,
-              separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.listGap),
+              separatorBuilder: (_, __) =>
+                  const SizedBox(height: AppSpacing.listGap),
               itemBuilder: (_, i) {
                 final w = _filtered[i];
                 return GestureDetector(
@@ -81,42 +93,50 @@ class _ThemeDetailScreenState extends ConsumerState<ThemeDetailScreen> {
                     padding: const EdgeInsets.all(AppSpacing.cardPad),
                     decoration: BoxDecoration(
                       color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+                      borderRadius:
+                          BorderRadius.circular(AppSpacing.radiusCard),
                       border: Border.all(color: AppColors.border),
                       boxShadow: AppColors.subtleShadow,
                     ),
                     child: Row(children: [
                       Container(
-                        width: 32, height: 32,
+                        width: 32,
+                        height: 32,
                         decoration: BoxDecoration(
-                          color: AppColors.topikBg(w.level),
-                          borderRadius: BorderRadius.circular(AppSpacing.radiusSm)),
-                        child: Center(child: Text('${w.level}',
-                          style: TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.w700,
-                            color: AppColors.topikColor(w.level)))),
+                            color: AppColors.topikBg(w.level),
+                            borderRadius:
+                                BorderRadius.circular(AppSpacing.radiusSm)),
+                        child: Center(
+                            child: Text('${w.level}',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.topikColor(w.level)))),
                       ),
                       const SizedBox(width: AppSpacing.md),
-                      Expanded(child: Column(
+                      Expanded(
+                          child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(w.korean,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontFamily: 'NotoSansKR',
-                              fontSize: 18, fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary)),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  fontFamily: 'NotoSansKR',
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary)),
                           Text(w.english,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 13, color: AppColors.textSecondary)),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textSecondary)),
                         ],
                       )),
                       if (w.example.isNotEmpty)
                         const Icon(Icons.chat_bubble_outline,
-                          size: 16, color: AppColors.textMuted),
+                            size: 16, color: AppColors.textMuted),
                     ]),
                   ),
                 );
@@ -136,8 +156,12 @@ class _LevelChip extends StatelessWidget {
   final ValueChanged<int> onTap;
   final Color? color;
 
-  const _LevelChip({required this.label, required this.value,
-    required this.current, required this.onTap, this.color});
+  const _LevelChip(
+      {required this.label,
+      required this.value,
+      required this.current,
+      required this.onTap,
+      this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -154,9 +178,11 @@ class _LevelChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
           border: Border.all(color: active ? c : c.withOpacity(0.3)),
         ),
-        child: Text(label, style: TextStyle(
-          fontSize: 13, fontWeight: FontWeight.w600,
-          color: active ? Colors.white : c)),
+        child: Text(label,
+            style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: active ? Colors.white : c)),
       ),
     );
   }

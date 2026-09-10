@@ -5,7 +5,8 @@
 class PracticeSentence {
   final String korean;
   final String english;
-  final List<String> highlights; // Korean vocab words to highlight in the sentence
+  final List<String>
+      highlights; // Korean vocab words to highlight in the sentence
 
   const PracticeSentence({
     required this.korean,
@@ -15,10 +16,10 @@ class PracticeSentence {
 }
 
 class SentenceGroup {
-  final String groupId;     // e.g. 'L1G1'
-  final int level;          // 1–6
-  final int groupIndex;     // 1–60
-  final List<String> wordIds;     // 20 word IDs in this group
+  final String groupId; // e.g. 'L1G1'
+  final int level; // 1–6
+  final int groupIndex; // 1–60
+  final List<String> wordIds; // 20 word IDs in this group
   final List<PracticeSentence> sentences; // 4 practice sentences
 
   const SentenceGroup({

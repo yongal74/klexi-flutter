@@ -7,7 +7,8 @@ import '../models/word.dart';
 import '../content/vocab/vocab_index.dart';
 import '../content/related_words.dart';
 
-final wordRepositoryProvider = Provider<WordRepository>((_) => WordRepository.instance);
+final wordRepositoryProvider =
+    Provider<WordRepository>((_) => WordRepository.instance);
 
 /// Central repository for all vocabulary words.
 /// Call [WordRepository.instance] to access the singleton.
@@ -50,8 +51,7 @@ class WordRepository {
 
   /// Returns all words belonging to the given TOPIK [level] (1–6).
   List<Word> getWordsByLevel(int level) =>
-      _levelCache[level] ??=
-          _all.where((w) => w.level == level).toList();
+      _levelCache[level] ??= _all.where((w) => w.level == level).toList();
 
   /// Returns all words belonging to the given [category] string.
   List<Word> getWordsByCategory(String category) =>
@@ -62,11 +62,14 @@ class WordRepository {
   List<Word> searchWords(String query) {
     if (query.trim().isEmpty) return _all;
     final q = query.toLowerCase();
-    return _all.where((w) =>
-      w.korean.toLowerCase().contains(q) ||
-      w.english.toLowerCase().contains(q) ||
-      w.pronunciation.toLowerCase().contains(q),
-    ).toList();
+    return _all
+        .where(
+          (w) =>
+              w.korean.toLowerCase().contains(q) ||
+              w.english.toLowerCase().contains(q) ||
+              w.pronunciation.toLowerCase().contains(q),
+        )
+        .toList();
   }
 
   /// Returns [count] words for today's daily session.
@@ -120,7 +123,6 @@ class WordRepository {
   int get totalCount => _all.length;
 
   /// All distinct categories present in the word list.
-  List<String> get categories =>
-      _categoriesCache ??=
-          (_all.map((w) => w.category).toSet().toList()..sort());
+  List<String> get categories => _categoriesCache ??=
+      (_all.map((w) => w.category).toSet().toList()..sort());
 }

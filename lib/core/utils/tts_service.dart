@@ -89,7 +89,8 @@ class TtsService {
       );
 
       if (response.statusCode == 200) {
-        final file = await platform.saveCache(text, isSlow, 'clova', response.data as List<int>);
+        final file = await platform.saveCache(
+            text, isSlow, 'clova', response.data as List<int>);
         await platform.playFile(file);
         return true;
       }
@@ -120,7 +121,8 @@ class TtsService {
       );
 
       if (response.statusCode == 200) {
-        final file = await platform.saveCache(text, isSlow, 'google', response.data as List<int>);
+        final file = await platform.saveCache(
+            text, isSlow, 'google', response.data as List<int>);
         await platform.playFile(file);
         return true;
       }
@@ -149,7 +151,8 @@ final ttsServiceProvider = Provider<TtsService>((ref) {
 
 final dioProvider = Provider<Dio>((ref) {
   return Dio(BaseOptions(
-    baseUrl: const String.fromEnvironment('API_URL', defaultValue: AppConfig.backendUrl),
+    baseUrl: const String.fromEnvironment('API_URL',
+        defaultValue: AppConfig.backendUrl),
     connectTimeout: const Duration(seconds: 5),
     receiveTimeout: const Duration(seconds: 10),
   ));

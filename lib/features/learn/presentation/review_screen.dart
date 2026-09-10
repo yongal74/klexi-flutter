@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
-import '../../../core/services/daily_session_service.dart' show dailySessionServiceProvider, lastSessionWordsProvider;
+import '../../../core/services/daily_session_service.dart'
+    show dailySessionServiceProvider, lastSessionWordsProvider;
 import '../../../core/services/polar_service.dart';
 import '../../../data/models/word.dart';
 import '../../../data/repositories/word_repository.dart';
@@ -62,7 +63,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen>
         final todaySession = await session.getTodaySession();
         final todayIds = todaySession.words.map((w) => w.id).toSet();
         srsWords = all
-            .where((w) => todayIds.contains(w.id) && (isPremium || w.level == 1))
+            .where(
+                (w) => todayIds.contains(w.id) && (isPremium || w.level == 1))
             .toList();
       }
     } catch (_) {
@@ -96,8 +98,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen>
           labelColor: AppColors.primary,
           unselectedLabelColor: AppColors.textSecondary,
           indicatorColor: AppColors.primary,
-          labelStyle: const TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w600),
+          labelStyle:
+              const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
           tabs: const [
             Tab(text: 'Wrong Answers'),
             Tab(text: 'All Review'),
@@ -147,8 +149,7 @@ class _WordList extends StatelessWidget {
     return ListView.separated(
       padding: const EdgeInsets.all(AppSpacing.lg),
       itemCount: words.length,
-      separatorBuilder: (_, __) =>
-          const SizedBox(height: AppSpacing.listGap),
+      separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.listGap),
       itemBuilder: (context, i) => _WordCard(word: words[i]),
     );
   }
@@ -213,12 +214,11 @@ class _WordCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 3),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: AppColors.topikBg(word.level),
-                      borderRadius:
-                          BorderRadius.circular(AppSpacing.radiusSm),
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                     ),
                     child: Text(
                       'TOPIK ${word.level}',
@@ -230,12 +230,11 @@ class _WordCard extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 3),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: AppColors.surfaceAlt,
-                      borderRadius:
-                          BorderRadius.circular(AppSpacing.radiusSm),
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                     ),
                     child: Text(
                       word.partOfSpeech,
@@ -254,8 +253,7 @@ class _WordCard extends StatelessWidget {
               padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
                 color: AppColors.surfaceAlt,
-                borderRadius:
-                    BorderRadius.circular(AppSpacing.radiusMd),
+                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

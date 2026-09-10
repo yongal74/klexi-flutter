@@ -56,7 +56,8 @@ class _PaywallPlaceholder extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 80, height: 80,
+                width: 80,
+                height: 80,
                 decoration: BoxDecoration(
                   gradient: AppColors.primaryGradient,
                   shape: BoxShape.circle,
@@ -97,8 +98,8 @@ class _PaywallPlaceholder extends StatelessWidget {
                         borderRadius: BorderRadius.circular(14)),
                   ),
                   child: const Text('Upgrade to Pro',
-                      style: TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w700)),
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                 ),
               ),
             ],

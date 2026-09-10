@@ -28,19 +28,21 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
 
   Future<void> _subscribe(Offerings? offerings) async {
     setState(() => _loading = true);
-    AnalyticsService.instance.logCheckoutStarted(plan: _yearly ? 'yearly' : 'monthly');
+    AnalyticsService.instance
+        .logCheckoutStarted(plan: _yearly ? 'yearly' : 'monthly');
     try {
       final active = await PurchaseService.instance.purchase(yearly: _yearly);
       if (active && mounted) {
-        AnalyticsService.instance.logPremiumActivated(plan: _yearly ? 'yearly' : 'monthly');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Premium activated!')));
+        AnalyticsService.instance
+            .logPremiumActivated(plan: _yearly ? 'yearly' : 'monthly');
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Premium activated!')));
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Purchase failed: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Purchase failed: $e')));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -53,13 +55,15 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
       final ok = await PurchaseService.instance.restorePurchases();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(ok ? 'Subscription restored!' : 'No active subscription found.')));
+            content: Text(ok
+                ? 'Subscription restored!'
+                : 'No active subscription found.')));
         if (ok) Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Restore failed: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Restore failed: $e')));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -165,14 +169,20 @@ class _Body extends StatelessWidget {
 
                 // Feature list
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                   child: Column(
                     children: const [
-                      _Feature(icon: '💬', text: 'Unlimited Dalli AI conversations'),
+                      _Feature(
+                          icon: '💬', text: 'Unlimited Dalli AI conversations'),
                       _Feature(icon: '📚', text: 'Full 7,200 TOPIK word bank'),
-                      _Feature(icon: '🎙️', text: 'Pronunciation scoring & feedback'),
-                      _Feature(icon: '🕸️', text: 'Full Word Network exploration'),
-                      _Feature(icon: '🎭', text: 'Role-play & Grammar Coach modes'),
+                      _Feature(
+                          icon: '🎙️',
+                          text: 'Pronunciation scoring & feedback'),
+                      _Feature(
+                          icon: '🕸️', text: 'Full Word Network exploration'),
+                      _Feature(
+                          icon: '🎭', text: 'Role-play & Grammar Coach modes'),
                       _Feature(icon: '📊', text: 'Advanced progress analytics'),
                     ],
                   ),
@@ -181,9 +191,11 @@ class _Body extends StatelessWidget {
 
                 // Plan selector
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                   child: Row(children: [
-                    Expanded(child: _PlanCard(
+                    Expanded(
+                        child: _PlanCard(
                       label: 'Monthly',
                       price: monthlyPrice,
                       period: '/month',
@@ -192,7 +204,8 @@ class _Body extends StatelessWidget {
                       onTap: () => onToggle(false),
                     )),
                     const SizedBox(width: AppSpacing.sm),
-                    Expanded(child: _PlanCard(
+                    Expanded(
+                        child: _PlanCard(
                       label: 'Yearly',
                       price: yearlyPrice,
                       period: '/year',
@@ -206,21 +219,26 @@ class _Body extends StatelessWidget {
 
                 if (yearly)
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: AppColors.success.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                        borderRadius:
+                            BorderRadius.circular(AppSpacing.radiusMd),
                       ),
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.savings_outlined, size: 16, color: AppColors.success),
+                          Icon(Icons.savings_outlined,
+                              size: 16, color: AppColors.success),
                           SizedBox(width: 8),
                           Text('Save 48% vs monthly — 7-day free trial',
-                            style: TextStyle(
-                              fontSize: 13, color: AppColors.success, fontWeight: FontWeight.w600)),
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.success,
+                                  fontWeight: FontWeight.w600)),
                         ],
                       ),
                     ),
@@ -229,7 +247,8 @@ class _Body extends StatelessWidget {
 
                 // Subscribe button
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                   child: SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -240,16 +259,20 @@ class _Body extends StatelessWidget {
                         foregroundColor: Colors.white,
                       ),
                       child: loading
-                          ? const SizedBox(width: 22, height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white))
                           : Text(
                               yearly
-                                ? 'Try Free for 7 Days · then ${yearlyPrice ?? '…'}/yr'
-                                : 'Subscribe Monthly · ${monthlyPrice ?? '…'}/mo',
+                                  ? 'Try Free for 7 Days · then ${yearlyPrice ?? '…'}/yr'
+                                  : 'Subscribe Monthly · ${monthlyPrice ?? '…'}/mo',
                               textAlign: TextAlign.center,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                              style: const TextStyle(
+                                  fontSize: 14, fontWeight: FontWeight.w700)),
                     ),
                   ),
                 ),
@@ -258,14 +281,15 @@ class _Body extends StatelessWidget {
                 TextButton(
                   onPressed: loading ? null : onRestore,
                   child: const Text('Restore Purchases',
-                    style: TextStyle(color: AppColors.textSecondary)),
+                      style: TextStyle(color: AppColors.textSecondary)),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(AppSpacing.lg),
                   child: const Text(
-                    'Cancel anytime. Subscription automatically renews unless canceled.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                      'Cancel anytime. Subscription automatically renews unless canceled.',
+                      textAlign: TextAlign.center,
+                      style:
+                          TextStyle(fontSize: 11, color: AppColors.textMuted)),
                 ),
                 SizedBox(height: MediaQuery.of(context).padding.bottom),
               ],
@@ -287,24 +311,26 @@ class _HeroSection extends StatelessWidget {
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
       ),
       padding: const EdgeInsets.fromLTRB(
-        AppSpacing.x2l, AppSpacing.lg, AppSpacing.x2l, AppSpacing.x2l),
+          AppSpacing.x2l, AppSpacing.lg, AppSpacing.x2l, AppSpacing.x2l),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 64, height: 64,
+            width: 64,
+            height: 64,
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.2),
               shape: BoxShape.circle,
             ),
-            child: const Center(
-              child: Text('✨', style: TextStyle(fontSize: 32))),
+            child:
+                const Center(child: Text('✨', style: TextStyle(fontSize: 32))),
           ),
           const SizedBox(height: AppSpacing.md),
           const Text('Unlock Full Klexi',
-            style: TextStyle(
-              fontSize: 26, fontWeight: FontWeight.w800,
-              color: Colors.white)),
+              style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white)),
         ],
       ),
     );
@@ -318,15 +344,18 @@ class _Feature extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 6),
-    child: Row(children: [
-      Text(icon, style: const TextStyle(fontSize: 20)),
-      const SizedBox(width: 12),
-      Expanded(child: Text(text, style: const TextStyle(
-        fontSize: 15, fontWeight: FontWeight.w500,
-        color: Color(0xFF374151)))),
-    ]),
-  );
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(children: [
+          Text(icon, style: const TextStyle(fontSize: 20)),
+          const SizedBox(width: 12),
+          Expanded(
+              child: Text(text,
+                  style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF374151)))),
+        ]),
+      );
 }
 
 class _PlanCard extends StatelessWidget {
@@ -354,7 +383,9 @@ class _PlanCard extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(AppSpacing.cardPad),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary.withOpacity(0.08) : AppColors.surface,
+          color: selected
+              ? AppColors.primary.withOpacity(0.08)
+              : AppColors.surface,
           borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
           border: Border.all(
             color: selected ? AppColors.primary : AppColors.border,
@@ -368,39 +399,51 @@ class _PlanCard extends StatelessWidget {
               height: 26,
               child: badge != null
                   ? Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: AppColors.accent,
-                        borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                        borderRadius:
+                            BorderRadius.circular(AppSpacing.radiusPill),
                       ),
-                      child: Text(badge!, style: const TextStyle(
-                        fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
+                      child: Text(badge!,
+                          style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white)),
                     )
                   : null,
             ),
             const SizedBox(height: 8),
-            Text(label, style: const TextStyle(
-              fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+            Text(label,
+                style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary)),
             const SizedBox(height: 4),
             price == null
                 ? const SizedBox(
                     height: 28,
                     child: Center(
-                      child: SizedBox(
-                        width: 16, height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2))))
+                        child: SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2))))
                 : SizedBox(
                     height: 32,
                     child: FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
-                      child: Text(price!, style: const TextStyle(
-                          fontSize: 24, fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary)),
+                      child: Text(price!,
+                          style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary)),
                     ),
                   ),
-            Text(period, style: const TextStyle(
-              fontSize: 12, color: AppColors.textMuted)),
+            Text(period,
+                style:
+                    const TextStyle(fontSize: 12, color: AppColors.textMuted)),
           ],
         ),
       ),

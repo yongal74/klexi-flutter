@@ -20,7 +20,8 @@ void main() async {
 
   // Firebase 초기화 — 실패 시 로그 출력 후 앱 계속 실행
   try {
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
     await AnalyticsService.instance.init();
     // Requests POST_NOTIFICATIONS (Android 13+) / APNs permission and registers
     // the push token. Was previously defined but never called — FCM push was dead.

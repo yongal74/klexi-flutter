@@ -40,10 +40,34 @@ class _KlexiNavBar extends StatelessWidget {
           height: 64,
           child: Row(
             children: [
-              _NavItem(icon: Icons.home_outlined,      activeIcon: Icons.home_rounded,         label: 'Home',     index: 0, current: currentIndex, onTap: onTap),
-              _NavItem(icon: Icons.menu_book_outlined, activeIcon: Icons.menu_book_rounded,    label: 'Learn',    index: 1, current: currentIndex, onTap: onTap),
-              _NavItem(icon: Icons.bar_chart_outlined, activeIcon: Icons.bar_chart_rounded,    label: 'Progress', index: 2, current: currentIndex, onTap: onTap),
-              _NavItem(icon: Icons.settings_outlined,  activeIcon: Icons.settings_rounded,     label: 'Settings', index: 3, current: currentIndex, onTap: onTap),
+              _NavItem(
+                  icon: Icons.home_outlined,
+                  activeIcon: Icons.home_rounded,
+                  label: 'Home',
+                  index: 0,
+                  current: currentIndex,
+                  onTap: onTap),
+              _NavItem(
+                  icon: Icons.menu_book_outlined,
+                  activeIcon: Icons.menu_book_rounded,
+                  label: 'Learn',
+                  index: 1,
+                  current: currentIndex,
+                  onTap: onTap),
+              _NavItem(
+                  icon: Icons.bar_chart_outlined,
+                  activeIcon: Icons.bar_chart_rounded,
+                  label: 'Progress',
+                  index: 2,
+                  current: currentIndex,
+                  onTap: onTap),
+              _NavItem(
+                  icon: Icons.settings_outlined,
+                  activeIcon: Icons.settings_rounded,
+                  label: 'Settings',
+                  index: 3,
+                  current: currentIndex,
+                  onTap: onTap),
             ],
           ),
         ),
@@ -83,7 +107,9 @@ class _NavItem extends StatelessWidget {
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
-                color: active ? AppColors.primary.withOpacity(0.12) : Colors.transparent,
+                color: active
+                    ? AppColors.primary.withOpacity(0.12)
+                    : Colors.transparent,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Icon(

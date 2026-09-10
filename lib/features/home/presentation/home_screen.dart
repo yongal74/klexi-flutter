@@ -12,7 +12,8 @@ import '../../../core/services/daily_session_service.dart';
 import '../../../core/services/purchase_service.dart';
 import '../../../data/repositories/word_repository.dart';
 
-export '../../../core/providers/user_level_provider.dart' show userTopikLevelProvider;
+export '../../../core/providers/user_level_provider.dart'
+    show userTopikLevelProvider;
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -66,20 +67,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             elevation: 0,
             title: Row(children: [
               Container(
-                width: 32, height: 32,
-                decoration: BoxDecoration(
-                  gradient: AppColors.primaryGradient,
-                  borderRadius: BorderRadius.circular(8)),
-                child: const Center(
-                  child: Text('K', style: TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)))),
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                      gradient: AppColors.primaryGradient,
+                      borderRadius: BorderRadius.circular(8)),
+                  child: const Center(
+                      child: Text('K',
+                          style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white)))),
               const SizedBox(width: 8),
-              const Text('Klexi', style: TextStyle(
-                fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+              const Text('Klexi',
+                  style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary)),
             ]),
             actions: [
               IconButton(
-                icon: const Icon(Icons.notifications_outlined, color: AppColors.textSecondary),
+                icon: const Icon(Icons.notifications_outlined,
+                    color: AppColors.textSecondary),
                 onPressed: () => context.push(AppRoutes.notifSettings),
               ),
               Padding(
@@ -96,9 +105,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           radius: 16,
                           backgroundColor: AppColors.primary.withOpacity(0.15),
                           child: Text(
-                            user?.displayName?.substring(0, 1).toUpperCase() ?? 'G',
-                            style: const TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                              user?.displayName
+                                      ?.substring(0, 1)
+                                      .toUpperCase() ??
+                                  'G',
+                              style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.primary)),
                         ),
                 ),
               ),
@@ -107,10 +121,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           SliverPadding(
             padding: const EdgeInsets.all(AppSpacing.lg),
-            sliver: SliverList(delegate: SliverChildListDelegate([
-
+            sliver: SliverList(
+                delegate: SliverChildListDelegate([
               // ── Stats row ──────────────────────────────
-              _StatsRow(streak: _streak, learned: _totalLearned, todayStudied: todayStudied),
+              _StatsRow(
+                  streak: _streak,
+                  learned: _totalLearned,
+                  todayStudied: todayStudied),
               const SizedBox(height: AppSpacing.sm),
 
               // ── TOPIK Level selector ───────────────────
@@ -123,8 +140,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
               // ── Quick actions ─────────────────────────
               const Text('Quick Actions',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary)),
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary)),
               const SizedBox(height: AppSpacing.md),
               _QuickActionsGrid(),
 
@@ -145,18 +164,36 @@ class _StatsRow extends StatelessWidget {
   final int streak;
   final int learned;
   final int todayStudied;
-  const _StatsRow({required this.streak, required this.learned, required this.todayStudied});
+  const _StatsRow(
+      {required this.streak,
+      required this.learned,
+      required this.todayStudied});
 
   @override
   Widget build(BuildContext context) => IntrinsicHeight(
-    child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      Expanded(child: _StatCard(value: '$streak', label: 'Day Streak', icon: '🔥', color: AppColors.streak)),
-      const SizedBox(width: AppSpacing.listGap),
-      Expanded(child: _StatCard(value: '$learned', label: 'Words Learned', icon: '📚', color: AppColors.primary)),
-      const SizedBox(width: AppSpacing.listGap),
-      Expanded(child: _StatCard(value: '$todayStudied/20', label: "Today's Goal", icon: '🎯', color: AppColors.success)),
-    ]),
-  );
+        child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Expanded(
+              child: _StatCard(
+                  value: '$streak',
+                  label: 'Day Streak',
+                  icon: '🔥',
+                  color: AppColors.streak)),
+          const SizedBox(width: AppSpacing.listGap),
+          Expanded(
+              child: _StatCard(
+                  value: '$learned',
+                  label: 'Words Learned',
+                  icon: '📚',
+                  color: AppColors.primary)),
+          const SizedBox(width: AppSpacing.listGap),
+          Expanded(
+              child: _StatCard(
+                  value: '$todayStudied/20',
+                  label: "Today's Goal",
+                  icon: '🎯',
+                  color: AppColors.success)),
+        ]),
+      );
 }
 
 class _StatCard extends StatelessWidget {
@@ -164,26 +201,33 @@ class _StatCard extends StatelessWidget {
   final String label;
   final String icon;
   final Color color;
-  const _StatCard({required this.value, required this.label, required this.icon, required this.color});
+  const _StatCard(
+      {required this.value,
+      required this.label,
+      required this.icon,
+      required this.color});
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-    decoration: BoxDecoration(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
-      border: Border.all(color: AppColors.border),
-      boxShadow: AppColors.subtleShadow,
-    ),
-    child: Column(children: [
-      Text(icon, style: const TextStyle(fontSize: 20)),
-      const SizedBox(height: 4),
-      Text(value, style: TextStyle(
-        fontSize: 20, fontWeight: FontWeight.w800, color: color)),
-      Text(label, textAlign: TextAlign.center, style: const TextStyle(
-        fontSize: 10, color: AppColors.textSecondary)),
-    ]),
-  );
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+          border: Border.all(color: AppColors.border),
+          boxShadow: AppColors.subtleShadow,
+        ),
+        child: Column(children: [
+          Text(icon, style: const TextStyle(fontSize: 20)),
+          const SizedBox(height: 4),
+          Text(value,
+              style: TextStyle(
+                  fontSize: 20, fontWeight: FontWeight.w800, color: color)),
+          Text(label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                  fontSize: 10, color: AppColors.textSecondary)),
+        ]),
+      );
 }
 
 // ── Today Card ────────────────────────────────────────────
@@ -193,39 +237,49 @@ class _TodayCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    decoration: BoxDecoration(
-      gradient: AppColors.primaryGradient,
-      borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
-    ),
-    padding: const EdgeInsets.all(AppSpacing.cardPadLg),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        const Text("Today's Session",
-          style: TextStyle(fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w500)),
-        const SizedBox(height: 6),
-        const Text('Daily Session', style: TextStyle(
-          fontSize: 26, fontWeight: FontWeight.w800, color: Colors.white)),
-        const SizedBox(height: 4),
-        Text('Sentence-first learning', style: TextStyle(
-          fontSize: 13, color: Colors.white.withOpacity(0.7))),
-        const SizedBox(height: AppSpacing.lg),
-        GestureDetector(
-          onTap: onStart,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 11),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
-            ),
-            child: const Text('Start Learning',
-              style: TextStyle(
-                fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.primary)),
-          ),
+        decoration: BoxDecoration(
+          gradient: AppColors.primaryGradient,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
         ),
-      ],
-    ),
-  );
+        padding: const EdgeInsets.all(AppSpacing.cardPadLg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const Text("Today's Session",
+                style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w500)),
+            const SizedBox(height: 6),
+            const Text('Daily Session',
+                style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white)),
+            const SizedBox(height: 4),
+            Text('Sentence-first learning',
+                style: TextStyle(
+                    fontSize: 13, color: Colors.white.withOpacity(0.7))),
+            const SizedBox(height: AppSpacing.lg),
+            GestureDetector(
+              onTap: onStart,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 28, vertical: 11),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                ),
+                child: const Text('Start Learning',
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary)),
+              ),
+            ),
+          ],
+        ),
+      );
 }
 
 // ── Quick Actions Grid ────────────────────────────────────
@@ -234,12 +288,42 @@ class _QuickActionsGrid extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isPremium = ref.watch(isPremiumProvider);
     final actions = [
-      (label: 'Word Network',   color: AppColors.primary,  route: AppRoutes.wordNetwork,  pro: false),
-      (label: 'Chat with Dalli',color: AppColors.accent,   route: AppRoutes.dalliChat,    pro: true),
-      (label: 'Grammar',        color: AppColors.topik4,   route: AppRoutes.grammar,      pro: true),
-      (label: 'Themes',         color: AppColors.topik5,   route: AppRoutes.themes,       pro: true),
-      (label: 'Pronunciation',  color: AppColors.topik3,   route: AppRoutes.pronunciation,pro: true),
-      (label: 'Hangeul',        color: AppColors.topik2,   route: AppRoutes.hangeul,      pro: false),
+      (
+        label: 'Word Network',
+        color: AppColors.primary,
+        route: AppRoutes.wordNetwork,
+        pro: false
+      ),
+      (
+        label: 'Chat with Dalli',
+        color: AppColors.accent,
+        route: AppRoutes.dalliChat,
+        pro: true
+      ),
+      (
+        label: 'Grammar',
+        color: AppColors.topik4,
+        route: AppRoutes.grammar,
+        pro: true
+      ),
+      (
+        label: 'Themes',
+        color: AppColors.topik5,
+        route: AppRoutes.themes,
+        pro: true
+      ),
+      (
+        label: 'Pronunciation',
+        color: AppColors.topik3,
+        route: AppRoutes.pronunciation,
+        pro: true
+      ),
+      (
+        label: 'Hangeul',
+        color: AppColors.topik2,
+        route: AppRoutes.hangeul,
+        pro: false
+      ),
     ];
     return GridView.count(
       shrinkWrap: true,
@@ -252,7 +336,9 @@ class _QuickActionsGrid extends ConsumerWidget {
       children: actions.map((a) {
         final locked = a.pro && !isPremium;
         return _QuickAction(
-          label: a.label, color: a.color, locked: locked,
+          label: a.label,
+          color: a.color,
+          locked: locked,
           onTap: () {
             if (locked) {
               context.push(AppRoutes.premium);
@@ -273,47 +359,56 @@ class _QuickAction extends StatelessWidget {
   final bool locked;
   final VoidCallback onTap;
   const _QuickAction({
-    required this.label, required this.color,
-    required this.onTap, this.locked = false,
+    required this.label,
+    required this.color,
+    required this.onTap,
+    this.locked = false,
   });
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      padding: const EdgeInsets.all(AppSpacing.cardPad),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: locked
-              ? [AppColors.textMuted.withOpacity(0.3), AppColors.textMuted.withOpacity(0.4)]
-              : [color.withOpacity(0.85), color],
-        ),
-        borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
-        boxShadow: [
-          BoxShadow(
-            color: (locked ? AppColors.textMuted : color).withOpacity(0.22),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.cardPad),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: locked
+                  ? [
+                      AppColors.textMuted.withOpacity(0.3),
+                      AppColors.textMuted.withOpacity(0.4)
+                    ]
+                  : [color.withOpacity(0.85), color],
+            ),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+            boxShadow: [
+              BoxShadow(
+                color: (locked ? AppColors.textMuted : color).withOpacity(0.22),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Row(children: [
-        Expanded(child: FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: Alignment.centerLeft,
-          child: Text(label,
-            style: TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w700,
-              color: locked ? Colors.white54 : Colors.white),
-            maxLines: 1))),
-        locked
-            ? const Icon(Icons.lock_rounded, size: 14, color: Colors.white38)
-            : const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.white70),
-      ]),
-    ),
-  );
+          child: Row(children: [
+            Expanded(
+                child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(label,
+                        style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: locked ? Colors.white54 : Colors.white),
+                        maxLines: 1))),
+            locked
+                ? const Icon(Icons.lock_rounded,
+                    size: 14, color: Colors.white38)
+                : const Icon(Icons.arrow_forward_ios,
+                    size: 14, color: Colors.white70),
+          ]),
+        ),
+      );
 }
 
 // ── TOPIK Level Selector ─────────────────────────────────
@@ -355,15 +450,19 @@ class _LevelSelector extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text('TOPIK $lvl',
-                    style: TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.w600,
-                      color: selected
-                          ? Colors.white
-                          : (locked ? AppColors.textMuted : AppColors.textSecondary),
-                    )),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: selected
+                            ? Colors.white
+                            : (locked
+                                ? AppColors.textMuted
+                                : AppColors.textSecondary),
+                      )),
                   if (locked) ...[
                     const SizedBox(width: 4),
-                    const Icon(Icons.lock_rounded, size: 10, color: AppColors.textMuted),
+                    const Icon(Icons.lock_rounded,
+                        size: 10, color: AppColors.textMuted),
                   ],
                 ],
               ),
@@ -423,7 +522,8 @@ class _SentenceSpotlightState extends ConsumerState<_SentenceSpotlight> {
     final userLevel = ref.watch(userTopikLevelProvider);
     if (_cachedLevel != userLevel) {
       final repo = ref.read(wordRepositoryProvider);
-      final levelWords = repo.getAllWords().where((w) => w.level == userLevel).toList();
+      final levelWords =
+          repo.getAllWords().where((w) => w.level == userLevel).toList();
       _cachedWords = _todayWords(levelWords);
       _cachedLevel = userLevel;
     }
@@ -433,8 +533,10 @@ class _SentenceSpotlightState extends ConsumerState<_SentenceSpotlight> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('Sentence Spotlight',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary)),
+            style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary)),
         const SizedBox(height: AppSpacing.md),
         SizedBox(
           height: 175,
@@ -480,26 +582,30 @@ class _SentenceSpotlightState extends ConsumerState<_SentenceSpotlight> {
                 borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
               ),
               child: Text('TOPIK ${word.level}',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
-                  color: AppColors.topikColor(word.level))),
+                  style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.topikColor(word.level))),
             ),
           ]),
           const SizedBox(height: AppSpacing.sm),
           Expanded(
             child: Text(word.example,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontFamily: 'NotoSansKR',
-                fontSize: 17, fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary, height: 1.5)),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                    fontFamily: 'NotoSansKR',
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                    height: 1.5)),
           ),
           const SizedBox(height: 4),
           Text(word.exampleTranslation,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 13, color: AppColors.textSecondary, height: 1.4)),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                  fontSize: 13, color: AppColors.textSecondary, height: 1.4)),
           const SizedBox(height: AppSpacing.sm),
           _WordChip(word.korean),
         ],
@@ -508,33 +614,36 @@ class _SentenceSpotlightState extends ConsumerState<_SentenceSpotlight> {
   }
 
   Widget _buildEmptyCard() => Container(
-    margin: const EdgeInsets.symmetric(horizontal: 2),
-    padding: const EdgeInsets.all(AppSpacing.cardPad),
-    decoration: BoxDecoration(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
-      border: Border.all(color: AppColors.border),
-    ),
-    child: const Center(
-      child: Text('Start a study session to see sentences here.',
-        textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.5)),
-    ),
-  );
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        padding: const EdgeInsets.all(AppSpacing.cardPad),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: const Center(
+          child: Text('Start a study session to see sentences here.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontSize: 13, color: AppColors.textMuted, height: 1.5)),
+        ),
+      );
 
   Widget _buildDots(int count) => Row(
-    mainAxisSize: MainAxisSize.min,
-    children: List.generate(count, (i) => AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      width: i == _page ? 14 : 6,
-      height: 6,
-      margin: const EdgeInsets.symmetric(horizontal: 2),
-      decoration: BoxDecoration(
-        color: i == _page ? AppColors.primary : AppColors.border,
-        borderRadius: BorderRadius.circular(3),
-      ),
-    )),
-  );
+        mainAxisSize: MainAxisSize.min,
+        children: List.generate(
+            count,
+            (i) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: i == _page ? 14 : 6,
+                  height: 6,
+                  margin: const EdgeInsets.symmetric(horizontal: 2),
+                  decoration: BoxDecoration(
+                    color: i == _page ? AppColors.primary : AppColors.border,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                )),
+      );
 }
 
 class _WordChip extends StatelessWidget {
@@ -543,15 +652,18 @@ class _WordChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(
-      horizontal: AppSpacing.chipPadH, vertical: AppSpacing.chipPadV),
-    decoration: BoxDecoration(
-      color: AppColors.primary.withOpacity(0.08),
-      borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
-      border: Border.all(color: AppColors.primary.withOpacity(0.2)),
-    ),
-    child: Text(text, style: const TextStyle(
-      fontFamily: 'NotoSansKR',
-      fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primary)),
-  );
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.chipPadH, vertical: AppSpacing.chipPadV),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+          border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+        ),
+        child: Text(text,
+            style: const TextStyle(
+                fontFamily: 'NotoSansKR',
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary)),
+      );
 }

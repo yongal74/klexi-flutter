@@ -29,29 +29,29 @@ import '../../features/premium/presentation/premium_screen.dart';
 import '../widgets/paywall_gate.dart';
 
 abstract class AppRoutes {
-  static const String auth              = '/auth';
-  static const String home              = '/home';
-  static const String learn             = '/learn';
-  static const String progress          = '/progress';
-  static const String settings          = '/settings';
-  static const String dailySession      = '/daily-session';
-  static const String sentenceCard      = '/sentence-card';
-  static const String clozeQuiz        = '/cloze-quiz';
-  static const String wordCard          = '/word-card';
-  static const String wordNetwork       = '/word-network';
-  static const String dalliChat         = '/dalli-chat';
-  static const String grammar           = '/grammar';
-  static const String grammarDetail     = '/grammar/:id';
-  static const String themes            = '/themes';
-  static const String themeDetail       = '/themes/:id';
-  static const String pronunciation     = '/pronunciation';
-  static const String hangeul           = '/hangeul';
-  static const String notifSettings     = '/notification-settings';
-  static const String levelWords        = '/level/:level';
-  static const String premium           = '/premium';
-  static const String sentencePractice  = '/sentence-practice';
-  static const String quizSession       = '/quiz-session';
-  static const String reviewSession     = '/review';
+  static const String auth = '/auth';
+  static const String home = '/home';
+  static const String learn = '/learn';
+  static const String progress = '/progress';
+  static const String settings = '/settings';
+  static const String dailySession = '/daily-session';
+  static const String sentenceCard = '/sentence-card';
+  static const String clozeQuiz = '/cloze-quiz';
+  static const String wordCard = '/word-card';
+  static const String wordNetwork = '/word-network';
+  static const String dalliChat = '/dalli-chat';
+  static const String grammar = '/grammar';
+  static const String grammarDetail = '/grammar/:id';
+  static const String themes = '/themes';
+  static const String themeDetail = '/themes/:id';
+  static const String pronunciation = '/pronunciation';
+  static const String hangeul = '/hangeul';
+  static const String notifSettings = '/notification-settings';
+  static const String levelWords = '/level/:level';
+  static const String premium = '/premium';
+  static const String sentencePractice = '/sentence-practice';
+  static const String quizSession = '/quiz-session';
+  static const String reviewSession = '/review';
 }
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -114,8 +114,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (c, s) {
           final lvl = int.tryParse(s.uri.queryParameters['level'] ?? '');
           final wordId = s.uri.queryParameters['wordId'];
-          final startIndex = int.tryParse(s.uri.queryParameters['startIndex'] ?? '') ?? 0;
-          return _slide(SentenceCardScreen(level: lvl, wordId: wordId, startIndex: startIndex));
+          final startIndex =
+              int.tryParse(s.uri.queryParameters['startIndex'] ?? '') ?? 0;
+          return _slide(SentenceCardScreen(
+              level: lvl, wordId: wordId, startIndex: startIndex));
         },
       ),
       GoRoute(
@@ -194,8 +196,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.pronunciation,
         pageBuilder: (c, s) => _slide(const PaywallGate(
           featureName: 'Pronunciation Coach',
-          featureDescription:
-              'AI-powered pronunciation scoring and feedback. '
+          featureDescription: 'AI-powered pronunciation scoring and feedback. '
               'Upgrade to Klexi Pro for unlimited pronunciation sessions.',
           child: PronunciationScreen(),
         )),
@@ -238,7 +239,8 @@ CustomTransitionPage<void> _slide(Widget child) {
         position: Tween<Offset>(
           begin: const Offset(1, 0),
           end: Offset.zero,
-        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
+        ).animate(
+            CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
         child: child,
       );
     },
@@ -255,7 +257,8 @@ CustomTransitionPage<void> _modal(Widget child) {
         position: Tween<Offset>(
           begin: const Offset(0, 1),
           end: Offset.zero,
-        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutQuart)),
+        ).animate(
+            CurvedAnimation(parent: animation, curve: Curves.easeOutQuart)),
         child: child,
       );
     },

@@ -63,12 +63,16 @@ class _SentencePracticeScreenState
     if (mounted) {
       setState(() {
         _group = group;
-        _sentences = group?.sentences ?? _fallbackSentences(
-          repo.getAllWords()
-            .where((w) => sessionWordIds.contains(w.id) && (isPremium || w.level == 1))
-            .take(4)
-            .toList(),
-        );
+        _sentences = group?.sentences ??
+            _fallbackSentences(
+              repo
+                  .getAllWords()
+                  .where((w) =>
+                      sessionWordIds.contains(w.id) &&
+                      (isPremium || w.level == 1))
+                  .take(4)
+                  .toList(),
+            );
         _loading = false;
       });
     }
@@ -84,7 +88,8 @@ class _SentencePracticeScreenState
 
     for (final group in kAllSentenceGroups) {
       if (!isPremium && group.level > 1) continue;
-      final overlap = group.wordIds.where((id) => sessionSet.contains(id)).length;
+      final overlap =
+          group.wordIds.where((id) => sessionSet.contains(id)).length;
       if (overlap > bestScore) {
         bestScore = overlap;
         best = group;
@@ -95,11 +100,13 @@ class _SentencePracticeScreenState
 
   /// Fallback: build sentences from individual word examples when no group matches.
   List<PracticeSentence> _fallbackSentences(List<Word> words) {
-    return words.map((w) => PracticeSentence(
-      korean: w.example,
-      english: w.exampleTranslation,
-      highlights: [w.korean],
-    )).toList();
+    return words
+        .map((w) => PracticeSentence(
+              korean: w.example,
+              english: w.exampleTranslation,
+              highlights: [w.korean],
+            ))
+        .toList();
   }
 
   void _reveal() {
@@ -142,7 +149,8 @@ class _SentencePracticeScreenState
       return Scaffold(
         appBar: _buildAppBar(),
         body: const Center(
-          child: Text('No sentences available.\nComplete a study session first.',
+          child: Text(
+              'No sentences available.\nComplete a study session first.',
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.textSecondary, height: 1.6)),
         ),
@@ -153,15 +161,15 @@ class _SentencePracticeScreenState
   }
 
   PreferredSizeWidget _buildAppBar() => AppBar(
-    title: const Text('Sentence Practice'),
-    backgroundColor: AppColors.surface,
-    foregroundColor: AppColors.textPrimary,
-    elevation: 0,
-    leading: IconButton(
-      icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-      onPressed: () => context.pop(),
-    ),
-  );
+        title: const Text('Sentence Practice'),
+        backgroundColor: AppColors.surface,
+        foregroundColor: AppColors.textPrimary,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          onPressed: () => context.pop(),
+        ),
+      );
 
   Widget _buildCard() {
     final sentence = _sentences[_cardIndex];
@@ -203,8 +211,7 @@ class _SentencePracticeScreenState
                   child: LinearProgressIndicator(
                     value: progress,
                     backgroundColor: AppColors.border,
-                    valueColor:
-                        const AlwaysStoppedAnimation(AppColors.primary),
+                    valueColor: const AlwaysStoppedAnimation(AppColors.primary),
                     minHeight: 5,
                   ),
                 ),
@@ -238,10 +245,13 @@ class _SentencePracticeScreenState
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               color: AppColors.primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                              borderRadius:
+                                  BorderRadius.circular(AppSpacing.radiusPill),
                             ),
                             child: Icon(
-                              _ttsPlaying ? Icons.stop_rounded : Icons.volume_up_rounded,
+                              _ttsPlaying
+                                  ? Icons.stop_rounded
+                                  : Icons.volume_up_rounded,
                               size: 18,
                               color: AppColors.primary,
                             ),
@@ -274,12 +284,14 @@ class _SentencePracticeScreenState
                                 ),
                               ])
                             : Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8),
                                 child: Text(
                                   'Tap to reveal translation',
                                   style: TextStyle(
                                       fontSize: 13,
-                                      color: AppColors.textMuted.withOpacity(0.7)),
+                                      color:
+                                          AppColors.textMuted.withOpacity(0.7)),
                                 ),
                               ),
                       ),
@@ -313,9 +325,7 @@ class _SentencePracticeScreenState
                       ),
                     ),
                     child: Text(
-                      _cardIndex + 1 >= _sentences.length
-                          ? 'Finish'
-                          : 'Next →',
+                      _cardIndex + 1 >= _sentences.length ? 'Finish' : 'Next →',
                       style: const TextStyle(
                           fontSize: 15, fontWeight: FontWeight.w600),
                     ),
@@ -353,9 +363,7 @@ class _SentencePracticeScreenState
     String remaining = korean;
 
     // Sort highlights by their position in the sentence
-    final sorted = highlights
-        .where((h) => korean.contains(h))
-        .toList()
+    final sorted = highlights.where((h) => korean.contains(h)).toList()
       ..sort((a, b) => korean.indexOf(a).compareTo(korean.indexOf(b)));
 
     for (final word in sorted) {
@@ -396,59 +404,63 @@ class _SentencePracticeScreenState
   }
 
   Widget _buildAllComplete() => Scaffold(
-    backgroundColor: AppColors.bg,
-    appBar: _buildAppBar(),
-    body: Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.x3l),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('🏆', style: TextStyle(fontSize: 64)),
-            const SizedBox(height: AppSpacing.lg),
-            const Text(
-              'Practice Complete!',
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            const Text(
-              'You\'ve reviewed all sentences for this session.\nReady to test yourself?',
-              style: TextStyle(
-                  fontSize: 14, color: AppColors.textSecondary, height: 1.5),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppSpacing.x3l),
-            SizedBox(
-              width: double.infinity,
-              height: AppSpacing.buttonH,
-              child: ElevatedButton(
-                onPressed: () => context.push(AppRoutes.quizSession),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        backgroundColor: AppColors.bg,
+        appBar: _buildAppBar(),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.x3l),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('🏆', style: TextStyle(fontSize: 64)),
+                const SizedBox(height: AppSpacing.lg),
+                const Text(
+                  'Practice Complete!',
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                const Text(
+                  'You\'ve reviewed all sentences for this session.\nReady to test yourself?',
+                  style: TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textSecondary,
+                      height: 1.5),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppSpacing.x3l),
+                SizedBox(
+                  width: double.infinity,
+                  height: AppSpacing.buttonH,
+                  child: ElevatedButton(
+                    onPressed: () => context.push(AppRoutes.quizSession),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(AppSpacing.radiusMd),
+                      ),
+                    ),
+                    child: const Text('Take Quiz →',
+                        style: TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.w600)),
                   ),
                 ),
-                child: const Text('Take Quiz →',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-              ),
+                const SizedBox(height: AppSpacing.md),
+                TextButton(
+                  onPressed: () => context.go(AppRoutes.home),
+                  child: const Text('Back to Home',
+                      style: TextStyle(
+                          fontSize: 14, color: AppColors.textSecondary)),
+                ),
+              ],
             ),
-            const SizedBox(height: AppSpacing.md),
-            TextButton(
-              onPressed: () => context.go(AppRoutes.home),
-              child: const Text('Back to Home',
-                  style: TextStyle(
-                      fontSize: 14, color: AppColors.textSecondary)),
-            ),
-          ],
+          ),
         ),
-      ),
-    ),
-  );
+      );
 }

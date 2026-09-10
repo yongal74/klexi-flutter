@@ -19,7 +19,7 @@ class GrammarDetailScreen extends ConsumerWidget {
       backgroundColor: AppColors.bg,
       appBar: AppBar(
         title: Text(pattern.title,
-          style: const TextStyle(fontFamily: 'NotoSansKR')),
+            style: const TextStyle(fontFamily: 'NotoSansKR')),
         backgroundColor: AppColors.surface,
       ),
       body: SingleChildScrollView(
@@ -39,26 +39,34 @@ class GrammarDetailScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.25),
-                      borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                      borderRadius:
+                          BorderRadius.circular(AppSpacing.radiusPill),
                     ),
                     child: Text('TOPIK ${pattern.level}',
-                      style: const TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
+                        style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white)),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   Text(pattern.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontFamily: 'NotoSansKR',
-                      fontSize: 32, fontWeight: FontWeight.w700, color: Colors.white)),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontFamily: 'NotoSansKR',
+                          fontSize: 32,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white)),
                   const SizedBox(height: AppSpacing.sm),
                   Text(pattern.meaning,
-                    style: TextStyle(
-                      fontSize: 16, color: Colors.white.withOpacity(0.85), height: 1.5)),
+                      style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.white.withOpacity(0.85),
+                          height: 1.5)),
                 ],
               ),
             ),
@@ -69,8 +77,10 @@ class GrammarDetailScreen extends ConsumerWidget {
               _InfoCard(
                 title: 'How to Use',
                 child: Text(pattern.structure,
-                  style: const TextStyle(
-                    fontSize: 15, color: AppColors.textPrimary, height: 1.6)),
+                    style: const TextStyle(
+                        fontSize: 15,
+                        color: AppColors.textPrimary,
+                        height: 1.6)),
               ),
             const SizedBox(height: AppSpacing.listGap),
 
@@ -85,17 +95,22 @@ class GrammarDetailScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (idx > 0) ...[
-                        Divider(color: AppColors.border, height: AppSpacing.x2l),
+                        Divider(
+                            color: AppColors.border, height: AppSpacing.x2l),
                       ],
                       Text(ex.korean,
-                        style: const TextStyle(
-                          fontFamily: 'NotoSansKR',
-                          fontSize: 18, fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary, height: 1.7)),
+                          style: const TextStyle(
+                              fontFamily: 'NotoSansKR',
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                              height: 1.7)),
                       const SizedBox(height: 4),
                       Text(ex.english,
-                        style: const TextStyle(
-                          fontSize: 14, color: AppColors.textSecondary, height: 1.5)),
+                          style: const TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textSecondary,
+                              height: 1.5)),
                     ],
                   );
                 }).toList(),
@@ -115,23 +130,26 @@ class _InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    width: double.infinity,
-    padding: const EdgeInsets.all(AppSpacing.cardPad),
-    decoration: BoxDecoration(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
-      border: Border.all(color: AppColors.border),
-      boxShadow: AppColors.subtleShadow,
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: const TextStyle(
-          fontSize: 12, fontWeight: FontWeight.w600,
-          color: AppColors.textMuted, letterSpacing: 0.5)),
-        const SizedBox(height: AppSpacing.md),
-        child,
-      ],
-    ),
-  );
+        width: double.infinity,
+        padding: const EdgeInsets.all(AppSpacing.cardPad),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+          border: Border.all(color: AppColors.border),
+          boxShadow: AppColors.subtleShadow,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title,
+                style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textMuted,
+                    letterSpacing: 0.5)),
+            const SizedBox(height: AppSpacing.md),
+            child,
+          ],
+        ),
+      );
 }

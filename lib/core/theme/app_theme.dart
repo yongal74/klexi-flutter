@@ -13,14 +13,14 @@ abstract class AppTheme {
       brightness: Brightness.light,
       scaffoldBackgroundColor: AppColors.bg,
       colorScheme: ColorScheme.light(
-        primary:    AppColors.primary,
-        secondary:  AppColors.accent,
-        surface:    AppColors.surface,
-        error:      AppColors.error,
-        onPrimary:  AppColors.textOnPrimary,
+        primary: AppColors.primary,
+        secondary: AppColors.accent,
+        surface: AppColors.surface,
+        error: AppColors.error,
+        onPrimary: AppColors.textOnPrimary,
         onSecondary: AppColors.textOnPrimary,
-        onSurface:  AppColors.textPrimary,
-        onError:    AppColors.textOnPrimary,
+        onSurface: AppColors.textPrimary,
+        onError: AppColors.textOnPrimary,
         surfaceContainerHighest: AppColors.surfaceAlt,
       ),
 
@@ -95,7 +95,7 @@ abstract class AppTheme {
         filled: true,
         fillColor: AppColors.surfaceAlt,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+            horizontal: AppSpacing.lg, vertical: AppSpacing.md),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
           borderSide: const BorderSide(color: AppColors.border),
@@ -130,16 +130,16 @@ abstract class AppTheme {
 
       // Apply DM Sans as the base English UI font, then override with app scale
       textTheme: GoogleFonts.dmSansTextTheme(TextTheme(
-        displayLarge:  AppTypography.display,
+        displayLarge: AppTypography.display,
         headlineLarge: AppTypography.heading1,
         headlineMedium: AppTypography.heading2,
         headlineSmall: AppTypography.heading3,
-        bodyLarge:     AppTypography.bodyMedium,
-        bodyMedium:    AppTypography.body,
-        bodySmall:     AppTypography.small,
-        labelLarge:    AppTypography.button,
-        labelMedium:   AppTypography.caption,
-        labelSmall:    AppTypography.label,
+        bodyLarge: AppTypography.bodyMedium,
+        bodyMedium: AppTypography.body,
+        bodySmall: AppTypography.small,
+        labelLarge: AppTypography.button,
+        labelMedium: AppTypography.caption,
+        labelSmall: AppTypography.label,
       )),
     );
   }

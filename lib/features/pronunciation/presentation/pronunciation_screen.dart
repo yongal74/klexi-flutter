@@ -15,7 +15,8 @@ import '../../../data/repositories/word_repository.dart';
 class PronunciationScreen extends ConsumerStatefulWidget {
   const PronunciationScreen({super.key});
   @override
-  ConsumerState<PronunciationScreen> createState() => _PronunciationScreenState();
+  ConsumerState<PronunciationScreen> createState() =>
+      _PronunciationScreenState();
 }
 
 class _PronunciationScreenState extends ConsumerState<PronunciationScreen>
@@ -39,8 +40,9 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen>
   @override
   void initState() {
     super.initState();
-    _pulseCtrl = AnimationController(vsync: this,
-      duration: const Duration(milliseconds: 800))..repeat(reverse: true);
+    _pulseCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 800))
+      ..repeat(reverse: true);
     _loadWord();
   }
 
@@ -188,18 +190,23 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen>
                         FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(_currentWord!.korean,
-                            style: const TextStyle(
-                              fontFamily: 'NotoSansKR',
-                              fontSize: 52, fontWeight: FontWeight.w700,
-                              color: Colors.white, letterSpacing: 4)),
+                              style: const TextStyle(
+                                  fontFamily: 'NotoSansKR',
+                                  fontSize: 52,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                  letterSpacing: 4)),
                         ),
                         const SizedBox(height: 8),
                         if (_currentWord!.pronunciation.isNotEmpty)
                           Text('[${_currentWord!.pronunciation}]',
-                            style: TextStyle(fontSize: 20, color: Colors.white.withOpacity(0.8))),
+                              style: TextStyle(
+                                  fontSize: 20,
+                                  color: Colors.white.withOpacity(0.8))),
                         const SizedBox(height: 8),
                         Text(_currentWord!.english,
-                          style: const TextStyle(fontSize: 18, color: Colors.white70)),
+                            style: const TextStyle(
+                                fontSize: 18, color: Colors.white70)),
                       ],
                     ),
                   ),
@@ -213,7 +220,8 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen>
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.primary,
                       side: const BorderSide(color: AppColors.primary),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.x3l),
@@ -225,33 +233,41 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen>
                       animation: _pulseCtrl,
                       builder: (_, __) {
                         return Container(
-                          width: 96, height: 96,
+                          width: 96,
+                          height: 96,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: _recording
                                 ? AppColors.error
                                 : AppColors.primary,
-                            boxShadow: _recording ? [
-                              BoxShadow(
-                                color: AppColors.error.withOpacity(0.3 + _pulseCtrl.value * 0.3),
-                                blurRadius: 20 + _pulseCtrl.value * 20,
-                                spreadRadius: 4,
-                              )
-                            ] : AppColors.cardShadow,
+                            boxShadow: _recording
+                                ? [
+                                    BoxShadow(
+                                      color: AppColors.error.withOpacity(
+                                          0.3 + _pulseCtrl.value * 0.3),
+                                      blurRadius: 20 + _pulseCtrl.value * 20,
+                                      spreadRadius: 4,
+                                    )
+                                  ]
+                                : AppColors.cardShadow,
                           ),
                           child: Icon(
-                            _recording ? Icons.stop_rounded : Icons.mic_rounded,
-                            color: Colors.white, size: 40),
+                              _recording
+                                  ? Icons.stop_rounded
+                                  : Icons.mic_rounded,
+                              color: Colors.white,
+                              size: 40),
                         );
                       },
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  Text(
-                    _recording ? 'Recording…' : 'Tap to Record',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: _recording ? AppColors.error : AppColors.textMuted)),
+                  Text(_recording ? 'Recording…' : 'Tap to Record',
+                      style: TextStyle(
+                          fontSize: 14,
+                          color: _recording
+                              ? AppColors.error
+                              : AppColors.textMuted)),
                   const SizedBox(height: AppSpacing.x3l),
 
                   // Scoring spinner
@@ -293,11 +309,13 @@ class _ScoreCard extends StatelessWidget {
     return AppColors.error;
   }
 
-  String get _label => feedback ?? (score >= 85
-      ? 'Great job! 🎉'
-      : score >= 60
-          ? 'Almost there!'
-          : 'Keep practicing');
+  String get _label =>
+      feedback ??
+      (score >= 85
+          ? 'Great job! 🎉'
+          : score >= 60
+              ? 'Almost there!'
+              : 'Keep practicing');
 
   @override
   Widget build(BuildContext context) {
@@ -312,7 +330,8 @@ class _ScoreCard extends StatelessWidget {
       child: Row(
         children: [
           SizedBox(
-            width: 60, height: 60,
+            width: 60,
+            height: 60,
             child: Stack(
               alignment: Alignment.center,
               children: [
@@ -323,26 +342,34 @@ class _ScoreCard extends StatelessWidget {
                   valueColor: AlwaysStoppedAnimation(_color),
                 ),
                 Text('$score',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.w800, color: _color)),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: _color)),
               ],
             ),
           ),
           const SizedBox(width: AppSpacing.lg),
-          Expanded(child: Column(
+          Expanded(
+              child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Your Score', style: const TextStyle(
-                fontSize: 12, color: AppColors.textMuted)),
+              Text('Your Score',
+                  style: const TextStyle(
+                      fontSize: 12, color: AppColors.textMuted)),
               const SizedBox(height: 2),
-              Text(_label, style: TextStyle(
-                fontSize: 14, fontWeight: FontWeight.w700, color: _color)),
+              Text(_label,
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: _color)),
               if (transcript != null && transcript!.isNotEmpty) ...[
                 const SizedBox(height: 4),
                 Text('Heard: "$transcript"',
-                  style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                    style: const TextStyle(
+                        fontSize: 12, color: AppColors.textMuted)),
               ],
             ],
           )),
