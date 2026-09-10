@@ -6,9 +6,82 @@ All notable changes to Klexi are documented here.
 
 ## [1.0.6+53] — 2026-09-10 (개발 중)
 
-> build53 은 2트랙 병렬 작업이다. 아래는 **트랙 A(백엔드·정책·문서)** 항목이며,
-> 트랙 B(앱 코어: 세션 복원, 계정·데이터 모델, 리마인더, 프리미엄 TTS, 학습 정합성)는
-> 병합 시 이 절에 합쳐진다.
+> build53 은 2트랙 병렬 작업이었다(트랙 A = 백엔드·정책·문서, 트랙 B = 앱 코어).
+> 두 트랙 모두 병합 완료. 미출시 — 에뮬레이터/실기기 검증과 백엔드 배포가 남아 있다.
+
+### Fixed — 한 번도 동작한 적 없던 기능들 (트랙 B)
+
+리뷰가 드러낸 공통 성격: 코드는 존재하는데 호출되지 않거나, 존재하지 않는 것을
+호출하고 있었다. 정적 분석으로는 잡히지 않고 실행해야 드러나는 부류다.
+
+- **프리미엄 TTS (WP-02)** — `tts_service.dart` 가 `/api/tts/clova`, `/api/tts/google` 를
+  호출했으나 서버에 그런 라우트가 존재한 적이 없다. 항상 404 → 기기 TTS 로 폴백했고,
+  즉 **유료 음성이 한 번도 나온 적이 없다**. 실존 라우트 `/api/ai-tts`(OpenAI TTS,
+  voice=nova) 하나로 통일. `app_strings` 의 "Naver CLOVA / Google Neural2" 허위 문구를
+  'AI voice (premium)' 로 정정.
+- **세션 복원 (WP-03)** — `AuthService.restoreSession()` 을 호출하는 곳이 0건이라
+  앱을 켤 때마다 로그인 화면이 떴다. `main.dart` 에서 `runApp` 전에 복원하고
+  `currentUserProvider` 를 시드한다. 게스트도 prefs 의 `guest_` id 로 복원.
+- **데일리 리마인더 (WP-04)** — `exactAllowWhileIdle` + 정확알람 권한 미선언 조합이라
+  Android 12+ 에서 `exact_alarms_not_permitted` 로 **예약 자체가 실패**했고, 호출부가
+  예외를 삼켜 화면에는 "Settings saved" 만 떴다. `inexactAllowWhileIdle` 로 전환
+  (학습 리마인더는 Play 의 정확알람 사용 자격이 없다), 실패를
+  `NotificationScheduleException` 으로 던져 스낵바로 표시.
+- **로컬 타임존 (WP-04)** — `tz.setLocalLocation` 미호출로 `tz.local` 이 UTC 였다.
+  예약 시각이 통째로 어긋나고 서머타임 전환 후 1시간 밀렸다. `flutter_timezone` 도입.
+- **계정 삭제 (WP-03)** — 삭제 대상 박스명이 `study_records_$uid` 였는데 실제 박스는
+  `study_records` 하나였다. 즉 학습기록이 지워지지 않았다. 박스를 uid 별로 나누고,
+  RevenueCat 로그아웃·FCM 토큰 삭제·prefs·임시파일(`klexi_pronunciation.m4a`,
+  `tts_cache/`)까지 정리한다. 각 단계는 독립적으로 실패를 삼켜 하나가 실패해도
+  나머지를 시도한다.
+- **게스트 → Google 업그레이드 (WP-03)** — `upgradeGuestWithGoogle()` 호출처가 0건이었다.
+  설정 프로필 카드에 "Sign in with Google to back up progress" 버튼으로 연결.
+- **구독이 계정이 아니라 기기에 묶여 있던 문제 (WP-03)** — `Purchases.logIn/logOut`
+  호출이 0건이라 로그아웃·계정삭제 후에도 premium 이 유지됐다.
+
+### Fixed — 유료 사용자에게만 나타나던 결함 (트랙 B)
+
+- **레벨 필터 회귀 (WP-07a)** — `getTodaySession`/`getTodayWordIds` 의
+  `isPremium`·`userLevel` 이 **선택 인자**라 `quiz_screen`, `review_screen`,
+  `sentence_practice_screen`, `pronunciation_screen` 네 곳이 인자 없이 호출했다.
+  유료 사용자가 이 화면들에서 레벨 1 필러 단어만 받았다(build48 #19 의 회귀).
+  두 인자를 `required` 로 바꿔 컴파일러가 호출처를 전부 잡게 했다.
+- **Grammar Coach 번역 누락 (WP-07b)** — `grammar_data.dart` 예문 324개 중
+  **74개(23%)에 `english` 가 빈 문자열**, 패턴 `g2-11` 은 `meaning` 이 빈 문자열이었다.
+  Grammar Coach 는 `PaywallGate` 가 걸린 유료 기능이므로, 유료 사용자가 한국어 예문만
+  보고 영어 번역은 빈칸을 보고 있었다. 74건 전부 각 문법 패턴의 뉘앙스에 맞춰 번역.
+  CI 를 복구한 직후 `flutter test` 가 잡아낸 결함이다.
+
+### Security — 클라이언트 측 (WP-02, 트랙 B)
+
+- `lib/core/network/api_client.dart` 신설 — 백엔드 호출 단일 창구.
+  `AuthInterceptor` 가 모든 `/api` 요청에 `Authorization: Bearer <ID 토큰>` 을 붙이고,
+  토큰이 없으면(게스트) 왕복 없이 `AuthRequiredException` 으로 거절, 401 응답도
+  같은 예외로 변환한다. `tts_service`·`pronunciation_service` 가 각자 갖고 있던
+  Dio 정의 2개를 이 클라이언트로 통일. 채팅 SSE(`http.Request`)에도 Bearer 부착.
+- `AUTH_MODE` 단계 전환 (WP-01b) — 서버 인증을 `soft`(토큰 없으면 통과 + 경고 로그,
+  있는데 무효면 401)로 먼저 배포한다. 라이브 build52 는 `Authorization` 헤더를 보내지
+  않으므로 곧바로 `hard` 로 가면 **기존 사용자 전원의 AI 기능이 401 로 죽는다.**
+  `hard` 전환은 build53 이 90% 보급되거나 출시 14일 경과 시점에 재배포로 수행한다.
+- FCM 토큰의 `SharedPreferences` 저장 제거 — prefs 는 Android 자동 백업 대상이라
+  기기 교체 후 복원하면 옛 기기 토큰이 살아나 푸시가 조용히 죽는다.
+
+### Changed — 데이터 모델·초기화 (트랙 B)
+
+- 학습기록 Hive 박스를 `study_records` 하나에서 **`study_records_$uid`** 로 분리.
+  기존 공용 박스는 첫 사용자에게 1회 이관 후 삭제하고, 이관 실패 시 원본을 남겨
+  다음 실행에 재시도한다. 같은 기기의 서로 다른 사용자가 기록을 공유하던 문제가 해소된다.
+- 콜드스타트에서 `PurchaseService.initialize()`·`FcmService().initialize()` 를
+  `runApp` 이후로 이동. 이전에는 RevenueCat 네트워크 왕복이 첫 프레임을 막았다.
+- 설정의 가짜 "Daily Reminders" 스위치 제거(화면 로컬 state 만 바꾸고 실제 예약과
+  무관했다). "Slow TTS Speed" 를 `slowTtsProvider`+prefs 로 실연결 — 기존 발음 호출부
+  6곳을 수정하지 않고도 설정이 반영된다.
+- TTS 캐시 키를 `text.hashCode` → `SHA-1(text|voice|isSlow)` 로 교체. hashCode 는
+  실행 간 안정성이 보장되지 않고 충돌하면 엉뚱한 음성이 재생된다.
+  임시 디렉토리 조회를 1회만 캐시하고, 실행당 1회 50MB LRU 정리.
+- 발음 업로드 파일명 `recording.webm` → `recording.m4a` + `contentType audio/mp4`.
+  실제 녹음 포맷은 aacLc/.m4a 라 Whisper 가 포맷을 오인할 수 있었다.
+- `pubspec.yaml` `1.0.6+52` → `1.0.6+53`. `flutter_timezone`·`crypto`·`http_parser` 추가.
 
 ### Security (WP-01) — 백엔드가 무인증이던 문제
 - `functions/src/auth.ts` 신설. `/api/ai-chat`, `/api/ai-tts`, `/api/pronunciation` 에
@@ -57,7 +130,23 @@ All notable changes to Klexi are documented here.
 
 ### CI (WP-00)
 - `.github/workflows/ci.yml` Flutter 핀 3.29.0 → 3.41.4(`pubspec.lock` 이 ≥3.38.4 요구),
-  키스토어 복원 경로 정정, 존재하지 않는 asset 디렉토리 항목 제거, `dart format lib/ test/` 적용.
+  키스토어 복원 경로 정정(`android/keystore/` 는 존재하지 않는 디렉토리였다),
+  존재하지 않는 asset 디렉토리 항목 제거, `dart format lib/ test/` 적용.
+- gitignore 대상인 `lib/firebase_options.dart` 를 워크플로 안에서 placeholder 로 생성.
+  이 파일이 없으면 `main.dart:15` 에서 analyze 가 실패한다. Firebase **클라이언트**
+  설정(공개 값)이므로 시크릿 대신 placeholder 를 쓴다.
+- `KEYSTORE_BASE64`/`KEY_PROPERTIES` 시크릿이 없으면 서명·릴리즈 빌드 단계를 조건부
+  skip. 시크릿 등록 전까지 CI 를 초록으로 유지한다.
+- **결과: 이 저장소에서 CI 가 처음으로 전부 통과했다**(Analyze & Test ✓ /
+  Build Android AAB ✓). `flutter test` 는 CI(ubuntu)에서 92건 전부 통과한다 —
+  멈추는 것은 Windows 로컬뿐이다.
+
+### Deploy (WP-01b)
+- `firebase.json` 에 `functions.predeploy`(`npm ci` + `npm run build`) 추가.
+  `functions/lib/` 는 git 추적 대상이 아니므로, 훅이 없으면 배포가 로컬에 남은 옛 빌드를
+  올린다 — WP-01 의 인증이 빠진 코드가 배포될 수 있었다.
+- `hosting.public` `"build/web"` → `"web"`. `build/` 는 gitignore 대상이라
+  WP-16 의 랜딩 페이지가 실제로 서비스되지 않는 상태였다.
 
 ---
 
