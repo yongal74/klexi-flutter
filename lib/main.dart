@@ -9,6 +9,9 @@ import 'core/services/daily_session_service.dart';
 import 'core/services/fcm_service.dart';
 import 'core/services/purchase_service.dart';
 import 'core/theme/app_theme.dart';
+import 'core/utils/tts_service_mobile.dart'
+    if (dart.library.html) 'core/utils/tts_service_web.dart' as tts_platform;
+import 'core/widgets/app_messenger.dart';
 import 'data/models/word.dart';
 
 // Firebase — requires google-services.json (Android) + GoogleService-Info.plist (iOS)
@@ -76,6 +79,8 @@ Future<void> _initAfterFirstFrame() async {
   } on Exception catch (e) {
     debugPrint('[FCM] 초기화 실패: $e');
   }
+  // TTS 캐시가 무한히 커지지 않도록 실행당 1회 정리한다.
+  await tts_platform.pruneCache();
 }
 
 class KlexiApp extends ConsumerWidget {
@@ -86,6 +91,7 @@ class KlexiApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
     return MaterialApp.router(
       title: 'Klexi — Learn Korean',
+      scaffoldMessengerKey: klexiMessengerKey,
       theme: AppTheme.light,
       routerConfig: router,
       debugShowCheckedModeBanner: false,

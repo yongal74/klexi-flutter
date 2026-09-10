@@ -5,7 +5,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../constants/app_config.dart';
+import 'package:http_parser/http_parser.dart';
+import '../network/api_client.dart';
 
 // ── Model ─────────────────────────────────────────────────────────────────
 
@@ -77,15 +78,18 @@ class PronunciationService {
   }) async {
     try {
       final formData = FormData.fromMap({
+        // 실제 녹음 포맷은 aacLc/.m4a 다(pronunciation_screen.dart).
+        // webm 으로 올리면 Whisper 가 포맷을 오인할 수 있다.
         'audio': await MultipartFile.fromFile(
           audioFile.path,
-          filename: 'recording.webm',
+          filename: 'recording.m4a',
+          contentType: MediaType('audio', 'mp4'),
         ),
         'text': expectedText,
       });
 
       final response = await _dio.post<Map<String, dynamic>>(
-        '/pronunciation/score',
+        '/api/pronunciation/score',
         data: formData,
         options: Options(contentType: 'multipart/form-data'),
       );
@@ -105,13 +109,6 @@ class PronunciationService {
 
 // ── Providers ─────────────────────────────────────────────────────────────
 
-final _dioProvider = Provider<Dio>((ref) => Dio(BaseOptions(
-      baseUrl: '${AppConfig.backendUrl}/api',
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 30),
-    )));
-
 final pronunciationServiceProvider = Provider<PronunciationService>((ref) {
-  final dio = ref.watch(_dioProvider);
-  return PronunciationService(dio);
+  return PronunciationService(ref.watch(apiDioProvider));
 });

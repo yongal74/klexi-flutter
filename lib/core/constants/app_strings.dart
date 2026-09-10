@@ -128,8 +128,12 @@ abstract class AppStrings {
   static const String dailyReminder = 'Daily Reminder';
   static const String reminderTime = 'Reminder Time';
   static const String ttsVoice = 'TTS Voice';
-  static const String naver = 'Naver CLOVA';
-  static const String google = 'Google Neural2';
+  // build52 까지 'Naver CLOVA' / 'Google Neural2' 라고 적혀 있었으나 그
+  // 라우트는 서버에 존재한 적이 없다. 실제 엔진은 OpenAI TTS 다.
+  static const String aiVoice = 'AI voice (premium)';
+  static const String deviceVoice = 'Device voice';
+  static const String usingDeviceVoice = 'Using device voice';
+  static const String signInForAi = 'Sign in to use AI features';
   static const String device = 'Device (offline)';
   static const String premium = 'Premium';
   static const String upgradeToPremium = 'Upgrade to Premium';

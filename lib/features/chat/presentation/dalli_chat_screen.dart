@@ -8,6 +8,8 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_config.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/providers/user_level_provider.dart';
+import '../../../core/network/api_client.dart';
+import '../../../core/constants/app_strings.dart';
 
 // ── Mode ─────────────────────────────────────────────────
 enum DalliMode { freeChat, wordReview, rolePlay, grammarCoach }
@@ -194,9 +196,22 @@ class _DalliChatScreenState extends ConsumerState<DalliChatScreen> {
       final mode = ref.read(dalliModeProvider);
       final uri = Uri.parse('${AppConfig.backendUrl}/api/ai-chat');
 
+      // 서버(WP-01)가 Firebase ID 토큰을 요구한다. 게스트는 토큰이 없으므로
+      // 왕복하지 않고 바로 로그인 안내를 띄운다.
+      final idToken = await currentIdToken();
+      if (idToken == null) {
+        ref.read(dalliTypingProvider.notifier).state = false;
+        final reply = ChatMessage(text: AppStrings.signInForAi, isUser: false);
+        msgs.state = [...ref.read(chatMessagesProvider), reply];
+        _scrollDown();
+        if (mounted) setState(() => _sending = false);
+        return;
+      }
+
       client = http.Client();
       final request = http.Request('POST', uri)
         ..headers['Content-Type'] = 'application/json'
+        ..headers['Authorization'] = 'Bearer $idToken'
         ..body = json.encode({
           'messages': _history.length > 8
               ? _history.sublist(_history.length - 8)

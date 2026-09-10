@@ -126,7 +126,7 @@ class _SentencePracticeScreenState
       return;
     }
     setState(() => _ttsPlaying = true);
-    await ref.read(ttsServiceProvider).speak(text, isPremium: true);
+    await ref.read(ttsServiceProvider).speak(text);
     if (mounted) setState(() => _ttsPlaying = false);
   }
 

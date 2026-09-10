@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 // ── Background handler (top-level function required by FCM) ──────────────────
 @pragma('vm:entry-point')
@@ -30,14 +29,12 @@ class FcmService {
       final token = await _messaging.getToken();
       if (token != null) {
         debugPrint('[FCM] Token retrieved');
-        await _saveToken(token);
       }
     }
 
     // Refresh token whenever it rotates
-    _subs.add(_messaging.onTokenRefresh.listen((newToken) async {
+    _subs.add(_messaging.onTokenRefresh.listen((_) {
       debugPrint('[FCM] Token refreshed');
-      await _saveToken(newToken);
     }));
 
     // Foreground notifications
@@ -65,17 +62,10 @@ class FcmService {
     _subs.clear();
   }
 
-  /// Saves FCM token to SharedPreferences for backend delivery on next API call.
-  Future<void> _saveToken(String token) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('fcm_token', token);
-  }
-
-  /// Returns the stored FCM token (to be sent to backend with user auth).
-  static Future<String?> getSavedToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('fcm_token');
-  }
+  // FCM 토큰은 더 이상 SharedPreferences 에 저장하지 않는다.
+  // prefs 는 Android 자동 백업 대상이라, 기기를 바꿔 복원하면 옛 기기의
+  // 토큰이 되살아나 푸시가 조용히 죽는다. 필요할 때 getToken() 으로
+  // 매번 다시 물어보는 편이 정확하고 비용도 없다(로컬 캐시).
 
   /// Routes the user to the relevant screen based on notification data.
   /// Expected data keys: 'screen' (e.g. 'learn', 'progress', 'premium')

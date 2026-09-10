@@ -45,9 +45,7 @@ class _WordCardScreenState extends ConsumerState<WordCardScreen> {
           if (word != null)
             IconButton(
               icon: const Icon(Icons.volume_up_outlined),
-              onPressed: () => ref
-                  .read(ttsServiceProvider)
-                  .speak(word.korean, isPremium: true),
+              onPressed: () => ref.read(ttsServiceProvider).speak(word.korean),
             ),
         ],
       ),
