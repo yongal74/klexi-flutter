@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": "build/web",
+    "public": "web",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       { "source": "/privacy", "destination": "/privacy.html" },
@@ -12,6 +12,10 @@
   },
   "functions": {
     "source": "functions",
-    "runtime": "nodejs22"
+    "runtime": "nodejs22",
+    "predeploy": [
+      "npm --prefix \"$RESOURCE_DIR\" ci",
+      "npm --prefix \"$RESOURCE_DIR\" run build"
+    ]
   }
 }
