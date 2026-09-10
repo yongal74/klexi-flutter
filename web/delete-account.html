@@ -17,7 +17,7 @@
 </head>
 <body>
 <h1>Delete your Klexi account</h1>
-<p class="updated">Last updated: September 1, 2026</p>
+<p class="updated">Last updated: September 10, 2026</p>
 
 <h2>Option 1 — In the app (fastest)</h2>
 <ol>
@@ -40,9 +40,15 @@ uninstall the app.</p>
 <h2>What gets deleted</h2>
 <ul>
   <li>Your account profile (name, email, profile photo) from Firebase Authentication</li>
-  <li>Your study progress and history (learned words, streaks, quiz results)</li>
-  <li>Your device push notification token</li>
+  <li>Your study progress and history stored on the device (learned words, streaks, quiz results)</li>
+  <li>Your Dalli AI chat history</li>
+  <li>Your app settings and preferences</li>
+  <li>Cached audio on the device (AI voice cache and the last pronunciation recording)</li>
+  <li>Your device push notification token (unregistered from Firebase Cloud Messaging)</li>
+  <li>Your subscription link in RevenueCat is signed out, so the account is no longer associated with your purchases on this device</li>
 </ul>
+<p>Klexi does not keep a server-side copy of your study records — they live on your device, and
+deleting the account erases them from the device as part of the same flow.</p>
 <p>Subscription and payment records are kept by Google Play / RevenueCat for billing and tax
 purposes as required by law, and are not tied to your Klexi profile after deletion.</p>
 

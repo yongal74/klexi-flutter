@@ -17,7 +17,7 @@
 </head>
 <body>
 <h1>Klexi — Privacy Policy</h1>
-<p class="updated">Last updated: September 1, 2026</p>
+<p class="updated">Last updated: September 10, 2026</p>
 
 <p>Klexi ("we", "the app") is a Korean-language learning app. This policy explains what data
 we collect, why, and who it is shared with.</p>
@@ -27,12 +27,24 @@ we collect, why, and who it is shared with.</p>
 <tr><th>Source</th><th>Data collected</th><th>Purpose</th><th>Shared with</th></tr>
 <tr><td>Firebase Auth (Google Sign-In)</td><td>Name, email, profile photo</td><td>Account creation & login</td><td>Google</td></tr>
 <tr><td>Firebase Analytics</td><td>App interactions, session data, device type</td><td>Product analytics</td><td>Google</td></tr>
+<tr><td>Firebase Analytics — Advertising ID</td><td>Android Advertising ID (AAID)</td><td>Analytics attribution only. We do not serve ads and do not build advertising profiles.</td><td>Google</td></tr>
 <tr><td>Firebase Crashlytics</td><td>Crash logs, device info, OS version</td><td>Stability & bug fixing</td><td>Google</td></tr>
 <tr><td>Firebase Cloud Messaging</td><td>Device push token</td><td>Study reminder notifications</td><td>Google</td></tr>
 <tr><td>RevenueCat</td><td>Purchase history</td><td>Subscription management</td><td>RevenueCat</td></tr>
 <tr><td>Dalli AI Chat (OpenAI)</td><td>Your last 8 chat messages</td><td>AI conversation feature</td><td>OpenAI</td></tr>
-<tr><td>Local storage (Hive)</td><td>Study progress records</td><td>App functionality</td><td>Not shared — stays on your device</td></tr>
+<tr><td>Pronunciation Coach (OpenAI Whisper)</td><td>Voice recording of the phrase you practise, plus the target phrase</td><td>Speech-to-text scoring of your pronunciation</td><td>OpenAI. The recording is sent for scoring only, is not stored on our servers, and the local copy on your device is overwritten by the next recording.</td></tr>
+<tr><td>AI voice playback (OpenAI TTS)</td><td>The Korean word or sentence being spoken</td><td>Generating the premium AI voice</td><td>OpenAI</td></tr>
+<tr><td>Local storage (Hive, app preferences)</td><td>Study progress records, app settings, chat history, cached audio</td><td>App functionality</td><td>Not shared — stays on your device</td></tr>
 </table>
+
+<h2>AI features and authentication</h2>
+<p>The AI features (Dalli chat, AI voice, pronunciation scoring) run through our own backend, which
+requires you to be signed in. Requests are authenticated with your Firebase sign-in token so that the
+service cannot be used anonymously on your behalf. We do not use your chat messages or voice recordings
+to train any AI model.</p>
+
+<h2>Children</h2>
+<p>Klexi is not directed to children under 13, and we do not knowingly collect personal data from them.</p>
 
 <h2>Your rights</h2>
 <p>You can request access to, correction of, or deletion of your personal data at any time.
