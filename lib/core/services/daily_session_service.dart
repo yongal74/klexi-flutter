@@ -42,8 +42,9 @@ class StudyRecord {
     const intervals = [1, 3, 7, 14, 30, 60];
     int idx = (timesStudied - 1).clamp(0, intervals.length - 1);
     // If user pressed Again more than twice, step back one level
-    if (hardCount - easyCount > 2)
+    if (hardCount - easyCount > 2) {
       idx = (idx - 1).clamp(0, intervals.length - 1);
+    }
     return intervals[idx];
   }
 

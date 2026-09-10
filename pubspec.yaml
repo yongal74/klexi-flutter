@@ -83,7 +83,5 @@ flutter:
 
   assets:
     - assets/fonts/
-    - assets/images/
-    - assets/icons/
 
   # Fonts loaded via google_fonts package at runtime (no local .ttf needed)

@@ -22,9 +22,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         context.go('/home');
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('Sign-in failed: $e')));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }

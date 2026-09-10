@@ -17,15 +17,37 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.29.0'
+          flutter-version: '3.41.4'
           channel: 'stable'
           cache: true
+
+      # lib/firebase_options.dart is gitignored (see .gitignore).
+      # It holds Firebase *client* config (public by design), so CI generates a
+      # placeholder instead of consuming a secret. Analyze/test only - these
+      # values never reach a running app.
+      - name: Generate firebase_options.dart (CI placeholder)
+        run: |
+          cat > lib/firebase_options.dart <<'DART'
+          // GENERATED IN CI - placeholder values, never committed.
+          // ignore_for_file: type=lint
+          import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
+
+          class DefaultFirebaseOptions {
+            static FirebaseOptions get currentPlatform => const FirebaseOptions(
+              apiKey: 'ci-placeholder',
+              appId: '1:000000000000:android:0000000000000000000000',
+              messagingSenderId: '000000000000',
+              projectId: 'klexi-ci-placeholder',
+              storageBucket: 'klexi-ci-placeholder.appspot.com',
+            );
+          }
+          DART
 
       - name: Install dependencies
         run: flutter pub get
 
       - name: Verify formatting
-        run: dart format --output=none --set-exit-if-changed lib/
+        run: dart format --output=none --set-exit-if-changed lib/ test/
 
       - name: Analyze (no fatal infos)
         run: flutter analyze --no-fatal-infos
@@ -58,25 +80,63 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.29.0'
+          flutter-version: '3.41.4'
           channel: 'stable'
           cache: true
+
+      # lib/firebase_options.dart is gitignored (see .gitignore).
+      # It holds Firebase *client* config (public by design), so CI generates a
+      # placeholder instead of consuming a secret. Analyze/test only - these
+      # values never reach a running app.
+      - name: Generate firebase_options.dart (CI placeholder)
+        run: |
+          cat > lib/firebase_options.dart <<'DART'
+          // GENERATED IN CI - placeholder values, never committed.
+          // ignore_for_file: type=lint
+          import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
+
+          class DefaultFirebaseOptions {
+            static FirebaseOptions get currentPlatform => const FirebaseOptions(
+              apiKey: 'ci-placeholder',
+              appId: '1:000000000000:android:0000000000000000000000',
+              messagingSenderId: '000000000000',
+              projectId: 'klexi-ci-placeholder',
+              storageBucket: 'klexi-ci-placeholder.appspot.com',
+            );
+          }
+          DART
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Decode keystore
+      - name: Check signing secrets
+        id: signing
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEY_PROPERTIES: ${{ secrets.KEY_PROPERTIES }}
         run: |
-          echo "$KEYSTORE_BASE64" | base64 --decode > android/keystore/klexi-release.jks
-          echo "$KEY_PROPERTIES" > android/key.properties
+          if [ -n "$KEYSTORE_BASE64" ] && [ -n "$KEY_PROPERTIES" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::KEYSTORE_BASE64 / KEY_PROPERTIES secrets not set - skipping release AAB build."
+          fi
+
+      - name: Decode keystore
+        if: steps.signing.outputs.available == 'true'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEY_PROPERTIES: ${{ secrets.KEY_PROPERTIES }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > android/klexi-release.jks
+          printf '%s' "$KEY_PROPERTIES" > android/key.properties
 
       - name: Build release AAB
+        if: steps.signing.outputs.available == 'true'
         run: flutter build appbundle --release
 
       - name: Upload AAB artifact
+        if: steps.signing.outputs.available == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: klexi-release-aab

@@ -105,10 +105,12 @@ class _ClozeQuizScreenState extends ConsumerState<ClozeQuizScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading)
+    if (_loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    if (_quiz.isEmpty)
+    }
+    if (_quiz.isEmpty) {
       return const Scaffold(body: Center(child: Text('No quiz available')));
+    }
 
     final word = _quiz[_index];
 
