@@ -82,7 +82,10 @@ final List<GrammarPattern> kGrammarData = [
           korean: '학교에 가요.', english: 'I go to school.', highlight: '에'),
       GrammarExample(
           korean: '서울에 살아요.', english: 'I live in Seoul.', highlight: '에'),
-      GrammarExample(korean: '세 시에 만나요.', english: '', highlight: '에'),
+      GrammarExample(
+          korean: '세 시에 만나요.',
+          english: 'Let\'s meet at three o\'clock.',
+          highlight: '에'),
     ],
     tips:
         'Use 에 for destinations and static locations. For the location of an action (where something happens), use 에서 instead.',
@@ -129,7 +132,10 @@ final List<GrammarPattern> kGrammarData = [
           korean: '한국의 음식은 맛있어요.',
           english: 'Korean food is delicious.',
           highlight: '의'),
-      GrammarExample(korean: '친구의 집에 갔어요.', english: '', highlight: '의'),
+      GrammarExample(
+          korean: '친구의 집에 갔어요.',
+          english: 'I went to my friend\'s house.',
+          highlight: '의'),
     ],
     tips:
         'In casual speech, 의 is often omitted, especially with pronouns. 나의 → 내, 저의 → 제, 너의 → 네.',
@@ -251,7 +257,10 @@ final List<GrammarPattern> kGrammarData = [
           korean: '오늘은 바쁘지 않아요.',
           english: 'I am not busy today.',
           highlight: '바쁘지 않아요'),
-      GrammarExample(korean: '고기를 먹지 않아요.', english: '', highlight: '먹지 않아요'),
+      GrammarExample(
+          korean: '고기를 먹지 않아요.',
+          english: 'I don\'t eat meat.',
+          highlight: '먹지 않아요'),
       GrammarExample(
           korean: '그 영화는 재미있지 않았어요.',
           english: 'That movie was not interesting.',
@@ -271,9 +280,14 @@ final List<GrammarPattern> kGrammarData = [
         'A short negation word placed directly before the verb or adjective. It is simpler and more commonly used in casual speech than -지 않다.',
     structure: '안 + Verb/Adjective',
     examples: [
-      GrammarExample(korean: '안 먹어요.', english: '', highlight: '안'),
-      GrammarExample(korean: '오늘 안 추워요.', english: '', highlight: '안'),
-      GrammarExample(korean: '안 좋아요.', english: '', highlight: '안'),
+      GrammarExample(
+          korean: '안 먹어요.', english: 'I don\'t eat it.', highlight: '안'),
+      GrammarExample(
+          korean: '오늘 안 추워요.',
+          english: 'It isn\'t cold today.',
+          highlight: '안'),
+      GrammarExample(
+          korean: '안 좋아요.', english: 'It isn\'t good.', highlight: '안'),
     ],
     tips:
         'For 하다 verbs, put 안 before 하다: 공부 안 해요 (not 안 공부해요). Cannot be used with 있다/없다; use -지 않다 instead.',
@@ -320,7 +334,10 @@ final List<GrammarPattern> kGrammarData = [
           korean: '한국어를 말할 수 있어요.',
           english: 'I can speak Korean.',
           highlight: '말할 수 있어요'),
-      GrammarExample(korean: '오늘은 갈 수 없어요.', english: '', highlight: '갈 수 없어요'),
+      GrammarExample(
+          korean: '오늘은 갈 수 없어요.',
+          english: 'I can\'t go today.',
+          highlight: '갈 수 없어요'),
       GrammarExample(
           korean: '여기서 수영할 수 있어요.',
           english: 'You can swim here.',
@@ -367,12 +384,18 @@ final List<GrammarPattern> kGrammarData = [
         'Turns a verb or adjective into a modifier for a noun. For verbs, -는 is present tense and -(으)ㄴ is past. For adjectives, -(으)ㄴ is used for the present state.',
     structure: 'Verb stem + 는 (present) / (으)ㄴ (past); Adjective stem + (으)ㄴ',
     examples: [
-      GrammarExample(korean: '제가 읽는 책이에요.', english: '', highlight: '읽는'),
+      GrammarExample(
+          korean: '제가 읽는 책이에요.',
+          english: 'It\'s the book I\'m reading.',
+          highlight: '읽는'),
       GrammarExample(
           korean: '어제 본 영화가 재미있었어요.',
           english: 'The movie I saw yesterday was fun.',
           highlight: '본'),
-      GrammarExample(korean: '예쁜 꽃이에요.', english: '', highlight: '예쁜'),
+      GrammarExample(
+          korean: '예쁜 꽃이에요.',
+          english: 'It\'s a pretty flower.',
+          highlight: '예쁜'),
     ],
     tips:
         'Adjective present: -(으)ㄴ (큰, 작은). Verb present: -는 (먹는, 가는). Verb past: -(으)ㄴ (먹은, 간).',
@@ -415,8 +438,14 @@ final List<GrammarPattern> kGrammarData = [
         'Connects two contrasting clauses, similar to "but" or "however." It shows that the second clause is unexpected given the first.',
     structure: 'Verb/Adjective stem + 지만',
     examples: [
-      GrammarExample(korean: '비싸지만 맛있어요.', english: '', highlight: '비싸지만'),
-      GrammarExample(korean: '피곤하지만 공부해야 해요.', english: '', highlight: '피곤하지만'),
+      GrammarExample(
+          korean: '비싸지만 맛있어요.',
+          english: 'It\'s expensive, but it\'s delicious.',
+          highlight: '비싸지만'),
+      GrammarExample(
+          korean: '피곤하지만 공부해야 해요.',
+          english: 'I\'m tired, but I have to study.',
+          highlight: '피곤하지만'),
       GrammarExample(
           korean: '한국어는 어렵지만 재미있어요.',
           english: 'Korean is hard, but fun.',
@@ -436,8 +465,14 @@ final List<GrammarPattern> kGrammarData = [
         'Expresses a conditional ("if") or a temporal condition ("when"). The second clause states what happens under that condition.',
     structure: 'Verb/Adjective stem + (으)면',
     examples: [
-      GrammarExample(korean: '시간이 있으면 같이 가요.', english: '', highlight: '있으면'),
-      GrammarExample(korean: '비가 오면 집에 있을 거예요.', english: '', highlight: '오면'),
+      GrammarExample(
+          korean: '시간이 있으면 같이 가요.',
+          english: 'If you have time, let\'s go together.',
+          highlight: '있으면'),
+      GrammarExample(
+          korean: '비가 오면 집에 있을 거예요.',
+          english: 'If it rains, I\'ll stay home.',
+          highlight: '오면'),
       GrammarExample(
           korean: '봄이 오면 꽃이 피어요.',
           english: 'When spring comes, flowers bloom.',
@@ -457,10 +492,18 @@ final List<GrammarPattern> kGrammarData = [
         'Gives a reason or cause for the following clause. Unlike -아/어서, it can be used with imperative and suggestive sentences, and can take past tense in the first clause.',
     structure: 'Verb/Adjective stem + (으)니까',
     examples: [
-      GrammarExample(korean: '배가 고프니까 밥 먹자.', english: '', highlight: '고프니까'),
-      GrammarExample(korean: '늦었으니까 택시 타요.', english: '', highlight: '늦었으니까'),
       GrammarExample(
-          korean: '비가 오니까 우산을 가져가세요.', english: '', highlight: '오니까'),
+          korean: '배가 고프니까 밥 먹자.',
+          english: 'I\'m hungry, so let\'s eat.',
+          highlight: '고프니까'),
+      GrammarExample(
+          korean: '늦었으니까 택시 타요.',
+          english: 'We\'re late, so let\'s take a taxi.',
+          highlight: '늦었으니까'),
+      GrammarExample(
+          korean: '비가 오니까 우산을 가져가세요.',
+          english: 'It\'s raining, so please take an umbrella.',
+          highlight: '오니까'),
     ],
     tips:
         'Use -(으)니까 when giving a reason followed by a command or suggestion. -아/어서 cannot be used before commands.',
@@ -555,9 +598,14 @@ final List<GrammarPattern> kGrammarData = [
         'Expresses the speaker\'s promise or voluntary intention to do something. Only used in first person — it is a commitment to the listener.',
     structure: 'Verb stem + (으)ㄹ게요',
     examples: [
-      GrammarExample(korean: '제가 할게요.', english: '', highlight: '할게요'),
-      GrammarExample(korean: '내일 전화할게요.', english: '', highlight: '전화할게요'),
-      GrammarExample(korean: '조심할게요.', english: '', highlight: '조심할게요'),
+      GrammarExample(
+          korean: '제가 할게요.', english: 'I\'ll do it.', highlight: '할게요'),
+      GrammarExample(
+          korean: '내일 전화할게요.',
+          english: 'I\'ll call you tomorrow.',
+          highlight: '전화할게요'),
+      GrammarExample(
+          korean: '조심할게요.', english: 'I\'ll be careful.', highlight: '조심할게요'),
     ],
     tips:
         'This is only for first person (I/we). It implies the decision is influenced by the listener. For general future plans, use -(으)ㄹ 거예요.',
@@ -593,14 +641,19 @@ final List<GrammarPattern> kGrammarData = [
     level: 2,
     title: '-(으)ㅂ시다',
     titleRomanized: '-(eu)psida',
-    meaning: '',
+    meaning: 'Let\'s (formal suggestion)',
     explanation:
         'A formal way to suggest doing something together. More direct than -(으)ㄹ까요 and used in slightly more formal settings.',
     structure: 'Verb stem + (으)ㅂ시다',
     examples: [
-      GrammarExample(korean: '같이 갑시다.', english: '', highlight: '갑시다'),
-      GrammarExample(korean: '시작합시다!', english: '', highlight: '시작합시다'),
-      GrammarExample(korean: '잠시 쉽시다.', english: '', highlight: '쉽시다'),
+      GrammarExample(
+          korean: '같이 갑시다.', english: 'Let\'s go together.', highlight: '갑시다'),
+      GrammarExample(
+          korean: '시작합시다!', english: 'Let\'s get started!', highlight: '시작합시다'),
+      GrammarExample(
+          korean: '잠시 쉽시다.',
+          english: 'Let\'s take a short break.',
+          highlight: '쉽시다'),
     ],
     tips:
         'This is more formal and direct than -(으)ㄹ까요. In casual speech, -자 is used instead: 가자! (Let\'s go!).',
@@ -643,7 +696,10 @@ final List<GrammarPattern> kGrammarData = [
         'Expresses that one action follows another in time. The first action is completed before the second begins.',
     structure: 'Verb stem + (으)ㄴ 후에',
     examples: [
-      GrammarExample(korean: '수업이 끝난 후에 만나요.', english: '', highlight: '끝난 후에'),
+      GrammarExample(
+          korean: '수업이 끝난 후에 만나요.',
+          english: 'Let\'s meet after class ends.',
+          highlight: '끝난 후에'),
       GrammarExample(
           korean: '밥을 먹은 후에 커피를 마셔요.',
           english: 'I drink coffee after eating.',
@@ -693,7 +749,10 @@ final List<GrammarPattern> kGrammarData = [
         'Expresses the purpose of going or coming somewhere. It can only be used with movement verbs like 가다 (go) and 오다 (come).',
     structure: 'Verb stem + (으)러 가다/오다',
     examples: [
-      GrammarExample(korean: '밥 먹으러 가요.', english: '', highlight: '먹으러'),
+      GrammarExample(
+          korean: '밥 먹으러 가요.',
+          english: 'I\'m going out to eat.',
+          highlight: '먹으러'),
       GrammarExample(
           korean: '친구를 만나러 왔어요.',
           english: 'I came to meet a friend.',
@@ -935,7 +994,9 @@ final List<GrammarPattern> kGrammarData = [
           english: 'He not only sings well but also dances well.',
           highlight: '잘할 뿐만 아니라'),
       GrammarExample(
-          korean: '맛있을 뿐만 아니라 건강에도 좋아요.', english: '', highlight: '맛있을 뿐만 아니라'),
+          korean: '맛있을 뿐만 아니라 건강에도 좋아요.',
+          english: 'Not only is it delicious, it\'s also good for you.',
+          highlight: '맛있을 뿐만 아니라'),
       GrammarExample(
           korean: '한국어뿐만 아니라 일본어도 해요.',
           english: 'I speak not only Korean but also Japanese.',
@@ -955,7 +1016,9 @@ final List<GrammarPattern> kGrammarData = [
     structure: 'Verb stem + 는 바람에',
     examples: [
       GrammarExample(
-          korean: '비가 오는 바람에 소풍을 못 갔어요.', english: '', highlight: '오는 바람에'),
+          korean: '비가 오는 바람에 소풍을 못 갔어요.',
+          english: 'We couldn\'t go on the picnic because it rained.',
+          highlight: '오는 바람에'),
       GrammarExample(
           korean: '늦잠을 자는 바람에 지각했어요.',
           english: 'Because I overslept, I was late.',
@@ -979,13 +1042,18 @@ final List<GrammarPattern> kGrammarData = [
         'Provides background information or sets up context for the main clause. It can also be used to softly contrast two situations.',
     structure: 'Verb stem + 는데; Adjective stem + (으)ㄴ데; Noun + 인데',
     examples: [
-      GrammarExample(korean: '시간이 없는데 어떻게 해요?', english: '', highlight: '없는데'),
+      GrammarExample(
+          korean: '시간이 없는데 어떻게 해요?',
+          english: 'I don\'t have time - what should I do?',
+          highlight: '없는데'),
       GrammarExample(
           korean: '한국어는 재미있는데 어려워요.',
           english: 'Korean is interesting, but it is hard.',
           highlight: '재미있는데'),
       GrammarExample(
-          korean: '내일 시험인데 공부 안 했어요.', english: '', highlight: '시험인데'),
+          korean: '내일 시험인데 공부 안 했어요.',
+          english: 'I have an exam tomorrow, but I haven\'t studied.',
+          highlight: '시험인데'),
     ],
     tips:
         'This is one of the most versatile connectors. It sets up context, gives reasons, or provides soft contrast.',
@@ -1002,13 +1070,17 @@ final List<GrammarPattern> kGrammarData = [
     structure: 'Verb/Adjective stem + 기는 하지만',
     examples: [
       GrammarExample(
-          korean: '맛있기는 하지만 비싸요.', english: '', highlight: '맛있기는 하지만'),
+          korean: '맛있기는 하지만 비싸요.',
+          english: 'It is tasty, but it\'s expensive.',
+          highlight: '맛있기는 하지만'),
       GrammarExample(
           korean: '알기는 하지만 설명하기 어려워요.',
           english: 'I do know it, but it is hard to explain.',
           highlight: '알기는 하지만'),
       GrammarExample(
-          korean: '좋기는 하지만 너무 멀어요.', english: '', highlight: '좋기는 하지만'),
+          korean: '좋기는 하지만 너무 멀어요.',
+          english: 'It is nice, but it\'s too far.',
+          highlight: '좋기는 하지만'),
     ],
     tips:
         'Often shortened to -기는 한데: 맛있기는 한데 비싸요. Sounds natural in conversation.',
@@ -1024,11 +1096,18 @@ final List<GrammarPattern> kGrammarData = [
         'Expresses the speaker\'s assumption or expectation about a situation, often followed by a suggestion or concern based on that assumption.',
     structure: 'Verb/Adjective stem + (으)ㄹ 텐데',
     examples: [
-      GrammarExample(korean: '피곤할 텐데 좀 쉬세요.', english: '', highlight: '피곤할 텐데'),
       GrammarExample(
-          korean: '배고플 텐데 밥 먹을까요?', english: '', highlight: '배고플 텐데'),
+          korean: '피곤할 텐데 좀 쉬세요.',
+          english: 'You must be tired - please get some rest.',
+          highlight: '피곤할 텐데'),
       GrammarExample(
-          korean: '내일 비가 올 텐데 우산 챙기세요.', english: '', highlight: '올 텐데'),
+          korean: '배고플 텐데 밥 먹을까요?',
+          english: 'You must be hungry - shall we eat?',
+          highlight: '배고플 텐데'),
+      GrammarExample(
+          korean: '내일 비가 올 텐데 우산 챙기세요.',
+          english: 'It\'ll probably rain tomorrow, so take an umbrella.',
+          highlight: '올 텐데'),
     ],
     tips:
         'This shows concern or consideration for the listener. It is a warm, empathetic expression.',
@@ -1072,11 +1151,17 @@ final List<GrammarPattern> kGrammarData = [
     structure: 'Verb/Adjective stem + 거든요',
     examples: [
       GrammarExample(
-          korean: '내일 못 가요. 시험이 있거든요.', english: '', highlight: '있거든요'),
+          korean: '내일 못 가요. 시험이 있거든요.',
+          english: 'I can\'t go tomorrow. I have an exam, you see.',
+          highlight: '있거든요'),
       GrammarExample(
-          korean: '좀 피곤해요. 어제 늦게 잤거든요.', english: '', highlight: '잤거든요'),
+          korean: '좀 피곤해요. 어제 늦게 잤거든요.',
+          english: 'I\'m a bit tired. I went to bed late last night.',
+          highlight: '잤거든요'),
       GrammarExample(
-          korean: '이거 맛있어요. 유명한 가게거든요.', english: '', highlight: '가게거든요'),
+          korean: '이거 맛있어요. 유명한 가게거든요.',
+          english: 'This is delicious. It\'s a famous place, you know.',
+          highlight: '가게거든요'),
     ],
     tips:
         'Use -거든요 when you are adding information the listener does not yet know. It is explanatory, not just causal.',
@@ -1123,9 +1208,14 @@ final List<GrammarPattern> kGrammarData = [
           korean: '모르는 척했어요.',
           english: 'I pretended not to know.',
           highlight: '모르는 척했어요'),
-      GrammarExample(korean: '자는 척하지 마세요.', english: '', highlight: '자는 척하지'),
       GrammarExample(
-          korean: '아픈 척하고 학교에 안 갔어요.', english: '', highlight: '아픈 척하고'),
+          korean: '자는 척하지 마세요.',
+          english: 'Don\'t pretend to be asleep.',
+          highlight: '자는 척하지'),
+      GrammarExample(
+          korean: '아픈 척하고 학교에 안 갔어요.',
+          english: 'He pretended to be sick and skipped school.',
+          highlight: '아픈 척하고'),
     ],
     tips:
         'Very commonly used in everyday speech. -는 체하다 is a more formal synonym.',
@@ -1204,7 +1294,9 @@ final List<GrammarPattern> kGrammarData = [
           english: 'I was sick to the point of not being able to walk.',
           highlight: '못 걸을 정도로'),
       GrammarExample(
-          korean: '눈이 안 보일 정도로 비가 왔어요.', english: '', highlight: '안 보일 정도로'),
+          korean: '눈이 안 보일 정도로 비가 왔어요.',
+          english: 'It rained so hard you could barely see.',
+          highlight: '안 보일 정도로'),
     ],
     tips:
         'Used for emphasis. The result clause usually describes an extreme state caused by the degree described.',
@@ -1248,9 +1340,13 @@ final List<GrammarPattern> kGrammarData = [
     structure: 'Verb/Adjective stem + 기 때문에',
     examples: [
       GrammarExample(
-          korean: '비가 오기 때문에 우산을 가져가세요.', english: '', highlight: '오기 때문에'),
+          korean: '비가 오기 때문에 우산을 가져가세요.',
+          english: 'Because it\'s raining, please take an umbrella.',
+          highlight: '오기 때문에'),
       GrammarExample(
-          korean: '바쁘기 때문에 못 갔어요.', english: '', highlight: '바쁘기 때문에'),
+          korean: '바쁘기 때문에 못 갔어요.',
+          english: 'I couldn\'t go because I was busy.',
+          highlight: '바쁘기 때문에'),
       GrammarExample(
           korean: '건강이 중요하기 때문에 운동해요.',
           english: 'Because health is important, I exercise.',
@@ -1271,7 +1367,9 @@ final List<GrammarPattern> kGrammarData = [
     structure: 'Verb stem + 는 대로',
     examples: [
       GrammarExample(
-          korean: '도착하는 대로 전화할게요.', english: '', highlight: '도착하는 대로'),
+          korean: '도착하는 대로 전화할게요.',
+          english: 'I\'ll call you as soon as I arrive.',
+          highlight: '도착하는 대로'),
       GrammarExample(
           korean: '선생님이 말하는 대로 하세요.',
           english: 'Do as the teacher says.',
@@ -1429,7 +1527,10 @@ final List<GrammarPattern> kGrammarData = [
         'Expresses that a situation is equivalent to or can be considered as something. Used when drawing a conclusion about what a situation amounts to.',
     structure: 'Verb stem + 는/(으)ㄴ 셈이다',
     examples: [
-      GrammarExample(korean: '거의 다 한 셈이에요.', english: '', highlight: '한 셈이에요'),
+      GrammarExample(
+          korean: '거의 다 한 셈이에요.',
+          english: 'It\'s as good as finished.',
+          highlight: '한 셈이에요'),
       GrammarExample(
           korean: '공짜로 산 셈이에요.',
           english: 'It amounts to getting it for free.',
@@ -1530,11 +1631,18 @@ final List<GrammarPattern> kGrammarData = [
         'Expresses that doing something will be pointless or will not change the outcome. It dismisses the value of the action.',
     structure: 'Verb stem + 아/어 봤자',
     examples: [
-      GrammarExample(korean: '말해 봤자 소용없어요.', english: '', highlight: '말해 봤자'),
       GrammarExample(
-          korean: '서둘러 봤자 늦을 거예요.', english: '', highlight: '서둘러 봤자'),
+          korean: '말해 봤자 소용없어요.',
+          english: 'There\'s no point in saying anything.',
+          highlight: '말해 봤자'),
       GrammarExample(
-          korean: '공부해 봤자 시험에 안 나와요.', english: '', highlight: '공부해 봤자'),
+          korean: '서둘러 봤자 늦을 거예요.',
+          english: 'Even if you hurry, you\'ll be late.',
+          highlight: '서둘러 봤자'),
+      GrammarExample(
+          korean: '공부해 봤자 시험에 안 나와요.',
+          english: 'Even if you study it, it won\'t be on the exam.',
+          highlight: '공부해 봤자'),
     ],
     tips: 'Always carries a negative or dismissive nuance about the result.',
     category: 'Connectors',
@@ -1612,7 +1720,9 @@ final List<GrammarPattern> kGrammarData = [
           english: 'Time naturally passes quickly.',
           highlight: '지나가는 법이에요'),
       GrammarExample(
-          korean: '사람은 실수하는 법이에요.', english: '', highlight: '실수하는 법이에요'),
+          korean: '사람은 실수하는 법이에요.',
+          english: 'People are bound to make mistakes.',
+          highlight: '실수하는 법이에요'),
     ],
     tips:
         'This is a proverbial tone. Use it to share wisdom or comfort someone about inevitable things.',
@@ -1637,7 +1747,9 @@ final List<GrammarPattern> kGrammarData = [
           english: 'After good things, bad things are bound to come.',
           highlight: '오기 마련이에요'),
       GrammarExample(
-          korean: '시간이 지나면 잊기 마련이에요.', english: '', highlight: '잊기 마련이에요'),
+          korean: '시간이 지나면 잊기 마련이에요.',
+          english: 'You\'re bound to forget as time goes by.',
+          highlight: '잊기 마련이에요'),
     ],
     tips:
         'Often used in writing and speeches. It sounds philosophical and wise.',
@@ -1689,7 +1801,9 @@ final List<GrammarPattern> kGrammarData = [
           english: 'Since you started, you must finish.',
           highlight: '시작한 이상'),
       GrammarExample(
-          korean: '알고 있는 이상 모른 척할 수 없어요.', english: '', highlight: '알고 있는 이상'),
+          korean: '알고 있는 이상 모른 척할 수 없어요.',
+          english: 'Now that I know, I can\'t pretend otherwise.',
+          highlight: '알고 있는 이상'),
     ],
     tips:
         'Implies a moral or logical obligation following from the established fact.',
@@ -1710,7 +1824,9 @@ final List<GrammarPattern> kGrammarData = [
           english: 'The game was canceled due to rain.',
           highlight: '온 탓에'),
       GrammarExample(
-          korean: '잠을 못 잔 탓에 피곤해요.', english: '', highlight: '못 잔 탓에'),
+          korean: '잠을 못 잔 탓에 피곤해요.',
+          english: 'I\'m tired because I couldn\'t sleep.',
+          highlight: '못 잔 탓에'),
       GrammarExample(
           korean: '날씨 탓에 비행기가 지연됐어요.',
           english: 'The flight was delayed due to the weather.',
@@ -1757,8 +1873,13 @@ final List<GrammarPattern> kGrammarData = [
     structure: 'Verb/Adjective stem + (으)ㄹ지라도',
     examples: [
       GrammarExample(
-          korean: '아무리 어려울지라도 포기하지 마세요.', english: '', highlight: '어려울지라도'),
-      GrammarExample(korean: '비가 올지라도 갈 거예요.', english: '', highlight: '올지라도'),
+          korean: '아무리 어려울지라도 포기하지 마세요.',
+          english: 'No matter how hard it gets, don\'t give up.',
+          highlight: '어려울지라도'),
+      GrammarExample(
+          korean: '비가 올지라도 갈 거예요.',
+          english: 'Even if it rains, I\'m going.',
+          highlight: '올지라도'),
       GrammarExample(
           korean: '실패할지라도 도전해 보세요.',
           english: 'Even if you fail, try it.',
@@ -1783,9 +1904,13 @@ final List<GrammarPattern> kGrammarData = [
           english: 'In addition to rain, the wind is blowing too.',
           highlight: '오는 데다가'),
       GrammarExample(
-          korean: '맛있는 데다가 가격도 싸요.', english: '', highlight: '맛있는 데다가'),
+          korean: '맛있는 데다가 가격도 싸요.',
+          english: 'It\'s delicious, and on top of that it\'s cheap.',
+          highlight: '맛있는 데다가'),
       GrammarExample(
-          korean: '피곤한 데다가 배도 고파요.', english: '', highlight: '피곤한 데다가'),
+          korean: '피곤한 데다가 배도 고파요.',
+          english: 'I\'m tired, and hungry on top of that.',
+          highlight: '피곤한 데다가'),
     ],
     tips:
         'The two things are usually of the same nature — both positive or both negative.',
@@ -1802,10 +1927,17 @@ final List<GrammarPattern> kGrammarData = [
     structure: 'Verb stem + (으)ㄹ 지경이다',
     examples: [
       GrammarExample(
-          korean: '너무 바빠서 쓰러질 지경이에요.', english: '', highlight: '쓰러질 지경이에요'),
-      GrammarExample(korean: '미칠 지경이에요.', english: '', highlight: '미칠 지경이에요'),
+          korean: '너무 바빠서 쓰러질 지경이에요.',
+          english: 'I\'m so busy I\'m about to collapse.',
+          highlight: '쓰러질 지경이에요'),
       GrammarExample(
-          korean: '배가 터질 지경이에요.', english: '', highlight: '터질 지경이에요'),
+          korean: '미칠 지경이에요.',
+          english: 'I\'m about to lose my mind.',
+          highlight: '미칠 지경이에요'),
+      GrammarExample(
+          korean: '배가 터질 지경이에요.',
+          english: 'I\'m so full I could burst.',
+          highlight: '터질 지경이에요'),
     ],
     tips:
         'Always implies an extreme or exaggerated degree. The result has not actually happened yet.',
@@ -1853,7 +1985,9 @@ final List<GrammarPattern> kGrammarData = [
           english: 'Given that it has already been decided, we must accept it.',
           highlight: '일일진대'),
       GrammarExample(
-          korean: '이리 된 바일진대 최선을 다합시다.', english: '', highlight: '바일진대'),
+          korean: '이리 된 바일진대 최선을 다합시다.',
+          english: 'Since it has come to this, let\'s do our best.',
+          highlight: '바일진대'),
       GrammarExample(
           korean: '약속한 일일진대 지키겠습니다.',
           english: 'Given that I promised, I will keep it.',
@@ -1874,11 +2008,17 @@ final List<GrammarPattern> kGrammarData = [
     structure: 'Verb stem + 는 터에',
     examples: [
       GrammarExample(
-          korean: '마침 가는 터에 같이 갑시다.', english: '', highlight: '가는 터에'),
+          korean: '마침 가는 터에 같이 갑시다.',
+          english: 'I\'m heading there anyway, so let\'s go together.',
+          highlight: '가는 터에'),
       GrammarExample(
-          korean: '바쁜 터에 도와줘서 고마워요.', english: '', highlight: '바쁜 터에'),
+          korean: '바쁜 터에 도와줘서 고마워요.',
+          english: 'Thank you for helping when you\'re so busy.',
+          highlight: '바쁜 터에'),
       GrammarExample(
-          korean: '돈이 없는 터에 어떻게 해요?', english: '', highlight: '없는 터에'),
+          korean: '돈이 없는 터에 어떻게 해요?',
+          english: 'What are we to do, with no money?',
+          highlight: '없는 터에'),
     ],
     tips:
         'Similar to -(으)ㄴ/는 처지에. Used to describe one\'s circumstances as context.',
@@ -1895,7 +2035,9 @@ final List<GrammarPattern> kGrammarData = [
     structure: 'Verb/Adjective stem + (으)ㄴ들',
     examples: [
       GrammarExample(
-          korean: '알았은들 어쩔 수 없었을 거예요.', english: '', highlight: '알았은들'),
+          korean: '알았은들 어쩔 수 없었을 거예요.',
+          english: 'Even if I had known, there was nothing I could have done.',
+          highlight: '알았은들'),
       GrammarExample(
           korean: '가본들 무슨 소용이에요?',
           english: 'Even if you go, what use is it?',
@@ -1923,7 +2065,10 @@ final List<GrammarPattern> kGrammarData = [
           korean: '도와주기는커녕 방해만 했어요.',
           english: 'Far from helping, they only got in the way.',
           highlight: '도와주기는커녕'),
-      GrammarExample(korean: '밥은커녕 물도 못 마셨어요.', english: '', highlight: '밥은커녕'),
+      GrammarExample(
+          korean: '밥은커녕 물도 못 마셨어요.',
+          english: 'Let alone food, I couldn\'t even drink water.',
+          highlight: '밥은커녕'),
       GrammarExample(
           korean: '감사하기는커녕 화를 냈어요.',
           english: 'Far from being thankful, they got angry.',
@@ -1948,9 +2093,13 @@ final List<GrammarPattern> kGrammarData = [
           english: 'Even though I may be poor, I am honest.',
           highlight: '가난할 망정'),
       GrammarExample(
-          korean: '죽을 망정 거짓말은 안 해요.', english: '', highlight: '죽을 망정'),
+          korean: '죽을 망정 거짓말은 안 해요.',
+          english: 'Even if it kills me, I won\'t lie.',
+          highlight: '죽을 망정'),
       GrammarExample(
-          korean: '늦을 망정 제대로 하겠어요.', english: '', highlight: '늦을 망정'),
+          korean: '늦을 망정 제대로 하겠어요.',
+          english: 'I\'d rather be late than do it badly.',
+          highlight: '늦을 망정'),
     ],
     tips:
         'Very strong expression of conviction. The speaker accepts the first clause but refuses to compromise on the second.',
@@ -2132,12 +2281,17 @@ final List<GrammarPattern> kGrammarData = [
     structure: 'Verb/Adjective stem + 더라도',
     examples: [
       GrammarExample(
-          korean: '힘들더라도 포기하지 마세요.', english: '', highlight: '힘들더라도'),
+          korean: '힘들더라도 포기하지 마세요.',
+          english: 'Even if it\'s hard, don\'t give up.',
+          highlight: '힘들더라도'),
       GrammarExample(
           korean: '실패하더라도 다시 시도하세요.',
           english: 'Even if you fail, try again.',
           highlight: '실패하더라도'),
-      GrammarExample(korean: '비가 오더라도 갈 거예요.', english: '', highlight: '오더라도'),
+      GrammarExample(
+          korean: '비가 오더라도 갈 거예요.',
+          english: 'Even if it rains, I\'ll go.',
+          highlight: '오더라도'),
     ],
     tips:
         'Stronger than -아/어도. Often used with 아무리 (no matter how) for extra emphasis.',
@@ -2157,9 +2311,14 @@ final List<GrammarPattern> kGrammarData = [
           korean: '지금쯤 도착했을 법해요.',
           english: 'They should have arrived by now.',
           highlight: '도착했을 법해요'),
-      GrammarExample(korean: '그럴 법한 이야기예요.', english: '', highlight: '그럴 법한'),
       GrammarExample(
-          korean: '화가 났을 법도 해요.', english: '', highlight: '났을 법도 해요'),
+          korean: '그럴 법한 이야기예요.',
+          english: 'That\'s a plausible story.',
+          highlight: '그럴 법한'),
+      GrammarExample(
+          korean: '화가 났을 법도 해요.',
+          english: 'It\'s understandable that they got angry.',
+          highlight: '났을 법도 해요'),
     ],
     tips:
         'Often used with -도: -(으)ㄹ 법도 하다, meaning "it would be reasonable/understandable."',
@@ -2176,9 +2335,14 @@ final List<GrammarPattern> kGrammarData = [
     structure: 'Verb stem + 는 통에',
     examples: [
       GrammarExample(
-          korean: '아이들이 떠드는 통에 집중할 수 없었어요.', english: '', highlight: '떠드는 통에'),
+          korean: '아이들이 떠드는 통에 집중할 수 없었어요.',
+          english:
+              'With the kids making such a racket, I couldn\'t concentrate.',
+          highlight: '떠드는 통에'),
       GrammarExample(
-          korean: '전화가 오는 통에 잠을 못 잤어요.', english: '', highlight: '오는 통에'),
+          korean: '전화가 오는 통에 잠을 못 잤어요.',
+          english: 'The phone kept ringing, so I couldn\'t sleep.',
+          highlight: '오는 통에'),
       GrammarExample(
           korean: '사람들이 밀치는 통에 넘어졌어요.',
           english: 'I fell because people were pushing.',
@@ -2252,9 +2416,13 @@ final List<GrammarPattern> kGrammarData = [
     structure: 'Verb/Adjective stem + (으)ㄹ 나위 없다',
     examples: [
       GrammarExample(
-          korean: '더할 나위 없이 행복해요.', english: '', highlight: '더할 나위 없이'),
+          korean: '더할 나위 없이 행복해요.',
+          english: 'I couldn\'t be happier.',
+          highlight: '더할 나위 없이'),
       GrammarExample(
-          korean: '더할 나위 없는 기회예요.', english: '', highlight: '더할 나위 없는'),
+          korean: '더할 나위 없는 기회예요.',
+          english: 'It\'s an absolutely perfect opportunity.',
+          highlight: '더할 나위 없는'),
       GrammarExample(
           korean: '말할 나위 없이 중요해요.',
           english: 'It goes without saying that it is important.',
@@ -2409,7 +2577,9 @@ final List<GrammarPattern> kGrammarData = [
     structure: 'Verb stem + 는 지라; Adjective stem + (으)ㄴ 지라',
     examples: [
       GrammarExample(
-          korean: '워낙 바쁜 지라 연락을 못 했어요.', english: '', highlight: '바쁜 지라'),
+          korean: '워낙 바쁜 지라 연락을 못 했어요.',
+          english: 'I was so busy that I couldn\'t get in touch.',
+          highlight: '바쁜 지라'),
       GrammarExample(
           korean: '아직 어린 지라 이해하기 어려울 거예요.',
           english: 'Since they are still young, it will be hard to understand.',
