@@ -10,7 +10,52 @@ function getOpenAI(): OpenAI {
 }
 
 // 메모리 저장 (디스크 없이 Buffer로 처리)
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+// 상한 2MB — 한 문장 녹음이면 충분하고, 메모리/OpenAI 비용 폭주를 막는다 (WP-01)
+const MAX_AUDIO_BYTES = 2 * 1024 * 1024;
+const MAX_TEXT_LEN = 200;
+const ALLOWED_AUDIO_MIME = [
+  "audio/m4a",
+  "audio/mp4",
+  "audio/x-m4a",
+  "audio/aac",
+  "audio/mpeg",
+  "audio/mp3",
+  "audio/wav",
+  "audio/x-wav",
+  "audio/webm",
+  "audio/ogg",
+];
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_AUDIO_BYTES, files: 1, fields: 4 },
+  fileFilter: (_req, file, cb) => {
+    const mime = (file.mimetype || "").split(";")[0].trim().toLowerCase();
+    if (!ALLOWED_AUDIO_MIME.includes(mime)) {
+      cb(new Error("unsupported_audio_type"));
+      return;
+    }
+    cb(null, true);
+  },
+});
+
+/** multer 오류(용량 초과·형식 불일치)를 500 대신 400 으로 변환한다. */
+function uploadAudio(req: Request, res: Response, next: (err?: unknown) => void): void {
+  upload.single("audio")(req, res, (err: unknown) => {
+    if (err) {
+      const code = (err as { code?: string }).code;
+      const reason =
+        code === "LIMIT_FILE_SIZE"
+          ? "audio too large (max 2MB)"
+          : (err as Error).message === "unsupported_audio_type"
+          ? "unsupported audio type"
+          : "invalid upload";
+      res.status(400).json({ error: reason });
+      return;
+    }
+    next();
+  });
+}
 
 interface PronunciationResponse {
   score: number;
@@ -61,7 +106,7 @@ function buildFeedback(score: number, expected: string, transcript: string): str
 export function setupPronunciationRoutes(app: Express): void {
   app.post(
     "/api/pronunciation/score",
-    upload.single("audio"),
+    uploadAudio,
     async (req: Request, res: Response) => {
       try {
         const audioFile = req.file;
@@ -70,8 +115,12 @@ export function setupPronunciationRoutes(app: Express): void {
         if (!audioFile) {
           return res.status(400).json({ error: "audio field is required" });
         }
-        if (!expectedText) {
+        if (!expectedText || typeof expectedText !== "string") {
           return res.status(400).json({ error: "text field is required" });
+        }
+        // 길이 상한 — computeScore 가 O(m·n) 이라 무제한이면 DoS 가 된다 (WP-01)
+        if (expectedText.length > MAX_TEXT_LEN) {
+          return res.status(400).json({ error: `text too long (max ${MAX_TEXT_LEN} chars)` });
         }
 
         // Buffer → OpenAI File 변환 (toFile 헬퍼 사용)

@@ -28,6 +28,76 @@ interface ChatMessage {
   content: string;
 }
 
+/** 클라이언트가 보낼 수 있는 메시지 — system 은 허용하지 않는다(프롬프트 주입 방어). */
+interface ClientMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+const MAX_MESSAGES = 8;
+const MAX_CONTENT_LEN = 1000;
+const ALLOWED_MODES = ["freeChat", "wordReview", "rolePlay", "grammarCoach"] as const;
+type ChatMode = (typeof ALLOWED_MODES)[number];
+
+/**
+ * 요청 본문 검증. 통과하면 정규화된 값을, 실패하면 사유 문자열을 돌려준다.
+ * - role 은 user/assistant 만 (system 주입 차단)
+ * - content 는 string, 1~1000자
+ * - messages 는 1~8개
+ */
+function validateChatRequest(body: unknown):
+  | { ok: true; messages: ClientMessage[]; userLevel: number; mode: ChatMode }
+  | { ok: false; error: string } {
+  if (typeof body !== "object" || body === null) {
+    return { ok: false, error: "invalid_body" };
+  }
+  const b = body as Record<string, unknown>;
+
+  if (!Array.isArray(b.messages)) {
+    return { ok: false, error: "messages array is required" };
+  }
+  if (b.messages.length < 1 || b.messages.length > MAX_MESSAGES) {
+    return { ok: false, error: `messages must contain 1-${MAX_MESSAGES} items` };
+  }
+
+  const messages: ClientMessage[] = [];
+  for (const raw of b.messages) {
+    if (typeof raw !== "object" || raw === null) {
+      return { ok: false, error: "invalid message" };
+    }
+    const m = raw as Record<string, unknown>;
+    if (m.role !== "user" && m.role !== "assistant") {
+      return { ok: false, error: "invalid role" };
+    }
+    if (typeof m.content !== "string") {
+      return { ok: false, error: "content must be a string" };
+    }
+    const content = m.content;
+    if (content.length === 0 || content.length > MAX_CONTENT_LEN) {
+      return { ok: false, error: `content must be 1-${MAX_CONTENT_LEN} chars` };
+    }
+    messages.push({ role: m.role, content });
+  }
+
+  let userLevel = 1;
+  if (b.userLevel !== undefined) {
+    if (typeof b.userLevel !== "number" || !Number.isFinite(b.userLevel)) {
+      return { ok: false, error: "invalid userLevel" };
+    }
+    userLevel = Math.min(6, Math.max(1, Math.round(b.userLevel)));
+  }
+
+  let mode: ChatMode = "freeChat";
+  if (b.mode !== undefined) {
+    if (typeof b.mode !== "string" || !(ALLOWED_MODES as readonly string[]).includes(b.mode)) {
+      return { ok: false, error: "invalid mode" };
+    }
+    mode = b.mode as ChatMode;
+  }
+
+  return { ok: true, messages, userLevel, mode };
+}
+
 const CACHED_RESPONSES: Record<string, string> = {
   "안녕하세요! (hello!)": "안녕하세요! (annyeonghaseyo!) 👋 반가워요! (bangawoyo - Nice to meet you!) 오늘 한국어 공부할 준비 됐어요? (Ready to study Korean today?)",
   "안녕하세요": "안녕하세요! (annyeonghaseyo!) 👋 반가워요! (bangawoyo - Nice to meet you!) 무엇을 배우고 싶으세요? (What would you like to learn?)",
@@ -47,8 +117,8 @@ const responseCache = new Map<string, { content: string; timestamp: number }>();
 const CACHE_TTL = 1000 * 60 * 60;
 const MAX_CACHE_SIZE = 200;
 
-function getCacheKey(message: string, level: number): string {
-  return `${level}:${message.trim().toLowerCase().slice(0, 100)}`;
+function getCacheKey(message: string, level: number, mode: string): string {
+  return `${mode}:${level}:${message.trim().toLowerCase().slice(0, 100)}`;
 }
 
 function cleanCache(): void {
@@ -67,40 +137,46 @@ function cleanCache(): void {
 
 export function setupAIChatRoutes(app: Express): void {
   app.post("/api/ai-chat", async (req: Request, res: Response) => {
+    const parsed = validateChatRequest(req.body);
+    if (!parsed.ok) {
+      return res.status(400).json({ error: parsed.error });
+    }
+    const { messages, userLevel, mode } = parsed;
+    // 클라이언트 연결 종료 시 true — 중단된 응답은 캐시/에러 전송에서 제외한다.
+    let aborted = false;
+
     try {
-      const { messages, userLevel = 1, mode = 'freeChat' } = req.body as {
-        messages: ChatMessage[];
-        userLevel?: number;
-        mode?: string;
-      };
-
-      if (!messages || !Array.isArray(messages)) {
-        return res.status(400).json({ error: "messages array is required" });
-      }
-
       const lastUserMsg = messages[messages.length - 1];
-      if (lastUserMsg && messages.length <= 1) {
+      if (messages.length <= 1) {
         const cached = findCachedResponse(lastUserMsg.content);
         if (cached) {
           res.setHeader("Content-Type", "text/event-stream");
           res.setHeader("Cache-Control", "no-cache");
           res.setHeader("Connection", "keep-alive");
-          res.write(`data: ${JSON.stringify({ content: cached })}\n\n`);
-          res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+          res.write(`data: ${JSON.stringify({ content: cached })}
+
+`);
+          res.write(`data: ${JSON.stringify({ done: true })}
+
+`);
           res.end();
           return;
         }
       }
 
-      if (lastUserMsg && messages.length <= 2) {
-        const cacheKey = getCacheKey(lastUserMsg.content, userLevel);
+      if (messages.length <= 2) {
+        const cacheKey = getCacheKey(lastUserMsg.content, userLevel, mode);
         const cachedDynamic = responseCache.get(cacheKey);
         if (cachedDynamic && Date.now() - cachedDynamic.timestamp < CACHE_TTL) {
           res.setHeader("Content-Type", "text/event-stream");
           res.setHeader("Cache-Control", "no-cache");
           res.setHeader("Connection", "keep-alive");
-          res.write(`data: ${JSON.stringify({ content: cachedDynamic.content })}\n\n`);
-          res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+          res.write(`data: ${JSON.stringify({ content: cachedDynamic.content })}
+
+`);
+          res.write(`data: ${JSON.stringify({ done: true })}
+
+`);
           res.end();
           return;
         }
@@ -114,17 +190,21 @@ export function setupAIChatRoutes(app: Express): void {
           : "The user is advanced (TOPIK Level 5-6). Respond mostly in Korean, minimal English.";
 
       const modeContext =
-        mode === 'wordReview'
+        mode === "wordReview"
           ? "Mode: Word Review. Focus on vocabulary. When the user mentions a word, give its meaning, pronunciation, and a short example sentence."
-          : mode === 'rolePlay'
+          : mode === "rolePlay"
           ? "Mode: Role Play. Act out a real-life Korean scenario (cafe, subway, shopping, etc). Stay in character and guide the user through the conversation naturally."
-          : mode === 'grammarCoach'
+          : mode === "grammarCoach"
           ? "Mode: Grammar Coach. Carefully analyze the user's Korean sentences for grammar mistakes. Gently correct errors and explain the grammar rule in one sentence."
           : "Mode: Free Chat. Have a natural, encouraging Korean conversation.";
 
       const systemMessage: ChatMessage = {
         role: "system",
-        content: `${SYSTEM_PROMPT}\n\n${levelContext}\n\n${modeContext}`,
+        content: `${SYSTEM_PROMPT}
+
+${levelContext}
+
+${modeContext}`,
       };
 
       res.setHeader("Content-Type", "text/event-stream");
@@ -133,9 +213,17 @@ export function setupAIChatRoutes(app: Express): void {
 
       const stream = await getOpenAI().chat.completions.create({
         model: "gpt-4o-mini",
-        messages: [systemMessage, ...messages.slice(-8)],
+        messages: [systemMessage, ...messages],
         stream: true,
         max_tokens: 250,
+      });
+
+      // 클라이언트가 끊으면 OpenAI 스트림도 즉시 중단(토큰 낭비 방지)
+      req.on("close", () => {
+        if (!res.writableEnded) {
+          aborted = true;
+          stream.controller.abort();
+        }
       });
 
       let fullContent = "";
@@ -143,22 +231,33 @@ export function setupAIChatRoutes(app: Express): void {
         const content = chunk.choices[0]?.delta?.content || "";
         if (content) {
           fullContent += content;
-          res.write(`data: ${JSON.stringify({ content })}\n\n`);
+          res.write(`data: ${JSON.stringify({ content })}
+
+`);
         }
       }
 
-      if (lastUserMsg && messages.length <= 2 && fullContent) {
-        const cacheKey = getCacheKey(lastUserMsg.content, userLevel);
+      if (aborted) return;
+
+      if (messages.length <= 2 && fullContent) {
+        const cacheKey = getCacheKey(lastUserMsg.content, userLevel, mode);
         responseCache.set(cacheKey, { content: fullContent, timestamp: Date.now() });
         cleanCache();
       }
 
-      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+      res.write(`data: ${JSON.stringify({ done: true })}
+
+`);
       res.end();
-    } catch (error: any) {
-      console.error("AI Chat error:", error?.message || error);
+    } catch (error: unknown) {
+      if (aborted) return;
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error("AI Chat error:", msg);
+      if (res.writableEnded) return;
       if (res.headersSent) {
-        res.write(`data: ${JSON.stringify({ error: "AI response failed" })}\n\n`);
+        res.write(`data: ${JSON.stringify({ error: "AI response failed" })}
+
+`);
         res.end();
       } else {
         res.status(500).json({ error: "Failed to get AI response" });
