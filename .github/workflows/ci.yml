@@ -34,12 +34,12 @@ jobs:
 
           class DefaultFirebaseOptions {
             static FirebaseOptions get currentPlatform => const FirebaseOptions(
-              apiKey: 'ci-placeholder',
-              appId: '1:000000000000:android:0000000000000000000000',
-              messagingSenderId: '000000000000',
-              projectId: 'klexi-ci-placeholder',
-              storageBucket: 'klexi-ci-placeholder.appspot.com',
-            );
+                  apiKey: 'ci-placeholder',
+                  appId: '1:000000000000:android:0000000000000000000000',
+                  messagingSenderId: '000000000000',
+                  projectId: 'klexi-ci-placeholder',
+                  storageBucket: 'klexi-ci-placeholder.appspot.com',
+                );
           }
           DART
 
@@ -97,12 +97,12 @@ jobs:
 
           class DefaultFirebaseOptions {
             static FirebaseOptions get currentPlatform => const FirebaseOptions(
-              apiKey: 'ci-placeholder',
-              appId: '1:000000000000:android:0000000000000000000000',
-              messagingSenderId: '000000000000',
-              projectId: 'klexi-ci-placeholder',
-              storageBucket: 'klexi-ci-placeholder.appspot.com',
-            );
+                  apiKey: 'ci-placeholder',
+                  appId: '1:000000000000:android:0000000000000000000000',
+                  messagingSenderId: '000000000000',
+                  projectId: 'klexi-ci-placeholder',
+                  storageBucket: 'klexi-ci-placeholder.appspot.com',
+                );
           }
           DART
 
