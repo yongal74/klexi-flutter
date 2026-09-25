@@ -377,11 +377,10 @@ class _QuickAction extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
+              // 잠긴 기능도 원래 색을 옅게 유지 — 회색+흰 글씨는 읽히지 않았고
+              // 무엇이 프리미엄에 들어있는지 보여주는 게 전환에 유리하다
               colors: locked
-                  ? [
-                      AppColors.textMuted.withOpacity(0.3),
-                      AppColors.textMuted.withOpacity(0.4)
-                    ]
+                  ? [color.withOpacity(0.55), color.withOpacity(0.7)]
                   : [color.withOpacity(0.85), color],
             ),
             borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
@@ -402,11 +401,10 @@ class _QuickAction extends StatelessWidget {
                         style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
-                            color: locked ? Colors.white54 : Colors.white),
+                            color: Colors.white),
                         maxLines: 1))),
             locked
-                ? const Icon(Icons.lock_rounded,
-                    size: 14, color: Colors.white38)
+                ? const Icon(Icons.lock_rounded, size: 16, color: Colors.white)
                 : const Icon(Icons.arrow_forward_ios,
                     size: 14, color: Colors.white70),
           ]),
