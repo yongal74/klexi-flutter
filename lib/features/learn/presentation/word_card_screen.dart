@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/services/analytics_service.dart';
 import '../../../core/utils/tts_service.dart';
+import '../../../data/content/themes/themes_index.dart';
 import '../../../data/models/word.dart';
 import '../../../data/repositories/word_repository.dart';
 
@@ -16,6 +17,7 @@ class WordCardScreen extends ConsumerStatefulWidget {
 
 class _WordCardScreenState extends ConsumerState<WordCardScreen> {
   Word? _word;
+  bool _notFound = false;
 
   @override
   void initState() {
@@ -24,13 +26,32 @@ class _WordCardScreenState extends ConsumerState<WordCardScreen> {
   }
 
   Future<void> _load() async {
-    final repo = ref.read(wordRepositoryProvider);
-    final words = repo.getAllWords();
-    final w = words.firstWhere((w) => w.id == widget.wordId,
-        orElse: () => words.first);
-    setState(() => _word = w);
-    AnalyticsService.instance
-        .logWordCardViewed(wordId: w.id, topikLevel: w.level);
+    final w = _findWord(widget.wordId);
+    if (!mounted) return;
+    setState(() {
+      _word = w;
+      _notFound = w == null;
+    });
+    if (w != null) {
+      AnalyticsService.instance
+          .logWordCardViewed(wordId: w.id, topikLevel: w.level);
+    }
+  }
+
+  /// TOPIK 단어(id "3-120")와 테마 단어(id "theme-kdrama-1-1")는 저장소가 다르다.
+  /// 예전에는 TOPIK 목록에서만 찾고 못 찾으면 첫 단어를 보여줘서,
+  /// 테마 단어를 누르면 항상 엉뚱한 단어가 떴다.
+  Word? _findWord(String id) {
+    if (id.startsWith('theme-')) {
+      final themeId = id.split('-')[1];
+      for (final w in getThemeWords(themeId)) {
+        if (w.id == id) return w;
+      }
+    }
+    for (final w in ref.read(wordRepositoryProvider).getAllWords()) {
+      if (w.id == id) return w;
+    }
+    return null;
   }
 
   @override
@@ -45,12 +66,17 @@ class _WordCardScreenState extends ConsumerState<WordCardScreen> {
           if (word != null)
             IconButton(
               icon: const Icon(Icons.volume_up_outlined),
+              tooltip: 'Listen',
               onPressed: () => ref.read(ttsServiceProvider).speak(word.korean),
             ),
         ],
       ),
       body: word == null
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(
+              child: _notFound
+                  ? const Text("This word couldn't be found.",
+                      style: TextStyle(color: AppColors.textSecondary))
+                  : const CircularProgressIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.all(AppSpacing.lg),
               child: Column(

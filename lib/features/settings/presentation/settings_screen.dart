@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/tts_speed_provider.dart';
@@ -10,6 +11,7 @@ import '../../../core/constants/app_config.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/services/daily_session_service.dart';
+import '../../../core/services/purchase_service.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -85,11 +87,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   iconBg: const Color(0xFFF0FDF4),
                   iconColor: const Color(0xFF4ADE80),
                   title: 'App Version',
-                  trailing: const Text(
-                    '1.0.0',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF9CA3AF),
+                  trailing: FutureBuilder<PackageInfo>(
+                    future: PackageInfo.fromPlatform(),
+                    builder: (_, snap) => Text(
+                      snap.hasData
+                          ? '${snap.data!.version} (${snap.data!.buildNumber})'
+                          : '',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF6B7280),
+                      ),
                     ),
                   ),
                   onTap: () {},
@@ -435,18 +442,13 @@ class _ProfileCardState extends ConsumerState<_ProfileCard> {
 
 // ── Premium Banner ─────────────────────────────────────────────
 
-class _PremiumCard extends StatelessWidget {
+class _PremiumCard extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isPremium = ref.watch(isPremiumProvider);
     return GestureDetector(
-      onTap: () {
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (_) => const _PremiumSheet(),
-        );
-      },
+      // 프리미엄 사용자는 결제 화면 대신 구독 관리(복원)로 보낸다 — 같은 화면이 둘 다 제공
+      onTap: () => context.push(AppRoutes.premium),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -478,22 +480,24 @@ class _PremiumCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 16),
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Upgrade to Premium',
-                    style: TextStyle(
+                    isPremium ? 'Premium is active' : 'Upgrade to Premium',
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF1A1A2E),
                     ),
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
-                    'Unlock all 7200 words & advanced features',
-                    style: TextStyle(
+                    isPremium
+                        ? 'Thanks for supporting Klexi — all features unlocked'
+                        : 'Unlock all 7,200 words & advanced features',
+                    style: const TextStyle(
                       fontSize: 13,
                       color: Color(0xFF6B7280),
                     ),
@@ -501,79 +505,14 @@ class _PremiumCard extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(
-              Icons.arrow_forward_ios_rounded,
-              size: 16,
-              color: Color(0xFFFF8C42),
-            ),
+            if (!isPremium)
+              const Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16,
+                color: Color(0xFFFF8C42),
+              ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _PremiumSheet extends StatelessWidget {
-  const _PremiumSheet();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(28),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text('⭐', style: TextStyle(fontSize: 40)),
-          const SizedBox(height: 12),
-          const Text(
-            'Klexi Premium',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1A1A2E),
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Access all 7200 words, grammar patterns, and K-culture themes.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 15, color: Color(0xFF6B7280)),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFF8C42),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              child: const Text(
-                'Start Free Trial',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text(
-              'Maybe later',
-              style: TextStyle(color: Color(0xFF9CA3AF)),
-            ),
-          ),
-        ],
       ),
     );
   }

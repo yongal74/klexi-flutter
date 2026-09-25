@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'core/providers/onboarding_provider.dart';
 import 'core/router/app_router.dart';
 import 'core/services/auth_service.dart';
 import 'core/services/daily_session_service.dart';
@@ -52,6 +54,15 @@ void main() async {
   if (restored != null) {
     await DailySessionService.instance.init(restored.id);
     container.read(currentUserProvider.notifier).state = restored;
+  }
+
+  // 첫 실행 안내: 기존 사용자(복원된 세션이 있음)는 업데이트 후에도 보여주지 않는다
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    container.read(onboardingDoneProvider.notifier).state =
+        prefs.getBool(kOnboardingDoneKey) ?? (restored != null);
+  } on Exception catch (e) {
+    debugPrint('[Onboarding] 플래그 로드 실패: $e');
   }
 
   runApp(

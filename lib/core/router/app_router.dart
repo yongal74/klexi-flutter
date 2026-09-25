@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/providers/onboarding_provider.dart';
 import '../../core/services/auth_service.dart';
+import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../core/widgets/main_scaffold.dart';
 import '../../features/auth/presentation/auth_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
@@ -30,6 +32,7 @@ import '../widgets/paywall_gate.dart';
 
 abstract class AppRoutes {
   static const String auth = '/auth';
+  static const String onboarding = '/onboarding';
   static const String home = '/home';
   static const String learn = '/learn';
   static const String progress = '/progress';
@@ -56,14 +59,19 @@ abstract class AppRoutes {
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(currentUserProvider);
+  final onboarded = ref.watch(onboardingDoneProvider);
 
   return GoRouter(
     initialLocation: AppRoutes.auth,
     redirect: (context, state) {
       final isAuthed = authState != null;
-      final onAuth = state.matchedLocation == AppRoutes.auth;
-      if (!isAuthed && !onAuth) return AppRoutes.auth;
-      if (isAuthed && onAuth) return AppRoutes.home;
+      final loc = state.matchedLocation;
+      final onAuth = loc == AppRoutes.auth;
+      final onOnboarding = loc == AppRoutes.onboarding;
+      if (!isAuthed) return onAuth ? null : AppRoutes.auth;
+      // 첫 로그인 직후 한 번만 안내
+      if (!onboarded) return onOnboarding ? null : AppRoutes.onboarding;
+      if (onAuth || onOnboarding) return AppRoutes.home;
       return null;
     },
     routes: [
@@ -71,6 +79,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.auth,
         builder: (context, state) => const AuthScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.onboarding,
+        builder: (context, state) => const OnboardingScreen(),
       ),
 
       // ── Main Shell (4 tabs) ───────────────────────────
@@ -149,6 +161,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           featureDescription:
               'Unlimited Korean conversation practice with Dalli, your AI tutor. '
               'Upgrade to Klexi Pro for unlimited Dalli sessions.',
+          requiresSignIn: true,
           child: DalliChatScreen(),
         )),
       ),
@@ -198,6 +211,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           featureName: 'Pronunciation Coach',
           featureDescription: 'AI-powered pronunciation scoring and feedback. '
               'Upgrade to Klexi Pro for unlimited pronunciation sessions.',
+          requiresSignIn: true,
           child: PronunciationScreen(),
         )),
       ),

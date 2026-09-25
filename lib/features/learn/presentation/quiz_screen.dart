@@ -87,10 +87,19 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
     final questions = <_QuizQuestion>[];
 
     for (final word in todayWords) {
-      // Build 3 distractors from other words in the session
-      final others = todayWords.where((w) => w.id != word.id).toList()
-        ..shuffle(rng);
-      final distractors = others.take(3).map((w) => w.english).toList();
+      // 오답 3개는 같은 레벨 전체에서, 뜻이 겹치지 않게 뽑는다.
+      // 예전엔 세션 단어에서만 뽑아 세션이 작으면 보기가 2~3개가 되거나,
+      // 레벨이 달라도 같은 뜻("to be slow")이 정답과 오답에 동시에 나왔다.
+      final seen = <String>{word.english.trim().toLowerCase()};
+      final distractors = <String>[];
+      for (final pool in [todayWords, repo.getWordsByLevel(word.level)]) {
+        for (final w in (List.of(pool)..shuffle(rng))) {
+          if (distractors.length == 3) break;
+          if (seen.add(w.english.trim().toLowerCase())) {
+            distractors.add(w.english);
+          }
+        }
+      }
 
       final options = [...distractors, word.english]..shuffle(rng);
       final correctIndex = options.indexOf(word.english);

@@ -82,6 +82,10 @@ class PurchaseService {
       if (errorCode == PurchasesErrorCode.purchaseCancelledError) {
         return false;
       }
+      // 이미 구독 중인 계정(재설치·기기 변경)은 결제 대신 복원으로 풀어준다
+      if (errorCode == PurchasesErrorCode.productAlreadyPurchasedError) {
+        return restorePurchases();
+      }
       rethrow;
     }
   }

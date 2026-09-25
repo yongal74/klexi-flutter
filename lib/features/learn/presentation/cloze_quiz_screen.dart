@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/providers/user_level_provider.dart';
+import '../../../core/services/purchase_service.dart';
 import '../../../data/models/word.dart';
 import '../../../data/repositories/word_repository.dart';
 
@@ -27,11 +29,18 @@ class _ClozeQuizScreenState extends ConsumerState<ClozeQuizScreen> {
     _load();
   }
 
+  // 보기(오답) 후보 풀 — 문제와 같은 레벨 단어
+  List<Word> _pool = [];
+
   Future<void> _load() async {
     final repo = ref.read(wordRepositoryProvider);
-    final all = repo.getAllWords();
+    final isPremium = ref.read(isPremiumProvider);
+    // 무료 사용자는 레벨 1만. 예전엔 7,200개 전체에서 뽑아 유료 레벨이 새어 나갔다.
+    final level = isPremium ? ref.read(userTopikLevelProvider) : 1;
+    _pool = repo.getWordsByLevel(level);
     final rng = Random();
-    final shuffled = List.of(all)..shuffle(rng);
+    final shuffled = List.of(_pool)..shuffle(rng);
+    if (!mounted) return;
     setState(() {
       _quiz = shuffled.take(10).toList();
       _loading = false;
@@ -42,13 +51,13 @@ class _ClozeQuizScreenState extends ConsumerState<ClozeQuizScreen> {
   void _buildChoices() {
     if (_quiz.isEmpty) return;
     final target = _quiz[_index];
-    final others = <String>[];
-    // Add 3 random distractors from same level if possible
     final rng = Random();
-    final candidates = _quiz.where((w) => w.id != target.id).toList()
-      ..shuffle(rng);
-    for (final w in candidates.take(3)) {
-      others.add(w.korean);
+    // 같은 레벨에서 정답과 글자가 다른 단어 3개 — 보기 중복·보기 부족 방지
+    final seen = <String>{target.korean};
+    final others = <String>[];
+    for (final w in (List.of(_pool)..shuffle(rng))) {
+      if (others.length == 3) break;
+      if (seen.add(w.korean)) others.add(w.korean);
     }
     _choices = [target.korean, ...others]..shuffle(rng);
   }

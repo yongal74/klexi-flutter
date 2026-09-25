@@ -526,7 +526,8 @@ class _WordNetworkScreenState extends ConsumerState<WordNetworkScreen>
                             color: AppColors.primary.withOpacity(0.8),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: Text(_expanded ? '간략히 (150)' : '더 보기 (300)',
+                          child: Text(
+                              _expanded ? 'Show less (150)' : 'Show more (300)',
                               style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 12,

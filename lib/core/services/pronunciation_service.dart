@@ -17,12 +17,18 @@ class PronunciationResult {
   final String feedback; // human-readable feedback
   final List<PhonemeDetail> details;
 
+  /// 채점 자체가 실패했을 때의 사용자용 메시지. null 이면 정상 채점 결과.
+  /// 예전에는 실패를 score 0 으로 돌려줘서 사용자가 "0점"으로 오해했다.
+  final String? error;
+  bool get isError => error != null;
+
   const PronunciationResult({
     required this.score,
     required this.transcript,
     required this.expected,
     required this.feedback,
     required this.details,
+    this.error,
   });
 
   factory PronunciationResult.fromJson(Map<String, dynamic> json) =>
@@ -36,14 +42,17 @@ class PronunciationResult {
             .toList(),
       );
 
-  /// Fallback result used when the server is unavailable.
-  factory PronunciationResult.offline() => const PronunciationResult(
+  factory PronunciationResult.failed(String message) => PronunciationResult(
         score: 0,
         transcript: '',
         expected: '',
-        feedback: 'Server unavailable. Check your connection.',
-        details: [],
+        feedback: '',
+        details: const [],
+        error: message,
       );
+
+  factory PronunciationResult.offline() => PronunciationResult.failed(
+      "Couldn't score your recording. Check your connection and try again.");
 }
 
 class PhonemeDetail {
@@ -97,8 +106,11 @@ class PronunciationService {
       if (response.data == null) return PronunciationResult.offline();
       return PronunciationResult.fromJson(response.data!);
     } on DioException catch (e) {
-      // Network / server error — return graceful offline result
       debugPrint('[Pronunciation] DioException: ${e.message}');
+      if (isAuthRequired(e)) {
+        return PronunciationResult.failed(
+            'Sign in with Google to use pronunciation scoring.');
+      }
       return PronunciationResult.offline();
     } catch (e) {
       debugPrint('[Pronunciation] Unexpected error: $e');

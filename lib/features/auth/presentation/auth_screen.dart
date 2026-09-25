@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../../core/constants/app_config.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/services/daily_session_service.dart';
 
@@ -26,10 +28,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         ref.read(currentUserProvider.notifier).state = user;
         context.go('/home');
       }
-    } catch (e) {
+    } on Exception catch (e) {
+      debugPrint('[Auth] Google sign-in failed: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Sign-in failed: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text(
+                "Google sign-in didn't complete. Check your connection and try again, or continue as a guest.")));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -44,6 +48,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       if (mounted) {
         ref.read(currentUserProvider.notifier).state = user;
         context.go('/home');
+      }
+    } on Exception catch (e) {
+      debugPrint('[Auth] guest start failed: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Couldn't start. Please try again.")));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -153,14 +163,41 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   onPressed: _loading ? null : _guestSignIn,
                   style: TextButton.styleFrom(
                       minimumSize: const Size.fromHeight(48),
-                      foregroundColor: Colors.grey),
+                      foregroundColor: const Color(0xFF4B5563)),
                   child: const Text('Continue as Guest',
                       style: TextStyle(
                           fontSize: 15, fontWeight: FontWeight.w500))),
-              const SizedBox(height: 8),
-              Text('By continuing, you agree to our Privacy Policy',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
+              const SizedBox(height: 4),
+              Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  const Text('By continuing, you agree to our ',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+                  GestureDetector(
+                    onTap: () => launchUrl(
+                        Uri.parse('${AppConfig.backendUrl}/terms'),
+                        mode: LaunchMode.externalApplication),
+                    child: const Text('Terms',
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF667EEA),
+                            decoration: TextDecoration.underline)),
+                  ),
+                  const Text(' and ',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+                  GestureDetector(
+                    onTap: () => launchUrl(
+                        Uri.parse('${AppConfig.backendUrl}/privacy'),
+                        mode: LaunchMode.externalApplication),
+                    child: const Text('Privacy Policy',
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF667EEA),
+                            decoration: TextDecoration.underline)),
+                  ),
+                ],
+              ),
               SizedBox(height: MediaQuery.of(context).padding.bottom),
             ]),
           ),

@@ -49,10 +49,15 @@ class ChatMessage {
   final List<String> wordPills;
   final DateTime time;
 
+  /// 연결 오류 등 안내 말풍선. 저장하지 않는다 — 저장하면 다음 실행 때
+  /// 묵은 "Connection error" 가 Dalli 의 첫 말처럼 보인다.
+  final bool isError;
+
   ChatMessage({
     required this.text,
     required this.isUser,
     this.wordPills = const [],
+    this.isError = false,
     DateTime? time,
   }) : time = time ?? DateTime.now();
 
@@ -131,6 +136,22 @@ class _DalliChatScreenState extends ConsumerState<DalliChatScreen> {
           .toList();
       if (list.isNotEmpty && mounted) {
         ref.read(chatMessagesProvider.notifier).state = list;
+        // 재시작 후에도 Dalli 가 앞 대화를 기억하도록 최근 8개를 문맥으로 복원
+        _history
+          ..clear()
+          ..addAll(list
+              .where((m) => !m.isError && m.text.isNotEmpty)
+              .map((m) => {
+                    'role': m.isUser ? 'user' : 'assistant',
+                    'content': m.text.length > 1000
+                        ? m.text.substring(0, 1000)
+                        : m.text,
+                  })
+              .toList()
+              .reversed
+              .take(8)
+              .toList()
+              .reversed);
       }
     } catch (e) {
       debugPrint('[Dalli] 히스토리 로드 실패: $e');
@@ -141,9 +162,10 @@ class _DalliChatScreenState extends ConsumerState<DalliChatScreen> {
   Future<void> _saveHistory(List<ChatMessage> messages) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final toSave = messages.length > _kMaxPersistedMessages
-          ? messages.sublist(messages.length - _kMaxPersistedMessages)
-          : messages;
+      final clean = messages.where((m) => !m.isError).toList();
+      final toSave = clean.length > _kMaxPersistedMessages
+          ? clean.sublist(clean.length - _kMaxPersistedMessages)
+          : clean;
       await prefs.setString(
         _kChatHistoryKey,
         jsonEncode(toSave.map((m) => m.toJson()).toList()),
@@ -156,10 +178,26 @@ class _DalliChatScreenState extends ConsumerState<DalliChatScreen> {
   // 이전 메시지들 (API 호출용)
   final List<Map<String, String>> _history = [];
 
+  void _showDalliError(String text) {
+    ref.read(dalliTypingProvider.notifier).state = false;
+    final msgs = ref.read(chatMessagesProvider.notifier);
+    msgs.state = [
+      ...ref.read(chatMessagesProvider),
+      ChatMessage(text: text, isUser: false, isError: true),
+    ];
+    _scrollDown();
+  }
+
   void _send() async {
     final text = _ctrl.text.trim();
     if (text.isEmpty || _sending) return;
     if (!mounted) return;
+    // 서버가 1,000자 초과 메시지를 거절한다(400) — 보내기 전에 안내
+    if (text.length > 1000) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Messages can be up to 1,000 characters.')));
+      return;
+    }
 
     setState(() => _sending = true);
     _ctrl.clear();
@@ -200,11 +238,7 @@ class _DalliChatScreenState extends ConsumerState<DalliChatScreen> {
       // 왕복하지 않고 바로 로그인 안내를 띄운다.
       final idToken = await currentIdToken();
       if (idToken == null) {
-        ref.read(dalliTypingProvider.notifier).state = false;
-        final reply = ChatMessage(text: AppStrings.signInForAi, isUser: false);
-        msgs.state = [...ref.read(chatMessagesProvider), reply];
-        _scrollDown();
-        if (mounted) setState(() => _sending = false);
+        _showDalliError(AppStrings.signInForAi);
         return;
       }
 
@@ -220,77 +254,80 @@ class _DalliChatScreenState extends ConsumerState<DalliChatScreen> {
           'mode': mode.name,
         });
 
-      // 타임아웃 적용
       final response = await client.send(request).timeout(
             _kSseTimeout,
-            onTimeout: () => throw TimeoutException('서버 응답 시간 초과'),
+            onTimeout: () => throw TimeoutException('ai-chat request timeout'),
           );
 
+      // 400/401/500 은 SSE 가 아니라 JSON 오류 본문이 온다. 예전엔 이걸 SSE 로
+      // 파싱하다 아무 줄도 못 찾고 조용히 끝나서 사용자는 무응답을 봤다.
+      if (response.statusCode == 401) {
+        _showDalliError(AppStrings.signInForAi);
+        return;
+      }
+      if (response.statusCode != 200) {
+        debugPrint('[Dalli] HTTP ${response.statusCode}');
+        _showDalliError(
+            "Dalli couldn't answer right now. Please try again in a moment.");
+        return;
+      }
+
       String accumulated = '';
+      bool serverError = false;
       ref.read(dalliTypingProvider.notifier).state = false;
 
-      // SSE 스트림 — 타임아웃 포함
+      // 줄 단위로 끊어 읽는다 — 네트워크 조각이 줄 중간에서 잘리면
+      // 예전 split('\n') 방식은 그 줄을 통째로 버렸다.
       await response.stream
           .transform(utf8.decoder)
+          .transform(const LineSplitter())
           .timeout(_kSseTimeout, onTimeout: (sink) => sink.close())
-          .forEach((chunk) {
-        for (final line in chunk.split('\n')) {
-          if (!line.startsWith('data: ')) continue;
-          final payload = line.substring(6).trim();
-          if (payload.isEmpty) continue;
-          try {
-            final parsed = json.decode(payload) as Map<String, dynamic>;
-            if (parsed['done'] == true) return;
-            final content = parsed['content'] as String? ?? '';
-            accumulated += content;
-
-            final current = ref.read(chatMessagesProvider);
-            if (current.isNotEmpty && !current.last.isUser) {
-              msgs.state = [
-                ...current.sublist(0, current.length - 1),
-                ChatMessage(text: accumulated, isUser: false),
-              ];
-            } else {
-              msgs.state = [
-                ...current,
-                ChatMessage(text: accumulated, isUser: false)
-              ];
-            }
-            _scrollDown();
-          } catch (e) {
-            debugPrint('[Dalli] SSE parse error: $e');
+          .forEach((line) {
+        if (!line.startsWith('data: ')) return;
+        final payload = line.substring(6).trim();
+        if (payload.isEmpty) return;
+        try {
+          final parsed = json.decode(payload) as Map<String, dynamic>;
+          if (parsed['done'] == true) return;
+          if (parsed['error'] != null) {
+            serverError = true;
+            return;
           }
+          final content = parsed['content'] as String? ?? '';
+          if (content.isEmpty) return;
+          accumulated += content;
+
+          final current = ref.read(chatMessagesProvider);
+          if (current.isNotEmpty && !current.last.isUser) {
+            msgs.state = [
+              ...current.sublist(0, current.length - 1),
+              ChatMessage(text: accumulated, isUser: false),
+            ];
+          } else {
+            msgs.state = [
+              ...current,
+              ChatMessage(text: accumulated, isUser: false)
+            ];
+          }
+          _scrollDown();
+        } catch (e) {
+          debugPrint('[Dalli] SSE parse error: $e');
         }
       });
 
       if (accumulated.isNotEmpty) {
         _history.add({'role': 'assistant', 'content': accumulated});
         await _saveHistory(ref.read(chatMessagesProvider));
+      } else {
+        _showDalliError(serverError
+            ? "Dalli couldn't answer right now. Please try again in a moment."
+            : "Dalli didn't reply. Please try again.");
       }
     } on TimeoutException {
-      ref.read(dalliTypingProvider.notifier).state = false;
-      final updated = [
-        ...ref.read(chatMessagesProvider),
-        ChatMessage(
-          text: '응답 시간이 초과되었습니다. 다시 시도해 주세요.',
-          isUser: false,
-        )
-      ];
-      msgs.state = updated;
-      await _saveHistory(updated);
-      _scrollDown();
+      _showDalliError('Dalli is taking too long to respond. Please try again.');
     } catch (e) {
-      ref.read(dalliTypingProvider.notifier).state = false;
-      final updated = [
-        ...ref.read(chatMessagesProvider),
-        ChatMessage(
-          text: 'Connection error. Check your internet connection.',
-          isUser: false,
-        )
-      ];
-      msgs.state = updated;
-      await _saveHistory(updated);
-      _scrollDown();
+      debugPrint('[Dalli] send failed: $e');
+      _showDalliError('Connection error. Check your internet connection.');
     } finally {
       // Client 반드시 닫기 — 소켓 누수 방지
       client?.close();
