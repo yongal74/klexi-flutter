@@ -8,7 +8,23 @@
   - 3-card session → home/progress stats update live
   - settings version 1.0.6 (54) → paywall price-failure Retry state
 
-## 🔴 Production incident — AI features down
+## ✅ Resolved 2026-09-25 23:40 KST
+- The owner registered a new key as secret version 3 and deployed functions and hosting.
+- Production smoke tests passed:
+
+  | Check | Result |
+  |---|---|
+  | `/api/health?deep=1` | `openai: ok` |
+  | Chat | SSE 200 |
+  | TTS | 200, audio/mpeg |
+  | Pronunciation (build52-style upload) | 200, score 100 |
+  | Garbage token | 401 |
+- Windows deploy notes:
+  - Quote the target list: `--only "functions,hosting"`.
+  - If discovery times out, set `$env:FUNCTIONS_DISCOVERY_TIMEOUT="60"`.
+  - A secret set after a deploy needs a redeploy.
+
+## (history) Production incident — AI features down
 - Chat (Dalli), TTS and pronunciation return 500. The logs show `401 Incorrect API key provided` from OpenAI.
 - Fix, which only the owner can do:
   1. Create a new OpenAI key and set a monthly hard limit.
