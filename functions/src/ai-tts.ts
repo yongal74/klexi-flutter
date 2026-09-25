@@ -36,8 +36,19 @@ export function setupAITTSRoutes(app: Express): void {
       voice = body.voice as Voice;
     }
 
+    // 느린 재생(학습용). 앱은 0.7/1.0 을 보내는데 예전엔 무시돼 "Slow" 가 효과가 없었다.
+    let speed = 1.0;
+    if (typeof body.speed === "number" && Number.isFinite(body.speed)) {
+      speed = Math.min(1.5, Math.max(0.5, body.speed));
+    }
+
     try {
-      const mp3 = await getOpenAI().audio.speech.create({ model: "tts-1", voice, input: text });
+      const mp3 = await getOpenAI().audio.speech.create({
+        model: "tts-1",
+        voice,
+        input: text,
+        speed,
+      });
       const buffer = Buffer.from(await mp3.arrayBuffer());
       res.setHeader("Content-Type", "audio/mpeg");
       res.setHeader("Content-Length", buffer.length.toString());

@@ -7,6 +7,22 @@ on:
     branches: [ master, main ]
 
 jobs:
+  functions-build:
+    name: Backend (Cloud Functions) build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: functions
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+      - run: npm ci
+      - run: npm run build
+
   analyze-and-test:
     name: Analyze & Test
     runs-on: ubuntu-latest

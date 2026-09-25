@@ -1,7 +1,11 @@
 // pronunciation.ts — OpenAI Whisper 기반 발음 채점 엔드포인트
+//
+// 업로드 파싱은 busboy 로 req.rawBody 를 직접 읽는다. Cloud Functions 는 Express
+// 앞단에서 본문 스트림을 이미 다 읽어 rawBody 에 넣기 때문에, 스트림을 읽는
+// multer 는 파일을 받지 못한다(요청이 멈추거나 "audio field is required").
 import OpenAI, { toFile } from "openai";
-import type { Express, Request, Response } from "express";
-import multer from "multer";
+import Busboy from "busboy";
+import type { Express, Request, Response, NextFunction } from "express";
 
 let _openai: OpenAI | null = null;
 function getOpenAI(): OpenAI {
@@ -9,7 +13,6 @@ function getOpenAI(): OpenAI {
   return _openai;
 }
 
-// 메모리 저장 (디스크 없이 Buffer로 처리)
 // 상한 2MB — 한 문장 녹음이면 충분하고, 메모리/OpenAI 비용 폭주를 막는다 (WP-01)
 const MAX_AUDIO_BYTES = 2 * 1024 * 1024;
 const MAX_TEXT_LEN = 200;
@@ -24,37 +27,110 @@ const ALLOWED_AUDIO_MIME = [
   "audio/x-wav",
   "audio/webm",
   "audio/ogg",
+  // build52 앱은 contentType 을 지정하지 않아 dio 기본값(octet-stream)으로 온다.
+  // 실제 형식은 아래 sniffAudio 가 파일 머리로 판별한다.
+  "application/octet-stream",
 ];
 
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: MAX_AUDIO_BYTES, files: 1, fields: 4 },
-  fileFilter: (_req, file, cb) => {
-    const mime = (file.mimetype || "").split(";")[0].trim().toLowerCase();
-    if (!ALLOWED_AUDIO_MIME.includes(mime)) {
-      cb(new Error("unsupported_audio_type"));
+interface Upload {
+  buffer: Buffer;
+  filename: string;
+  mimetype: string;
+}
+
+type UploadRequest = Request & { upload?: Upload; fields?: Record<string, string> };
+
+/** multipart 를 파싱해 req.upload / req.fields 에 넣는다. 오류는 400. */
+function parseMultipart(req: Request, res: Response, next: NextFunction): void {
+  let bb: Busboy.Busboy;
+  try {
+    bb = Busboy({
+      headers: req.headers,
+      limits: { fileSize: MAX_AUDIO_BYTES, files: 1, fields: 4 },
+    });
+  } catch {
+    res.status(400).json({ error: "invalid upload" });
+    return;
+  }
+
+  const r = req as UploadRequest;
+  const fields: Record<string, string> = {};
+  const chunks: Buffer[] = [];
+  let file: { filename: string; mimetype: string } | null = null;
+  let failure: string | null = null;
+
+  bb.on("field", (name, value) => {
+    fields[name] = value;
+  });
+  bb.on("file", (name, stream, info) => {
+    const mime = (info.mimeType || "").split(";")[0].trim().toLowerCase();
+    if (name !== "audio") {
+      failure = "unsupported audio type";
+      stream.resume();
       return;
     }
-    cb(null, true);
-  },
-});
-
-/** multer 오류(용량 초과·형식 불일치)를 500 대신 400 으로 변환한다. */
-function uploadAudio(req: Request, res: Response, next: (err?: unknown) => void): void {
-  upload.single("audio")(req, res, (err: unknown) => {
-    if (err) {
-      const code = (err as { code?: string }).code;
-      const reason =
-        code === "LIMIT_FILE_SIZE"
-          ? "audio too large (max 2MB)"
-          : (err as Error).message === "unsupported_audio_type"
-          ? "unsupported audio type"
-          : "invalid upload";
-      res.status(400).json({ error: reason });
+    // 형식 표시는 클라이언트마다 제각각(build52 는 표시 없음)이라 여기선 받고,
+    // 다 받은 뒤 허용 목록 또는 파일 머리 판별로 최종 확인한다.
+    file = { filename: info.filename || "recording", mimetype: mime };
+    stream.on("data", (d: Buffer) => chunks.push(d));
+    stream.on("limit", () => {
+      failure = "audio too large (max 2MB)";
+    });
+  });
+  bb.on("error", () => {
+    if (!res.headersSent) res.status(400).json({ error: "invalid upload" });
+  });
+  bb.on("close", () => {
+    if (res.headersSent) return;
+    if (failure) {
+      res.status(400).json({ error: failure });
       return;
+    }
+    r.fields = fields;
+    if (file) {
+      const f = file as { filename: string; mimetype: string };
+      const buffer = Buffer.concat(chunks);
+      const known = sniffAudio(buffer, "", "").name !== "";
+      if (!ALLOWED_AUDIO_MIME.includes(f.mimetype) && !known) {
+        res.status(400).json({ error: "unsupported audio type" });
+        return;
+      }
+      r.upload = { buffer, filename: f.filename, mimetype: f.mimetype };
     }
     next();
   });
+
+  const raw = (req as Request & { rawBody?: Buffer }).rawBody;
+  if (raw) {
+    bb.end(raw); // Cloud Functions
+  } else {
+    req.pipe(bb); // 로컬 Express·에뮬레이터
+  }
+}
+
+/**
+ * 파일 머리(magic bytes)로 실제 형식을 판별해 Whisper 가 알아보는 파일명·타입을 붙인다.
+ * build52 는 m4a 녹음을 "recording.webm"·octet-stream 으로 보내서, 그대로 넘기면
+ * Whisper 가 형식을 잘못 읽는다.
+ */
+function sniffAudio(buf: Buffer, fallbackName: string, fallbackType: string) {
+  const head = buf.subarray(0, 12);
+  if (head.subarray(4, 8).toString("ascii") === "ftyp") {
+    return { name: "recording.m4a", type: "audio/mp4" };
+  }
+  if (head.subarray(0, 4).toString("ascii") === "RIFF") {
+    return { name: "recording.wav", type: "audio/wav" };
+  }
+  if (head.subarray(0, 4).toString("ascii") === "OggS") {
+    return { name: "recording.ogg", type: "audio/ogg" };
+  }
+  if (head[0] === 0x1a && head[1] === 0x45 && head[2] === 0xdf && head[3] === 0xa3) {
+    return { name: "recording.webm", type: "audio/webm" };
+  }
+  if (head.subarray(0, 3).toString("ascii") === "ID3" || (head[0] === 0xff && (head[1] & 0xe0) === 0xe0)) {
+    return { name: "recording.mp3", type: "audio/mpeg" };
+  }
+  return { name: fallbackName, type: fallbackType };
 }
 
 interface PronunciationResponse {
@@ -95,24 +171,26 @@ function computeScore(expected: string, transcript: string): number {
   return Math.max(0, Math.min(100, Math.round(similarity * 100)));
 }
 
+// 사용자는 영어권 학습자 — 피드백은 영어로(구버전 앱은 이 문구를 그대로 보여준다)
 function buildFeedback(score: number, expected: string, transcript: string): string {
-  if (score >= 90) return "발음이 정확해요! 훌륭합니다 🎉";
-  if (score >= 75) return `거의 다 왔어요! "${expected}"를 다시 한번 천천히 말해보세요.`;
-  if (score >= 50) return `"${expected}"를 여러 번 들어보고 따라 말해보세요.`;
-  if (transcript) return `"${transcript}"라고 들렸어요. "${expected}"에 집중해보세요.`;
-  return "목소리가 잘 들리지 않았어요. 마이크에 가까이 대고 다시 시도해주세요.";
+  if (score >= 90) return "Excellent pronunciation! 🎉";
+  if (score >= 75) return `Almost there! Say "${expected}" once more, slowly.`;
+  if (score >= 50) return `Listen to "${expected}" a few times and repeat after it.`;
+  if (transcript) return `We heard "${transcript}". Focus on "${expected}".`;
+  return "We couldn't hear you clearly. Hold the phone closer and try again.";
 }
 
 export function setupPronunciationRoutes(app: Express): void {
   app.post(
     "/api/pronunciation/score",
-    uploadAudio,
+    parseMultipart,
     async (req: Request, res: Response) => {
       try {
-        const audioFile = req.file;
-        const expectedText = req.body?.text as string | undefined;
+        const r = req as UploadRequest;
+        const audioFile = r.upload;
+        const expectedText = r.fields?.text;
 
-        if (!audioFile) {
+        if (!audioFile || audioFile.buffer.length === 0) {
           return res.status(400).json({ error: "audio field is required" });
         }
         if (!expectedText || typeof expectedText !== "string") {
@@ -123,12 +201,14 @@ export function setupPronunciationRoutes(app: Express): void {
           return res.status(400).json({ error: `text too long (max ${MAX_TEXT_LEN} chars)` });
         }
 
-        // Buffer → OpenAI File 변환 (toFile 헬퍼 사용)
-        const openaiFile = await toFile(
+        const detected = sniffAudio(
           audioFile.buffer,
-          audioFile.originalname || "recording.m4a",
-          { type: audioFile.mimetype || "audio/m4a" }
+          audioFile.filename || "recording.m4a",
+          audioFile.mimetype === "application/octet-stream" ? "audio/mp4" : audioFile.mimetype
         );
+        const openaiFile = await toFile(audioFile.buffer, detected.name, {
+          type: detected.type,
+        });
 
         // OpenAI Whisper STT
         const transcription = await getOpenAI().audio.transcriptions.create({
@@ -167,7 +247,7 @@ export function setupPronunciationRoutes(app: Express): void {
           score: 0,
           transcript: "",
           expected: "",
-          feedback: "채점 서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
+          feedback: "Scoring is temporarily unavailable. Please try again shortly.",
           details: [],
         });
       }

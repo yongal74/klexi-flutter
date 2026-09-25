@@ -31,7 +31,8 @@ export async function requireAuth(
   next: NextFunction
 ): Promise<void> {
   const header = req.headers.authorization ?? "";
-  const token = header.startsWith("Bearer ") ? header.slice(7).trim() : null;
+  const match = /^bearer\s+(.+)$/i.exec(header);
+  const token = match ? match[1].trim() : null;
 
   if (!token) {
     if (authMode.value() === "soft") {

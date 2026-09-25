@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { createHash } from "crypto";
 import type { Express, Request, Response } from "express";
 
 let _openai: OpenAI | null = null;
@@ -72,11 +73,24 @@ function validateChatRequest(body: unknown):
     if (typeof m.content !== "string") {
       return { ok: false, error: "content must be a string" };
     }
-    const content = m.content;
-    if (content.length === 0 || content.length > MAX_CONTENT_LEN) {
-      return { ok: false, error: `content must be 1-${MAX_CONTENT_LEN} chars` };
+    let content = m.content.trim();
+    if (content.length === 0) {
+      return { ok: false, error: "content must not be empty" };
+    }
+    if (content.length > MAX_CONTENT_LEN) {
+      // 사용자 입력은 거절, Dalli 의 이전 답(assistant)은 잘라서 받는다 —
+      // 긴 답 하나 때문에 이후 대화 전체가 400 으로 막히지 않게.
+      if (m.role === "user") {
+        return { ok: false, error: `content must be 1-${MAX_CONTENT_LEN} chars` };
+      }
+      content = content.slice(0, MAX_CONTENT_LEN);
     }
     messages.push({ role: m.role, content });
+  }
+
+  // 마지막은 반드시 사용자 발화 — assistant 턴을 조작해 답을 유도하는 주입 차단
+  if (messages[messages.length - 1].role !== "user") {
+    return { ok: false, error: "last message must be from the user" };
   }
 
   let userLevel = 1;
@@ -117,8 +131,12 @@ const responseCache = new Map<string, { content: string; timestamp: number }>();
 const CACHE_TTL = 1000 * 60 * 60;
 const MAX_CACHE_SIZE = 200;
 
+// 메시지 전체를 해시한다 — 앞 100자만 쓰면 다른 질문끼리 같은 답을 공유했다.
 function getCacheKey(message: string, level: number, mode: string): string {
-  return `${mode}:${level}:${message.trim().toLowerCase().slice(0, 100)}`;
+  const digest = createHash("sha256")
+    .update(message.trim().toLowerCase())
+    .digest("hex");
+  return `${mode}:${level}:${digest}`;
 }
 
 function cleanCache(): void {
@@ -164,7 +182,9 @@ export function setupAIChatRoutes(app: Express): void {
         }
       }
 
-      if (messages.length <= 2) {
+      // 캐시는 "대화 첫 질문 1개"일 때만 — 앞 턴(특히 assistant 턴)은 클라이언트가
+      // 조작할 수 있어서, 2턴까지 캐시하면 조작된 답이 다른 사용자에게 퍼졌다.
+      if (messages.length === 1) {
         const cacheKey = getCacheKey(lastUserMsg.content, userLevel, mode);
         const cachedDynamic = responseCache.get(cacheKey);
         if (cachedDynamic && Date.now() - cachedDynamic.timestamp < CACHE_TTL) {
@@ -211,20 +231,26 @@ ${modeContext}`,
       res.setHeader("Cache-Control", "no-cache");
       res.setHeader("Connection", "keep-alive");
 
-      const stream = await getOpenAI().chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [systemMessage, ...messages],
-        stream: true,
-        max_tokens: 250,
-      });
-
-      // 클라이언트가 끊으면 OpenAI 스트림도 즉시 중단(토큰 낭비 방지)
-      req.on("close", () => {
+      // 클라이언트가 끊으면 OpenAI 호출도 즉시 중단(토큰 낭비 방지).
+      // req 의 close 는 본문을 다 읽은 시점에 이미 발생하므로 res 의 close 를,
+      // 그리고 OpenAI 호출 "전에" 건다.
+      const controller = new AbortController();
+      res.on("close", () => {
         if (!res.writableEnded) {
           aborted = true;
-          stream.controller.abort();
+          controller.abort();
         }
       });
+
+      const stream = await getOpenAI().chat.completions.create(
+        {
+          model: "gpt-4o-mini",
+          messages: [systemMessage, ...messages],
+          stream: true,
+          max_tokens: 250,
+        },
+        { signal: controller.signal }
+      );
 
       let fullContent = "";
       for await (const chunk of stream) {
@@ -239,7 +265,7 @@ ${modeContext}`,
 
       if (aborted) return;
 
-      if (messages.length <= 2 && fullContent) {
+      if (messages.length === 1 && fullContent) {
         const cacheKey = getCacheKey(lastUserMsg.content, userLevel, mode);
         responseCache.set(cacheKey, { content: fullContent, timestamp: Date.now() });
         cleanCache();
