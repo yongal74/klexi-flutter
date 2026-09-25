@@ -50,7 +50,8 @@ class _SentencePracticeScreenState
     final session = ref.read(dailySessionServiceProvider);
 
     // Get today's / last session word IDs
-    final lastIds = ref.read(lastSessionWordsProvider);
+    final memIds = ref.read(lastSessionWordsProvider);
+    final lastIds = memIds.isNotEmpty ? memIds : session.getTodayStudiedIds();
     final List<String> sessionWordIds;
     if (lastIds.isNotEmpty) {
       sessionWordIds = lastIds.take(20).toList();

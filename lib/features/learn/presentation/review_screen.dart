@@ -5,7 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/services/daily_session_service.dart'
     show dailySessionServiceProvider, lastSessionWordsProvider;
-import '../../../core/services/polar_service.dart';
+import '../../../core/services/purchase_service.dart';
 import '../../../data/models/word.dart';
 import '../../../data/repositories/word_repository.dart';
 import 'quiz_screen.dart';
@@ -55,7 +55,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen>
     // All Review tab: prefer last studied session, fall back to today's session
     List<Word> srsWords;
     try {
-      final lastIds = ref.read(lastSessionWordsProvider);
+      final memIds = ref.read(lastSessionWordsProvider);
+      final lastIds = memIds.isNotEmpty ? memIds : session.getTodayStudiedIds();
       if (lastIds.isNotEmpty) {
         srsWords = all
             .where((w) => lastIds.contains(w.id) && (isPremium || w.level == 1))
@@ -71,7 +72,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen>
                 (w) => todayIds.contains(w.id) && (isPremium || w.level == 1))
             .toList();
       }
-    } catch (_) {
+    } on Exception catch (_) {
       srsWords = [];
     }
 

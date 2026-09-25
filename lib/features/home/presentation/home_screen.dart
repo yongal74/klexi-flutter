@@ -52,9 +52,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
-    // Live-update today's count when words are studied
-    final liveCount = ref.watch(todayStudiedCountProvider);
-    final todayStudied = liveCount > 0 ? liveCount : _todayStudied;
+    // 카드를 공부하거나 사용자가 바뀌면 통계를 저장소에서 다시 읽는다.
+    // 예전엔 initState 에서 한 번만 읽어 첫 세션 뒤에도 연속학습일·학습 단어가 0 이었고,
+    // 오늘 카운트는 메모리 값이라 다른 계정·다음 날에도 남았다.
+    ref.listen(todayStudiedCountProvider, (_, __) => _load());
+    ref.listen(currentUserProvider, (_, __) => _load());
+    final todayStudied = _todayStudied;
 
     return Scaffold(
       backgroundColor: AppColors.bg,

@@ -242,15 +242,25 @@ class DailySessionService {
     // Split words into due, new, and studied
     final dueWords = <Word>[];
     final newWords = <Word>[];
+    // 새 단어는 사용자가 고른 레벨부터. 예전엔 저장소 순서(레벨 1 먼저)라
+    // TOPIK 4 를 고른 유료 사용자도 레벨 1 기초 단어만 받았다.
+    final preferredLevel = isPremium ? userLevel : 1;
 
     for (final w in all) {
       final rec = records[w.id];
       if (rec == null) {
-        newWords.add(w);
+        if (isPremium || w.level == 1) newWords.add(w);
       } else if (rec.isDueToday) {
         dueWords.add(w);
       }
     }
+    newWords.sort((a, b) {
+      final da = (a.level - preferredLevel).abs() +
+          (a.level < preferredLevel ? 10 : 0);
+      final db = (b.level - preferredLevel).abs() +
+          (b.level < preferredLevel ? 10 : 0);
+      return da.compareTo(db);
+    });
 
     final selected = <Word>[];
     // Always reserve at least 5 slots for new words so the user sees new content daily
@@ -306,7 +316,17 @@ class DailySessionService {
     if (box == null) return;
 
     final existing = box.get(wordId);
-    final now = DateTime.now().millisecondsSinceEpoch;
+    final nowDt = DateTime.now();
+    final now = nowDt.millisecondsSinceEpoch;
+    final today = _dayKey(nowDt);
+
+    // 학습한 날짜 목록을 단어별로 남긴다. lastStudied 는 복습할 때마다 덮어써져서,
+    // 예전엔 어제 단어를 오늘 복습하면 어제 기록이 사라져 연속학습일·주간 그래프가 깨졌다.
+    final days = <int>[
+      ...((existing?['days'] as List?)?.cast<int>() ?? const <int>[]),
+    ];
+    if (!days.contains(today)) days.add(today);
+    if (days.length > 120) days.removeRange(0, days.length - 120);
 
     if (existing == null) {
       await box.put(wordId, {
@@ -314,15 +334,66 @@ class DailySessionService {
         'timesStudied': 1,
         'easyCount': wasEasy ? 1 : 0,
         'hardCount': wasEasy ? 0 : 1,
+        'days': days,
       });
     } else {
       await box.put(wordId, {
         'lastStudied': now,
-        'timesStudied': ((existing['timesStudied'] as int?) ?? 0) + 1,
+        // "Again"(어려움)이면 간격 사다리를 처음으로 되돌려 내일 다시 나오게 한다
+        'timesStudied':
+            wasEasy ? ((existing['timesStudied'] as int?) ?? 0) + 1 : 1,
         'easyCount': ((existing['easyCount'] as int?) ?? 0) + (wasEasy ? 1 : 0),
         'hardCount': ((existing['hardCount'] as int?) ?? 0) + (wasEasy ? 0 : 1),
+        'days': days,
       });
     }
+  }
+
+  static int _dayKey(DateTime d) => d.year * 10000 + d.month * 100 + d.day;
+
+  static DateTime _fromDayKey(int k) =>
+      DateTime(k ~/ 10000, (k ~/ 100) % 100, k % 100);
+
+  /// 모든 단어 기록에서 "공부한 날" 집합을 모은다. build54 이전 기록은
+  /// 날짜 목록이 없으므로 lastStudied 하루만 쓴다.
+  Set<DateTime> _studiedDays() {
+    final box = _box;
+    final result = <DateTime>{};
+    if (box == null) return result;
+    for (final key in box.keys) {
+      final raw = box.get(key);
+      if (raw == null) continue;
+      final days = (raw['days'] as List?)?.cast<int>();
+      if (days != null && days.isNotEmpty) {
+        result.addAll(days.map(_fromDayKey));
+      } else {
+        final ms = (raw['lastStudied'] as int?) ?? 0;
+        if (ms == 0) continue;
+        final d = DateTime.fromMillisecondsSinceEpoch(ms);
+        result.add(DateTime(d.year, d.month, d.day));
+      }
+    }
+    return result;
+  }
+
+  /// 오늘 공부한 단어 id. 퀴즈·복습은 이 단어로 낸다(안 본 단어로 퀴즈 내지 않도록).
+  List<String> getTodayStudiedIds() {
+    final box = _box;
+    if (box == null) return const [];
+    final today = DateTime.now();
+    final ids = <String>[];
+    for (final key in box.keys) {
+      final raw = box.get(key);
+      if (raw == null) continue;
+      final d = DateTime.fromMillisecondsSinceEpoch(
+          (raw['lastStudied'] as int?) ?? 0);
+      if (d.year == today.year &&
+          d.month == today.month &&
+          d.day == today.day) {
+        ids.add(key as String);
+      }
+    }
+    return ids;
   }
 
   // ── Statistics ─────────────────────────────────────────────
@@ -337,9 +408,10 @@ class DailySessionService {
     return session.words.map((w) => w.id).toList();
   }
 
-  /// Records a review with SM-2 quality score (1=hard, 3=ok, 5=easy).
+  /// Records a review (1=Again, 3=Good, 5=Easy).
+  /// 예전엔 quality >= 4 만 "쉬움"이라 "Good"(3)도 어려움으로 기록됐다.
   Future<void> recordReview(String wordId, int quality) =>
-      recordStudy(wordId: wordId, wasEasy: quality >= 4);
+      recordStudy(wordId: wordId, wasEasy: quality >= 3);
 
   /// Returns the total number of distinct words ever studied.
   Future<int> getTotalWordsStudied() async {
@@ -351,24 +423,33 @@ class DailySessionService {
     final box = _box;
     if (box == null) return List.filled(7, 0);
 
-    // Map: date → set of word IDs studied that day
-    final dayWords = <DateTime, Set<String>>{};
+    // Map: date → number of words studied that day (날짜 목록 기준)
+    final dayCounts = <DateTime, int>{};
     for (final key in box.keys) {
       final raw = box.get(key);
       if (raw == null) continue;
-      final ms = (raw['lastStudied'] as int?) ?? 0;
-      if (ms == 0) continue;
-      final d = DateTime.fromMillisecondsSinceEpoch(ms);
-      final day = DateTime(d.year, d.month, d.day);
-      dayWords.putIfAbsent(day, () => <String>{}).add(key as String);
+      final days = (raw['days'] as List?)?.cast<int>();
+      if (days != null && days.isNotEmpty) {
+        for (final k in days) {
+          final day = _fromDayKey(k);
+          dayCounts[day] = (dayCounts[day] ?? 0) + 1;
+        }
+      } else {
+        final ms = (raw['lastStudied'] as int?) ?? 0;
+        if (ms == 0) continue;
+        final d = DateTime.fromMillisecondsSinceEpoch(ms);
+        final day = DateTime(d.year, d.month, d.day);
+        dayCounts[day] = (dayCounts[day] ?? 0) + 1;
+      }
     }
 
-    // Build 7-element list for Mon(0)→Sun(6) of the current week
+    // Mon(0)→Sun(6) of the current week. 날짜 생성자로 계산해 서머타임 경계에서
+    // 하루 밀리던 문제를 피한다.
     final today = DateTime.now();
-    final weekStart = today.subtract(Duration(days: today.weekday - 1));
     return List.generate(7, (i) {
-      final day = DateTime(weekStart.year, weekStart.month, weekStart.day + i);
-      return dayWords[day]?.length ?? 0;
+      final day = DateTime(
+          today.year, today.month, today.day - (today.weekday - 1) + i);
+      return dayCounts[day] ?? 0;
     });
   }
 
@@ -419,30 +500,22 @@ class DailySessionService {
 
   /// Returns the current streak in consecutive days studied.
   Future<int> getCurrentStreak() async {
-    final box = _box;
-    if (box == null) return 0;
-
-    // Collect unique study dates
-    final studiedDates = <DateTime>{};
-    for (final key in box.keys) {
-      final raw = box.get(key);
-      if (raw == null) continue;
-      final ms = (raw['lastStudied'] as int?) ?? 0;
-      final d = DateTime.fromMillisecondsSinceEpoch(ms);
-      studiedDates.add(DateTime(d.year, d.month, d.day));
-    }
-
+    final studiedDates = _studiedDays();
     if (studiedDates.isEmpty) return 0;
 
-    int streak = 0;
-    var checkDate =
-        DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
-
-    while (studiedDates.contains(checkDate)) {
-      streak++;
-      checkDate = checkDate.subtract(const Duration(days: 1));
+    final now = DateTime.now();
+    var checkDate = DateTime(now.year, now.month, now.day);
+    // 오늘 아직 공부 전이면 어제부터 센다. 예전엔 30일 연속이어도
+    // 매일 아침 첫 카드 전까지 0 으로 보였다.
+    if (!studiedDates.contains(checkDate)) {
+      checkDate = DateTime(now.year, now.month, now.day - 1);
     }
 
+    int streak = 0;
+    while (studiedDates.contains(checkDate)) {
+      streak++;
+      checkDate = DateTime(checkDate.year, checkDate.month, checkDate.day - 1);
+    }
     return streak;
   }
 }

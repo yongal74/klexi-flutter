@@ -2,12 +2,19 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/services/auth_service.dart';
 import '../../../core/services/daily_session_service.dart';
 import '../../../data/repositories/word_repository.dart';
 
 // ── Providers ──────────────────────────────────────────────────────────────
 
-final _progressDataProvider = FutureProvider<_ProgressData>((ref) async {
+/// 학습할 때마다(todayStudiedCount 변화)·사용자가 바뀔 때마다 다시 계산한다.
+/// 예전엔 앱 실행당 한 번만 계산돼, 공부해도 숫자가 안 바뀌고 다른 계정으로
+/// 로그인해도 이전 사용자 통계가 보였다.
+final progressDataProvider =
+    FutureProvider.autoDispose<ProgressData>((ref) async {
+  ref.watch(currentUserProvider);
+  ref.watch(todayStudiedCountProvider);
   final svc = ref.watch(dailySessionServiceProvider);
   final repo = ref.watch(wordRepositoryProvider);
 
@@ -29,7 +36,7 @@ final _progressDataProvider = FutureProvider<_ProgressData>((ref) async {
     );
   }
 
-  return _ProgressData(
+  return ProgressData(
     streak: streak,
     totalWordsStudied: totalStudied,
     levelStats: levelStats.values.toList(),
@@ -51,13 +58,13 @@ Color _levelColor(int level) {
 
 // ── Models ─────────────────────────────────────────────────────────────────
 
-class _ProgressData {
+class ProgressData {
   final int streak;
   final int totalWordsStudied;
   final List<_LevelStat> levelStats;
   final List<int> weekActivity;
 
-  const _ProgressData({
+  const ProgressData({
     required this.streak,
     required this.totalWordsStudied,
     required this.levelStats,
@@ -88,7 +95,7 @@ class ProgressScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final dataAsync = ref.watch(_progressDataProvider);
+    final dataAsync = ref.watch(progressDataProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF2F3F8),

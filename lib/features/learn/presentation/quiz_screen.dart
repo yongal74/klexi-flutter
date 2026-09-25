@@ -59,8 +59,10 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
     final session = ref.read(dailySessionServiceProvider);
     final all = repo.getAllWords();
 
-    // Prefer the last studied session; fall back to today's session words
-    final lastIds = ref.read(lastSessionWordsProvider);
+    // 우선순위: 방금 끝낸 세션 → 오늘 공부한 단어(앱 재시작 후에도 유지) → 오늘 세션.
+    // 예전엔 재시작하면 '다음에 배울' 안 본 단어로 퀴즈를 냈다.
+    final memIds = ref.read(lastSessionWordsProvider);
+    final lastIds = memIds.isNotEmpty ? memIds : session.getTodayStudiedIds();
     final List<Word> todayWords;
     if (lastIds.isNotEmpty) {
       todayWords = all

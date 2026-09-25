@@ -34,6 +34,7 @@ class AuthService {
   bool get isSignedIn => _currentUser != null && !_currentUser!.isGuest;
 
   static const String _userIdKey = 'klexi_user_id';
+  static const String _lastGuestIdKey = 'klexi_last_guest_id';
 
   /// dalli_chat_screen.dart 의 _kChatHistoryKey 와 같은 값이어야 한다.
   static const String _chatHistoryKey = 'dalli_chat_history';
@@ -104,7 +105,8 @@ class AuthService {
   /// 게스트 모드 — 로컬 전용, 기기 간 동기화 없음
   Future<KlexiUser> signInAsGuest() async {
     final prefs = await SharedPreferences.getInstance();
-    final existing = prefs.getString(_userIdKey);
+    final existing =
+        prefs.getString(_userIdKey) ?? prefs.getString(_lastGuestIdKey);
     final guestId = (existing != null && existing.startsWith('guest_'))
         ? existing
         : 'guest_${DateTime.now().millisecondsSinceEpoch}';
@@ -121,6 +123,13 @@ class AuthService {
     await DailySessionService.instance.closeForSignOut();
 
     final prefs = await SharedPreferences.getInstance();
+    // 게스트는 계정이 없어 id 를 잃으면 학습기록에 다시 닿을 수 없다.
+    // 자동 복원은 막되(user id 삭제), "게스트로 계속"을 누르면 같은 기록으로 돌아오게 보관한다.
+    final wasGuest = _currentUser?.isGuest ?? false;
+    final id = prefs.getString(_userIdKey);
+    if (wasGuest && id != null && id.startsWith('guest_')) {
+      await prefs.setString(_lastGuestIdKey, id);
+    }
     await prefs.remove(_userIdKey);
     await prefs.remove(_chatHistoryKey);
 

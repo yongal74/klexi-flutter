@@ -57,14 +57,26 @@ abstract class AppRoutes {
   static const String reviewSession = '/review';
 }
 
+/// 로그인·온보딩 상태가 바뀌면 GoRouter 에 redirect 재평가만 알린다.
+class _RouterRefresh extends ChangeNotifier {
+  void ping() => notifyListeners();
+}
+
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(currentUserProvider);
-  final onboarded = ref.watch(onboardingDoneProvider);
+  // GoRouter 는 한 번만 만든다. 예전엔 ref.watch 로 로그인 상태가 바뀔 때마다
+  // 라우터를 새로 만들어 화면 스택이 날아갔다 — 결제 화면에서 구글 로그인하면
+  // 홈으로 튕겨서 결제가 진행되지 않았다.
+  final refresh = _RouterRefresh();
+  ref.listen(currentUserProvider, (_, __) => refresh.ping());
+  ref.listen(onboardingDoneProvider, (_, __) => refresh.ping());
+  ref.onDispose(refresh.dispose);
 
   return GoRouter(
     initialLocation: AppRoutes.auth,
+    refreshListenable: refresh,
     redirect: (context, state) {
-      final isAuthed = authState != null;
+      final isAuthed = ref.read(currentUserProvider) != null;
+      final onboarded = ref.read(onboardingDoneProvider);
       final loc = state.matchedLocation;
       final onAuth = loc == AppRoutes.auth;
       final onOnboarding = loc == AppRoutes.onboarding;

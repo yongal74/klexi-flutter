@@ -133,6 +133,8 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen>
         debugPrint('[Pronunciation] stop failed: $e');
       }
       path ??= _lastRecordingPath;
+      // 녹음 정지 중 화면을 나가면 ref 사용이 예외가 된다
+      if (!mounted) return;
 
       if (path == null || _currentWord == null) {
         if (mounted) {

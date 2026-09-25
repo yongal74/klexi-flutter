@@ -316,7 +316,14 @@ class _DalliChatScreenState extends ConsumerState<DalliChatScreen> {
       });
 
       if (accumulated.isNotEmpty) {
-        _history.add({'role': 'assistant', 'content': accumulated});
+        // 서버는 메시지당 1,000자 제한 — 긴 답을 그대로 문맥에 넣으면 다음 요청이
+        // 계속 400 으로 막힌다
+        _history.add({
+          'role': 'assistant',
+          'content': accumulated.length > 1000
+              ? accumulated.substring(0, 1000)
+              : accumulated,
+        });
         await _saveHistory(ref.read(chatMessagesProvider));
       } else {
         _showDalliError(serverError

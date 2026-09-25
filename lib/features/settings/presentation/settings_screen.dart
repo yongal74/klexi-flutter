@@ -12,6 +12,11 @@ import '../../../core/router/app_router.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/services/daily_session_service.dart';
 import '../../../core/services/purchase_service.dart';
+import '../../chat/presentation/dalli_chat_screen.dart'
+    show chatMessagesProvider;
+import '../../learn/presentation/quiz_screen.dart' show quizWrongWordsProvider;
+import '../../progress/presentation/progress_screen.dart'
+    show progressDataProvider;
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -145,7 +150,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 icon: Icons.refresh_rounded,
                 iconBg: const Color(0xFFE0F2FE),
                 iconColor: const Color(0xFF0284C7),
-                title: 'Reset Today\'s Session',
+                title: 'Reset All Progress',
                 onTap: _resetSession,
               ),
             ]),
@@ -184,35 +189,57 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Reset Session'),
+        title: const Text('Reset all progress?'),
         content: const Text(
-            'This will clear all study history and serve fresh words. Continue?'),
+            'This permanently erases every word you have studied, your streak, '
+            'and your review schedule. This cannot be undone.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
               child: const Text('Cancel')),
           TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Reset',
-                  style: TextStyle(color: Color(0xFF0284C7)))),
+              child: const Text('Erase everything',
+                  style: TextStyle(color: AppColors.error))),
         ],
       ),
     );
     if (confirm == true && mounted) {
       await ref.read(dailySessionServiceProvider).resetSession();
+      _clearSessionState();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Session reset! New words will be served.')));
+            content: Text('Progress reset. You will start with new words.')));
       }
     }
   }
 
+  /// 세션·퀴즈처럼 이 사용자의 학습에 묶인 메모리 상태를 비운다.
+  void _clearSessionState() {
+    ref.read(todayStudiedCountProvider.notifier).state = 0;
+    ref.read(lastSessionWordsProvider.notifier).state = [];
+    ref.read(quizWrongWordsProvider.notifier).state = [];
+    ref.invalidate(progressDataProvider);
+  }
+
+  /// 로그아웃·계정삭제 후 이전 사용자의 흔적(채팅 화면 내용 포함)이 다음
+  /// 사용자에게 보이지 않도록 초기화한다.
+  void _clearUserState() {
+    _clearSessionState();
+    ref.invalidate(chatMessagesProvider);
+  }
+
   Future<void> _signOut() async {
+    final isGuest = ref.read(currentUserProvider)?.isGuest ?? false;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Sign Out'),
-        content: const Text('Are you sure you want to sign out?'),
+        content: Text(isGuest
+            ? 'You are using Klexi as a guest. Your progress stays on this phone — '
+                'choose "Continue as Guest" next time to get it back. '
+                'To keep it safe across phones, sign in with Google instead.'
+            : 'Are you sure you want to sign out?'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -226,6 +253,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
     if (confirm == true && mounted) {
       await ref.read(authServiceProvider).signOut();
+      _clearUserState();
       ref.read(currentUserProvider.notifier).state = null;
       if (mounted) context.go(AppRoutes.auth);
     }
@@ -283,12 +311,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     try {
       await ref.read(authServiceProvider).deleteAccount();
+      _clearUserState();
       ref.read(currentUserProvider.notifier).state = null;
       if (mounted) context.go(AppRoutes.auth);
-    } catch (e) {
+    } on Exception catch (e) {
+      debugPrint('[Settings] delete account failed: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Could not delete account: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text(
+                "Your account wasn't deleted. Please sign in again when asked and retry.")));
       }
     }
   }

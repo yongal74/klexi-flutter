@@ -24,9 +24,12 @@ class AnalyticsService {
     await _fa.setAnalyticsCollectionEnabled(!kDebugMode);
 
     // Route all Flutter errors to Crashlytics
-    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+    // 화면 오버플로 같은 Flutter 오류와 잡히지 않은 비동기 오류는 앱을 죽이지 않으므로
+    // non-fatal 로 기록한다. 전부 fatal 로 올리면 크래시 없는 사용자 비율이 왜곡돼
+    // 진짜 크래시를 가려낼 수 없다.
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterError;
     PlatformDispatcher.instance.onError = (error, stack) {
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: false);
       return true;
     };
   }

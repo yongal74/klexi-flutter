@@ -19,11 +19,10 @@ class FcmService {
 
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-    final settings = await _messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    // 권한을 여기서 요청하지 않는다. 예전엔 앱 실행 즉시(로그인 화면 위에서)
+    // 알림 권한을 물어 사용자가 이유도 모른 채 거절했다. 권한은 온보딩의
+    // "매일 알림" 또는 알림 설정에서 사용자가 켤 때만 요청한다.
+    final settings = await _messaging.getNotificationSettings();
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       final token = await _messaging.getToken();
