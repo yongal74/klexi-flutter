@@ -185,6 +185,11 @@ daySeed = DateTime.now().millisecondsSinceEpoch ~/ msPerDay  // 일별 시드
 - 🔴 **`AUTH_MODE` 는 현재 `soft`** — 토큰이 없으면 통과(경고 로그), 있는데 무효면 401.
   라이브 build52 가 토큰을 안 보내기 때문이다. build53 이 90% 보급되거나 출시 14일
   경과 시 **`hard` 로 재배포해야 한다.** 안 하면 비용 방어가 절반만 걸린 채 남는다.
+- 🔴 **OpenAI 키는 Secret Manager** (`secrets: ["OPENAI_API_KEY"]`). 배포 시점 버전이 고정되므로
+  키를 바꾸면 **반드시 재배포**. 키 상태는 `GET /api/health?deep=1` (실패 시 503) — 외부 감시는 이 주소에.
+- `AUTH_MODE` 값은 `functions/.env.klexi-30ab5` 에 고정(커밋됨). 비어 있으면 hard 로 동작한다.
+- 발음 업로드는 busboy 가 `req.rawBody` 를 파싱한다(Cloud Functions 는 본문을 미리 읽어 multer 불가).
+- 호출 제한(`guard.ts`, 인스턴스 메모리): chat 40·tts 150·pron 60 회 / 10분, uid 또는 IP 기준.
 - 🔴 `functions/lib/` 는 커밋 대상이 아니다. 배포 전 `npm run build` 가 반드시
   선행돼야 하며, `firebase.json` 의 `predeploy` 훅이 이를 자동 수행한다.
 - 호스팅 루트(`web/`)는 정적 랜딩 페이지다. Flutter 웹은 `purchases_flutter` 미지원.
@@ -308,7 +313,10 @@ flutter build appbundle --release
 # 서명 확인 문자열: 7EDE361C (build51/52 와 동일해야 한다)
 
 # Firebase 배포 (predeploy 훅이 npm ci + build 를 자동 수행)
-firebase deploy --only functions,hosting --project klexi-30ab5
+# PowerShell 은 쉼표 목록에 따옴표 필수, Windows 첫 로딩이 10초를 넘으면 타임아웃 연장
+$env:FUNCTIONS_DISCOVERY_TIMEOUT = "60"
+firebase deploy --only "functions,hosting" --project klexi-30ab5
+curl.exe "https://klexi-30ab5.web.app/api/health?deep=1"   # openai: ok 확인
 
 # 에뮬레이터 / 실기기
 & "C:\androidsdk\platform-tools\adb.exe" devices
